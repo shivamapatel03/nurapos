@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Strictly Monochrome Black & White Palette */
+  --bg-page: #FFFFFF;
+  --bg-surface: #FAFAFA;
+  --bg-surface-subtle: #F4F4F4;
+  --bg-surface-active: #EAEAEA;
+  --text-primary: #000000;
+  --text-secondary: #525252;
+  --text-muted: #737373;
+  --text-inverse: #FFFFFF;
+  
+  --border-primary: #000000;
+  --border-light: #E5E5E5;
+  --border-dark: #262626;
+  
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-full: 9999px;
+  
+  /* STRICTLY NO SHADOWS & NO GRADIENTS */
+  --shadow-none: none;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  /* Enforce no shadows across custom elements */
+  box-shadow: none;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   BUTTON-20: Black & White Edition (No Shadows, No Gradients, Rounded)
+   ========================================================================== */
+
+.button-20 {
+  appearance: button;
+  background-color: #000000;
+  background-image: none;
+  border: 1px solid #000000;
+  border-radius: 1rem;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-inter);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.55rem 1.25rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+.button-20:focus:not(:focus-visible),
+.button-20:focus {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.button-20:hover {
+  background-color: #262626;
+  border-color: #262626;
+  color: #FFFFFF;
+}
+
+.button-20:active {
+  background-color: #404040;
+  background-image: none;
+  border-color: #404040;
+  box-shadow: none;
+}
+
+.button-20:active:focus {
+  box-shadow: none;
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.button-20:disabled {
+  background-image: none;
+  box-shadow: none;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Secondary (Outline / White) Button-20 */
+.button-20-secondary {
+  appearance: button;
+  background-color: #FFFFFF;
+  background-image: none;
+  border: 1px solid #000000;
+  border-radius: 1rem;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: #000000;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-inter);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.55rem 1.25rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+.button-20-secondary:focus:not(:focus-visible),
+.button-20-secondary:focus {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.button-20-secondary:hover {
+  background-color: #000000;
+  border-color: #000000;
+  color: #FFFFFF;
+}
+
+.button-20-secondary:active {
+  background-color: #262626;
+  border-color: #262626;
+  color: #FFFFFF;
+  box-shadow: none;
+}
+
+.button-20-secondary:active:focus {
+  box-shadow: none;
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.button-20-secondary:disabled {
+  background-image: none;
+  box-shadow: none;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* 3D Tactile Button-20 */
+.button-20-3d {
+  appearance: button;
+  background-color: #000000;
+  background-image: none;
+  border: 1px solid #000000;
+  border-radius: 1rem;
+  box-shadow: 0 4px 0 #262626;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-inter);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.55rem 1.25rem;
+  text-align: center;
+  text-decoration: none;
+  transform: translateY(0);
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background-color 0.15s ease-in-out;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+.button-20-3d:hover {
+  background-color: #171717;
+  box-shadow: 0 4px 0 #333333;
+}
+
+.button-20-3d:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #262626;
+  background-color: #262626;
+}
+
+.button-20-3d:focus:not(:focus-visible),
+.button-20-3d:focus {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+/* Ghost / Pill Button-20 */
+.button-20-ghost {
+  appearance: button;
+  background-color: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 1rem;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: #000000;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: var(--font-inter);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.button-20-ghost:hover {
+  background-color: #F4F4F4;
+}
+
+/* Compact Small Button-20 */
+.button-20-sm {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: 0.75rem;
+}
+
+/* Rounded Badges */
+.badge-rounded {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+.badge-rounded-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background-color: #FFFFFF;
+  color: #000000;
+  border: 1px solid #000000;
+}
+
+/* Monochrome Bordered Cards (No shadows, rounded) */
+.card-rounded {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-light);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.card-rounded:hover {
+  border-color: #000000;
+}
+
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex !important;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
