@@ -204,6 +204,7 @@ export default function SigninPage() {
                   <input
                     type="email"
                     required
+                    placeholder="example@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={{
@@ -246,6 +247,7 @@ export default function SigninPage() {
                   <input
                     type="password"
                     required
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{

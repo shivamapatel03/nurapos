@@ -233,6 +233,7 @@ export default function SignupPage() {
                 <input
                   type="email"
                   required
+                  placeholder="example@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{
@@ -275,6 +276,7 @@ export default function SignupPage() {
                 <input
                   type="password"
                   required
+                  placeholder="Create your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={{

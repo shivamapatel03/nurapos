@@ -324,3 +324,9 @@ a {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+input::placeholder,
+textarea::placeholder {
+  color: #8E8E93;
+  opacity: 1;
+}
