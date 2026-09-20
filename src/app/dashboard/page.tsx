@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -41,6 +41,20 @@ import InventoryManagement from '@/components/admin/InventoryManagement';
 import ProductManagement from '@/components/admin/ProductManagement';
 import ReportsManagement from '@/components/admin/ReportsManagement';
 import SalesManagement from '@/components/admin/SalesManagement';
+import EmployeesManagement from '@/components/admin/EmployeesManagement';
+import CustomersManagement from '@/components/admin/CustomersManagement';
+import SettingsManagement from '@/components/admin/SettingsManagement';
+import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
+import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
+import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
+import GroupWorkRoundedIcon from '@mui/icons-material/GroupWorkRounded';
+import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
+import { ThemeId, APP_THEMES } from '@/lib/themeConfig';
 
 interface SubNavItem {
   id: string;
@@ -61,12 +75,15 @@ export default function AdminDashboardPage() {
   // Sidebar collapse/expand state with smooth animation
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Accordion state for expandable menu items (inventory expanded by default)
+  // Accordion state for expandable menu items (only one menu open at a time)
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
-    sales: true,
+    sales: false,
     catalog: false,
     inventory: true,
     reports: false,
+    employees: false,
+    customers: false,
+    settings: false,
   });
 
   const [activeTabId, setActiveTabId] = useState('po');
@@ -76,6 +93,37 @@ export default function AdminDashboardPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+
+  const isSettingsActive =
+    activeTabId === 'settings' ||
+    activeTabId === 'set_store' ||
+    activeTabId === 'set_business' ||
+    activeTabId === 'set_tax' ||
+    activeTabId === 'set_payments' ||
+    activeTabId === 'set_hardware' ||
+    activeTabId === 'set_pos' ||
+    activeTabId === 'set_notifications' ||
+    activeTabId === 'set_users' ||
+    activeTabId === 'set_security' ||
+    activeTabId === 'set_appearance';
+
+  const isCustomersActive =
+    activeTabId === 'customers' ||
+    activeTabId === 'cust_all' ||
+    activeTabId === 'cust_history' ||
+    activeTabId === 'cust_loyalty' ||
+    activeTabId === 'cust_groups' ||
+    activeTabId === 'cust_feedback';
+
+  const isEmployeesActive =
+    activeTabId === 'employees' ||
+    activeTabId === 'emp_all' ||
+    activeTabId === 'emp_cashiers' ||
+    activeTabId === 'emp_managers' ||
+    activeTabId === 'emp_roles' ||
+    activeTabId === 'emp_shifts' ||
+    activeTabId === 'emp_attendance' ||
+    activeTabId === 'emp_performance';
 
   const isSalesActive =
     activeTabId === 'sales' ||
@@ -102,8 +150,57 @@ export default function AdminDashboardPage() {
     activeTabId === 'rep_customers' ||
     activeTabId === 'rep_performance';
 
+  // Accordion navigation helpers: only ONE menu expanded at a time
+  const openSingleMenu = (menuId: string) => {
+    setExpandedMenus({
+      sales: menuId === 'sales',
+      catalog: menuId === 'catalog',
+      inventory: menuId === 'inventory',
+      reports: menuId === 'reports',
+      employees: menuId === 'employees',
+      customers: menuId === 'customers',
+      settings: menuId === 'settings',
+    });
+  };
+
+  const closeAllMenus = () => {
+    setExpandedMenus({
+      sales: false,
+      catalog: false,
+      inventory: false,
+      reports: false,
+      employees: false,
+      customers: false,
+      settings: false,
+    });
+  };
+
   const toggleMenu = (menuId: string) => {
-    setExpandedMenus((prev) => ({ ...prev, [menuId]: !prev[menuId] }));
+    setExpandedMenus((prev) => {
+      const isCurrentlyOpen = !!prev[menuId];
+      if (isCurrentlyOpen) {
+        // Toggle closed
+        return {
+          sales: false,
+          catalog: false,
+          inventory: false,
+          reports: false,
+          employees: false,
+          customers: false,
+          settings: false,
+        };
+      }
+      // Open this menu and automatically close all other menus
+      return {
+        sales: menuId === 'sales',
+        catalog: menuId === 'catalog',
+        inventory: menuId === 'inventory',
+        reports: menuId === 'reports',
+        employees: menuId === 'employees',
+        customers: menuId === 'customers',
+        settings: menuId === 'settings',
+      };
+    });
   };
 
   const navItems: NavItem[] = [
@@ -149,9 +246,49 @@ export default function AdminDashboardPage() {
         { id: 'rep_performance', label: 'Employee Performance', icon: <BadgeRoundedIcon sx={{ fontSize: 16 }} /> },
       ],
     },
-    { id: 'employees', label: 'Employees', icon: <PeopleAltRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'customers', label: 'Customers', icon: <PersonOutlineRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'settings', label: 'Settings', icon: <SettingsRoundedIcon sx={{ fontSize: 20 }} /> },
+    {
+      id: 'employees',
+      label: 'Employees',
+      icon: <PeopleAltRoundedIcon sx={{ fontSize: 20 }} />,
+      subItems: [
+        { id: 'emp_all', label: 'All Employees', icon: <PeopleAltRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_cashiers', label: 'Cashiers', icon: <PointOfSaleRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_managers', label: 'Managers', icon: <AdminPanelSettingsRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_roles', label: 'Roles & Permissions', icon: <SecurityRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_shifts', label: 'Shifts', icon: <ScheduleRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_attendance', label: 'Attendance', icon: <EventAvailableRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'emp_performance', label: 'Employee Performance', icon: <TrendingUpRoundedIcon sx={{ fontSize: 16 }} /> },
+      ],
+    },
+    {
+      id: 'customers',
+      label: 'Customers',
+      icon: <PersonOutlineRoundedIcon sx={{ fontSize: 20 }} />,
+      subItems: [
+        { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'cust_loyalty', label: 'Loyalty & Rewards', icon: <CardGiftcardRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'cust_groups', label: 'Customer Groups', icon: <GroupWorkRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'cust_feedback', label: 'Feedback & Reviews', icon: <RateReviewRoundedIcon sx={{ fontSize: 16 }} /> },
+      ],
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <SettingsRoundedIcon sx={{ fontSize: 20 }} />,
+      subItems: [
+        { id: 'set_store', label: 'Store Profile', icon: <StoreRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_business', label: 'Business Settings', icon: <TuneRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_tax', label: 'Tax & Invoicing', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_payments', label: 'Payments', icon: <PaymentsRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_hardware', label: 'Hardware', icon: <PrintRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_pos', label: 'POS Settings', icon: <PointOfSaleRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_notifications', label: 'Notifications', icon: <NotificationsNoneRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_users', label: 'Users & Permissions', icon: <SecurityRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_security', label: 'Security', icon: <LockRoundedIcon sx={{ fontSize: 16 }} /> },
+        { id: 'set_appearance', label: 'Appearance', icon: <PaletteRoundedIcon sx={{ fontSize: 16 }} /> },
+      ],
+    },
   ];
 
   // Weekly bar chart data
@@ -195,44 +332,32 @@ export default function AdminDashboardPage() {
     { id: '3', title: 'Register Shift Reconciled', desc: 'Shift #42 was closed and verified by Alex Vance.', time: '3h ago' },
   ];
 
-  // Salt and Pepper Theme Colors (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B)
-  const theme = {
-    bgPage: '#FFFFFF',
-    bgCard: '#F5F5F7',
-    bgCardHover: '#EBEBED',
-    bgHeader: '#FFFFFF',
-    bgSidebar: '#FFFFFF',
-    border: '#D4D4D4',
-    borderCard: '#D4D4D4',
-    borderHover: '#2B2B2B',
-    textPrimary: '#2B2B2B',
-    textSecondary: '#71717A',
-    textMuted: '#B3B3B3',
-    hoverBg: '#F0F0F0',
-    activeBg: '#2B2B2B',
-    activeText: '#FFFFFF',
-    activeIcon: '#FFFFFF',
-    badgeBg: '#2B2B2B',
-    badgeText: '#FFFFFF',
-    badgeBorder: '#2B2B2B',
-    secondaryBadgeBg: '#D4D4D4',
-    secondaryBadgeText: '#2B2B2B',
-    secondaryBadgeBorder: '#D4D4D4',
-    barDefault: '#B3B3B3',
-    barActive: '#2B2B2B',
-    barHover: '#2B2B2B',
-    tableHeaderBg: '#F5F5F7',
-    tableRowHover: '#FAFAFA',
-    posBtnBg: '#2B2B2B',
-    posBtnText: '#FFFFFF',
-    posBtnBorder: '#2B2B2B',
-    posBtnShadow: '#D4D4D4',
-    livePosBg: '#D4D4D4',
-    livePosBorder: '#D4D4D4',
-    livePosText: '#2B2B2B',
-    popoverBg: '#FFFFFF',
-    popoverBorder: '#D4D4D4',
+  // Dynamic Admin Theme State ('macos' | 'bw_dark' | 'bw_light' | 'blue_white' | 'classic_pos')
+  const [currentThemeId, setCurrentThemeId] = useState<ThemeId>('bw_light');
+
+  // Load saved theme on mount
+  useEffect(() => {
+    try {
+      const saved = (localStorage.getItem('nuradesk_admin_theme') || localStorage.getItem('nuradesk_pos_theme')) as ThemeId | null;
+      if (saved && APP_THEMES[saved]) {
+        setCurrentThemeId(saved);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const handleSelectTheme = (id: ThemeId) => {
+    setCurrentThemeId(id);
+    try {
+      localStorage.setItem('nuradesk_admin_theme', id);
+      localStorage.setItem('nuradesk_pos_theme', id);
+    } catch {
+      // Ignore localStorage errors
+    }
   };
+
+  const theme = APP_THEMES[currentThemeId] || APP_THEMES.bw_light;
 
   return (
     <div style={{
@@ -247,17 +372,32 @@ export default function AdminDashboardPage() {
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* Top Header Bar - Salt & Pepper */}
+      {/* Global CSS for Smooth Dropdown & Accordion Animations */}
+      <style>{`
+        @keyframes fadeInSlideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
+
+      {/* Top Header Bar */}
       <header style={{
         height: '62px',
         backgroundColor: theme.bgHeader,
-        borderBottom: `1px solid ${theme.border}`,
+        borderBottom: `1px solid ${theme.headerBorder || theme.border}`,
         padding: '0 1.5rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexShrink: 0,
         zIndex: 30,
+        color: theme.headerTextPrimary || theme.textPrimary,
       }}>
         {/* Left: Sidebar Toggle + Brand Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
@@ -271,31 +411,30 @@ export default function AdminDashboardPage() {
               height: '36px',
               borderRadius: '0.55rem',
               backgroundColor: 'transparent',
-              border: `1px solid ${theme.border}`,
+              border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: theme.textPrimary,
+              color: theme.headerTextPrimary || theme.textPrimary,
               transition: 'all 0.15s ease',
+              padding: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = theme.hoverBg;
-              e.currentTarget.style.borderColor = theme.borderHover;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.border;
             }}
           >
             {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary || theme.textPrimary }} />
             ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary || theme.textPrimary }} />
             )}
           </button>
 
-          {/* Logo + Name in Salt & Pepper */}
+          {/* Logo + Name */}
           <Link
             href="/dashboard"
             style={{
@@ -322,14 +461,17 @@ export default function AdminDashboardPage() {
                 width={34}
                 height={34}
                 priority
-                style={{ objectFit: 'contain' }}
+                style={{
+                  objectFit: 'contain',
+                  filter: theme.headerIsDark ? 'invert(1)' : 'none',
+                }}
               />
             </div>
             <span style={{
               fontSize: '21px',
               fontWeight: 800,
               letterSpacing: '-0.04em',
-              color: theme.textPrimary,
+              color: theme.headerTextPrimary || theme.textPrimary,
             }}>
               Nuradesk
             </span>
@@ -338,71 +480,6 @@ export default function AdminDashboardPage() {
 
         {/* Right Controls: Manager View + POS Terminal Button + Bell + Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {/* Switch to Manager View Button */}
-          <Link
-            href="/manager"
-            title="Switch to Store Manager Dashboard (Amit)"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0 0.85rem',
-              height: '34px',
-              borderRadius: '0.65rem',
-              backgroundColor: theme.hoverBg,
-              border: `1px solid ${theme.border}`,
-              color: theme.textPrimary,
-              fontSize: '12.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = theme.borderHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = theme.border;
-            }}
-          >
-            <span>Manager View</span>
-            <ArrowOutwardRoundedIcon sx={{ fontSize: 13, color: theme.textPrimary }} />
-          </Link>
-
-          {/* POS Terminal Link 3D Tactile Button */}
-          <Link
-            href="/pos"
-            role="button"
-            style={{
-              height: '35px',
-              padding: '0 1.1rem',
-              fontSize: '13px',
-              fontWeight: 800,
-              borderRadius: '0.65rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              textDecoration: 'none',
-              backgroundColor: theme.posBtnBg,
-              color: theme.posBtnText,
-              border: `1px solid ${theme.posBtnBorder}`,
-              boxShadow: `0 3px 0 ${theme.posBtnShadow}`,
-              transform: 'translateY(0)',
-              transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-              cursor: 'pointer',
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'translateY(2px)';
-              e.currentTarget.style.boxShadow = `0 1px 0 ${theme.posBtnShadow}`;
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 3px 0 ${theme.posBtnShadow}`;
-            }}
-          >
-            <span>POS Terminal</span>
-            <ArrowOutwardRoundedIcon sx={{ fontSize: 15, color: '#FFFFFF' }} />
-          </Link>
-
           {/* AI Assistant Icon Button (Future Integration) */}
           <div style={{ position: 'relative' }}>
             <button
@@ -418,28 +495,24 @@ export default function AdminDashboardPage() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '0.55rem',
-                border: `1px solid ${showAiModal ? theme.borderHover : theme.border}`,
-                backgroundColor: showAiModal ? theme.hoverBg : 'transparent',
+                border: 'none',
+                backgroundColor: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: theme.textPrimary,
                 position: 'relative',
                 transition: 'all 0.15s ease',
+                padding: 0,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.borderColor = theme.borderHover;
               }}
               onMouseLeave={(e) => {
-                if (!showAiModal) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = theme.border;
-                }
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <AutoAwesomeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
+              <AutoAwesomeRoundedIcon sx={{ fontSize: 20, color: theme.headerTextPrimary || theme.textPrimary }} />
             </button>
 
             {/* AI Assistant Popover (Future Integration Preview) */}
@@ -452,9 +525,10 @@ export default function AdminDashboardPage() {
                 backgroundColor: theme.popoverBg,
                 border: `1px solid ${theme.popoverBorder}`,
                 borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '1rem',
                 zIndex: 50,
+                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                transformOrigin: 'top right',
               }}>
                 <div style={{
                   display: 'flex',
@@ -558,7 +632,7 @@ export default function AdminDashboardPage() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '0.55rem',
-                border: `1px solid ${showNotifications ? theme.borderHover : theme.border}`,
+                border: 'none',
                 backgroundColor: showNotifications ? theme.hoverBg : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
@@ -567,19 +641,18 @@ export default function AdminDashboardPage() {
                 color: theme.textPrimary,
                 position: 'relative',
                 transition: 'all 0.15s ease',
+                padding: 0,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.borderColor = theme.borderHover;
               }}
               onMouseLeave={(e) => {
                 if (!showNotifications) {
                   e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = theme.border;
                 }
               }}
             >
-              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary || theme.textPrimary }} />
               {/* Notification Indicator Dot */}
               <span style={{
                 position: 'absolute',
@@ -588,7 +661,7 @@ export default function AdminDashboardPage() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: theme.textPrimary,
+                backgroundColor: theme.headerTextPrimary || theme.textPrimary,
               }} />
             </button>
 
@@ -605,6 +678,8 @@ export default function AdminDashboardPage() {
                 boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '0.85rem',
                 zIndex: 50,
+                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                transformOrigin: 'top right',
               }}>
                 <div style={{
                   display: 'flex',
@@ -675,17 +750,19 @@ export default function AdminDashboardPage() {
                 alignItems: 'center',
                 gap: '0.6rem',
                 cursor: 'pointer',
-                padding: '4px 10px',
+                padding: '4px 8px',
                 borderRadius: '0.65rem',
-                border: `1px solid ${showProfileMenu ? theme.borderHover : theme.border}`,
-                backgroundColor: theme.hoverBg,
+                border: 'none',
+                backgroundColor: showProfileMenu ? theme.hoverBg : 'transparent',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = theme.borderHover;
+                e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
-                if (!showProfileMenu) e.currentTarget.style.borderColor = theme.border;
+                if (!showProfileMenu) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
               }}
             >
               <div style={{
@@ -705,12 +782,12 @@ export default function AdminDashboardPage() {
               <span style={{
                 fontSize: '13.5px',
                 fontWeight: 700,
-                color: theme.textPrimary,
+                color: theme.headerTextPrimary || theme.textPrimary,
                 letterSpacing: '-0.01em',
               }}>
                 Rahul Sharma
               </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
+              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.headerTextPrimary || theme.textPrimary }} />
             </div>
 
             {/* Profile Menu Dropdown */}
@@ -726,6 +803,8 @@ export default function AdminDashboardPage() {
                 boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '0.65rem',
                 zIndex: 50,
+                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                transformOrigin: 'top right',
               }}>
                 <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Rahul Sharma</div>
@@ -802,12 +881,12 @@ export default function AdminDashboardPage() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Animated Collapsible Sidebar - Salt & Pepper */}
+        {/* Animated Collapsible Sidebar */}
         <aside style={{
           width: isSidebarOpen ? '236px' : '68px',
           minWidth: isSidebarOpen ? '236px' : '68px',
           backgroundColor: theme.bgSidebar,
-          borderRight: `1px solid ${theme.border}`,
+          borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -833,20 +912,33 @@ export default function AdminDashboardPage() {
                     type="button"
                     onClick={() => {
                       if (hasSubItems) {
+                        const isCurrentlyExpanded = !!expandedMenus[item.id];
                         toggleMenu(item.id);
-                        if (item.id === 'sales' && !isSalesActive) {
-                          setActiveTabId('orders');
-                        }
-                        if (item.id === 'inventory' && !isInventoryActive) {
-                          setActiveTabId('stock');
-                        }
-                        if (item.id === 'catalog' && !isCatalogActive) {
-                          setActiveTabId('products');
-                        }
-                        if (item.id === 'reports' && !isReportsActive) {
-                          setActiveTabId('rep_sales');
+                        if (!isCurrentlyExpanded) {
+                          if (item.id === 'sales' && !isSalesActive) {
+                            setActiveTabId('orders');
+                          }
+                          if (item.id === 'inventory' && !isInventoryActive) {
+                            setActiveTabId('stock');
+                          }
+                          if (item.id === 'catalog' && !isCatalogActive) {
+                            setActiveTabId('products');
+                          }
+                          if (item.id === 'reports' && !isReportsActive) {
+                            setActiveTabId('rep_sales');
+                          }
+                          if (item.id === 'employees' && !isEmployeesActive) {
+                            setActiveTabId('emp_all');
+                          }
+                          if (item.id === 'customers' && !isCustomersActive) {
+                            setActiveTabId('cust_all');
+                          }
+                          if (item.id === 'settings' && !isSettingsActive) {
+                            setActiveTabId('set_store');
+                          }
                         }
                       } else {
+                        closeAllMenus();
                         setActiveTabId(item.id);
                       }
                     }}
@@ -860,15 +952,15 @@ export default function AdminDashboardPage() {
                       borderRadius: '0.75rem',
                       border: isActive ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                       backgroundColor: isActive ? theme.activeBg : 'transparent',
-                      color: isActive ? theme.activeText : theme.textPrimary,
+                      color: isActive ? theme.activeText : (theme.sidebarTextPrimary || theme.textPrimary),
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = theme.hoverBg;
-                        e.currentTarget.style.borderColor = theme.border;
+                        e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                        e.currentTarget.style.borderColor = theme.sidebarBorder || theme.border;
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -888,7 +980,7 @@ export default function AdminDashboardPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isActive ? theme.activeIcon : theme.textPrimary,
+                        color: isActive ? theme.activeIcon : (theme.sidebarTextPrimary || theme.textPrimary),
                       }}>
                         {item.icon}
                       </span>
@@ -897,7 +989,7 @@ export default function AdminDashboardPage() {
                           fontSize: '14px',
                           fontWeight: isActive ? 800 : 600,
                           letterSpacing: '-0.015em',
-                          color: isActive ? theme.activeText : theme.textPrimary,
+                          color: isActive ? theme.activeText : (theme.sidebarTextPrimary || theme.textPrimary),
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -912,27 +1004,44 @@ export default function AdminDashboardPage() {
                       <span style={{
                         display: 'flex',
                         alignItems: 'center',
-                        color: isActive ? theme.activeText : theme.textPrimary,
+                        color: isActive ? theme.activeText : (theme.sidebarTextPrimary || theme.textPrimary),
                         transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s ease',
+                        transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}>
-                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: isActive ? theme.activeText : theme.textPrimary }} />
+                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: isActive ? theme.activeText : (theme.sidebarTextPrimary || theme.textPrimary) }} />
                       </span>
                     )}
                   </button>
 
-                  {/* Submenu List with Icons */}
-                  {hasSubItems && isExpanded && isSidebarOpen && (
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.2rem',
-                      paddingLeft: '0.85rem',
-                      paddingTop: '0.35rem',
-                      paddingBottom: '0.35rem',
-                      borderLeft: `1px solid ${theme.border}`,
-                      marginLeft: '1.4rem',
-                    }}>
+                  {/* Submenu List with Icons - Smooth CSS Grid Transition */}
+                  {hasSubItems && isSidebarOpen && (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateRows: isExpanded ? '1fr' : '0fr',
+                        transition: 'grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          opacity: isExpanded ? 1 : 0,
+                          transform: isExpanded ? 'translateY(0)' : 'translateY(-6px)',
+                          transition: 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.2rem',
+                            paddingLeft: '0.85rem',
+                            paddingTop: '0.35rem',
+                            paddingBottom: '0.35rem',
+                            borderLeft: `1px solid ${theme.sidebarBorder || theme.border}`,
+                            marginLeft: '1.4rem',
+                          }}
+                        >
                       {item.subItems?.map((sub) => {
                         const isSubActive = activeTabId === sub.id;
                         return (
@@ -941,18 +1050,7 @@ export default function AdminDashboardPage() {
                             type="button"
                             onClick={() => {
                               setActiveTabId(sub.id);
-                              if (item.id === 'sales') {
-                                setExpandedMenus((prev) => ({ ...prev, sales: true }));
-                              }
-                              if (item.id === 'inventory') {
-                                setExpandedMenus((prev) => ({ ...prev, inventory: true }));
-                              }
-                              if (item.id === 'catalog') {
-                                setExpandedMenus((prev) => ({ ...prev, catalog: true }));
-                              }
-                              if (item.id === 'reports') {
-                                setExpandedMenus((prev) => ({ ...prev, reports: true }));
-                              }
+                              openSingleMenu(item.id);
                             }}
                             style={{
                               display: 'flex',
@@ -963,7 +1061,7 @@ export default function AdminDashboardPage() {
                               borderRadius: '0.55rem',
                               border: isSubActive ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                               backgroundColor: isSubActive ? theme.activeBg : 'transparent',
-                              color: isSubActive ? theme.activeText : theme.textPrimary,
+                              color: isSubActive ? theme.activeText : (theme.sidebarTextSecondary || theme.textSecondary),
                               fontSize: '13px',
                               fontWeight: isSubActive ? 800 : 500,
                               cursor: 'pointer',
@@ -972,14 +1070,14 @@ export default function AdminDashboardPage() {
                             }}
                             onMouseEnter={(e) => {
                               if (!isSubActive) {
-                                e.currentTarget.style.backgroundColor = theme.hoverBg;
-                                e.currentTarget.style.color = theme.textPrimary;
+                                e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                                e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isSubActive) {
                                 e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = theme.textPrimary;
+                                e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
                               }
                             }}
                           >
@@ -987,7 +1085,7 @@ export default function AdminDashboardPage() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isSubActive ? theme.activeIcon : theme.textPrimary,
+                              color: isSubActive ? theme.activeIcon : (theme.sidebarTextSecondary || theme.textSecondary),
                             }}>
                               {sub.icon}
                             </span>
@@ -1001,6 +1099,8 @@ export default function AdminDashboardPage() {
                           </button>
                         );
                       })}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1008,89 +1108,92 @@ export default function AdminDashboardPage() {
             })}
           </nav>
 
-          {/* Bottom Sidebar Store Indicator (Salt & Pepper with Green Live Pulse) */}
-          <Link
-            href="/pos-login"
-            style={{ textDecoration: 'none', display: 'block', marginTop: '1.25rem' }}
-          >
-            {isSidebarOpen ? (
-              <div
-                style={{
-                  height: '46px',
-                  backgroundColor: theme.hoverBg,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.55rem',
-                  color: theme.textPrimary,
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.01em',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.borderHover;
-                  e.currentTarget.style.backgroundColor = theme.bgCardHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.border;
-                  e.currentTarget.style.backgroundColor = theme.hoverBg;
-                }}
-              >
-                {/* Live Pulse Dot */}
-                <span style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22C55E',
-                  boxShadow: '0 0 8px #22C55E',
-                  display: 'inline-block',
-                }} />
-                <span>SP CAFE — Live POS</span>
-              </div>
-            ) : (
-              <div
-                title="SP CAFE — Live POS"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: theme.hoverBg,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.75rem',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.textPrimary,
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.borderHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.border;
-                }}
-              >
-                POS
-                <span style={{
-                  position: 'absolute',
-                  top: '5px',
-                  right: '5px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22C55E',
-                }} />
-              </div>
-            )}
-          </Link>
+          {/* Bottom Sidebar Controls: Live POS Indicator */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginTop: '1.25rem' }}>
+
+            {/* Store Indicator Link */}
+            <Link
+              href="/pos-login"
+              style={{ textDecoration: 'none', display: 'block' }}
+            >
+              {isSidebarOpen ? (
+                <div
+                  style={{
+                    height: '44px',
+                    backgroundColor: theme.sidebarHoverBg || theme.hoverBg,
+                    border: `1px solid ${theme.sidebarBorder || theme.border}`,
+                    borderRadius: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.55rem',
+                    color: theme.sidebarTextPrimary || theme.textPrimary,
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.01em',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.borderHover;
+                    e.currentTarget.style.backgroundColor = theme.bgCardHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = theme.sidebarBorder || theme.border;
+                    e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                  }}
+                >
+                  <span style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    backgroundColor: '#22C55E',
+                    boxShadow: '0 0 8px #22C55E',
+                    display: 'inline-block',
+                  }} />
+                  <span>SP CAFE — Live POS</span>
+                </div>
+              ) : (
+                <div
+                  title="SP CAFE — Live POS"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: theme.sidebarHoverBg || theme.hoverBg,
+                    border: `1px solid ${theme.sidebarBorder || theme.border}`,
+                    borderRadius: '0.75rem',
+                    margin: '0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: theme.sidebarTextPrimary || theme.textPrimary,
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = theme.borderHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = theme.sidebarBorder || theme.border;
+                  }}
+                >
+                  POS
+                  <span style={{
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#22C55E',
+                  }} />
+                </div>
+              )}
+            </Link>
+          </div>
         </aside>
 
         {/* Main Dashboard Content Area - Salt & Pepper */}
@@ -1102,7 +1205,58 @@ export default function AdminDashboardPage() {
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          {isSalesActive ? (
+          {isSettingsActive ? (
+            <SettingsManagement
+              activeSubTab={
+                activeTabId === 'set_business' ? 'set_business' :
+                activeTabId === 'set_tax' ? 'set_tax' :
+                activeTabId === 'set_payments' ? 'set_payments' :
+                activeTabId === 'set_hardware' ? 'set_hardware' :
+                activeTabId === 'set_pos' ? 'set_pos' :
+                activeTabId === 'set_notifications' ? 'set_notifications' :
+                activeTabId === 'set_users' ? 'set_users' :
+                activeTabId === 'set_security' ? 'set_security' :
+                activeTabId === 'set_appearance' ? 'set_appearance' : 'set_store'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                openSingleMenu('settings');
+              }}
+              theme={theme}
+              currentThemeId={currentThemeId}
+              onSelectTheme={handleSelectTheme}
+            />
+          ) : isCustomersActive ? (
+            <CustomersManagement
+              activeSubTab={
+                activeTabId === 'cust_history' ? 'cust_history' :
+                activeTabId === 'cust_loyalty' ? 'cust_loyalty' :
+                activeTabId === 'cust_groups' ? 'cust_groups' :
+                activeTabId === 'cust_feedback' ? 'cust_feedback' : 'cust_all'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                openSingleMenu('customers');
+              }}
+              theme={theme}
+            />
+          ) : isEmployeesActive ? (
+            <EmployeesManagement
+              activeSubTab={
+                activeTabId === 'emp_cashiers' ? 'emp_cashiers' :
+                activeTabId === 'emp_managers' ? 'emp_managers' :
+                activeTabId === 'emp_roles' ? 'emp_roles' :
+                activeTabId === 'emp_shifts' ? 'emp_shifts' :
+                activeTabId === 'emp_attendance' ? 'emp_attendance' :
+                activeTabId === 'emp_performance' ? 'emp_performance' : 'emp_all'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                openSingleMenu('employees');
+              }}
+              theme={theme}
+            />
+          ) : isSalesActive ? (
             <SalesManagement
               activeSubTab={
                 activeTabId === 'returns' ? 'returns' :
@@ -1110,7 +1264,7 @@ export default function AdminDashboardPage() {
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
-                setExpandedMenus((prev) => ({ ...prev, sales: true }));
+                openSingleMenu('sales');
               }}
               theme={theme}
             />
@@ -1123,7 +1277,7 @@ export default function AdminDashboardPage() {
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
-                setExpandedMenus((prev) => ({ ...prev, reports: true }));
+                openSingleMenu('reports');
               }}
               theme={theme}
             />
@@ -1135,7 +1289,7 @@ export default function AdminDashboardPage() {
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
-                setExpandedMenus((prev) => ({ ...prev, catalog: true }));
+                openSingleMenu('catalog');
               }}
               theme={theme}
             />
@@ -1147,7 +1301,7 @@ export default function AdminDashboardPage() {
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
-                setExpandedMenus((prev) => ({ ...prev, inventory: true }));
+                openSingleMenu('inventory');
               }}
               theme={theme}
             />
@@ -1450,13 +1604,13 @@ export default function AdminDashboardPage() {
                     gap: '0.45rem',
                     fontSize: '12.5px',
                     fontWeight: 800,
-                    backgroundColor: '#FFFFFF',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
+                    backgroundColor: theme.secondaryBadgeBg,
+                    border: `1px solid ${theme.secondaryBadgeBorder}`,
+                    color: theme.secondaryBadgeText,
                     padding: '4px 11px',
                     borderRadius: '9999px',
                   }}>
-                    <TrendingUpRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
+                    <TrendingUpRoundedIcon sx={{ fontSize: 16, color: theme.secondaryBadgeText }} />
                     <span>+14.8% vs last {chartTimeframe === 'weekly' ? 'week' : 'month'}</span>
                   </div>
                 </div>
@@ -1565,7 +1719,7 @@ export default function AdminDashboardPage() {
                   type="button"
                   onClick={() => {
                     setActiveTabId('orders');
-                    setExpandedMenus((prev) => ({ ...prev, sales: true }));
+                    openSingleMenu('sales');
                   }}
                   style={{
                     fontSize: '13px',
@@ -1602,7 +1756,7 @@ export default function AdminDashboardPage() {
                   <thead>
                     <tr style={{
                       borderBottom: `1px solid ${theme.border}`,
-                      backgroundColor: '#EBEBED',
+                      backgroundColor: theme.tableHeaderBg,
                       borderRadius: '0.75rem',
                     }}>
                       <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>

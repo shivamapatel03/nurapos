@@ -863,7 +863,7 @@ export default function InventoryManagement({
               <thead>
                 <tr style={{
                   borderBottom: `1px solid ${theme.border}`,
-                  backgroundColor: '#EBEBED',
+                  backgroundColor: theme.tableHeaderBg,
                 }}>
                   <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     Item & SKU
@@ -1169,7 +1169,7 @@ export default function InventoryManagement({
               <thead>
                 <tr style={{
                   borderBottom: `1px solid ${theme.border}`,
-                  backgroundColor: '#EBEBED',
+                  backgroundColor: theme.tableHeaderBg,
                 }}>
                   <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     Adjustment Ref
@@ -1421,7 +1421,7 @@ export default function InventoryManagement({
               <thead>
                 <tr style={{
                   borderBottom: `1px solid ${theme.border}`,
-                  backgroundColor: '#EBEBED',
+                  backgroundColor: theme.tableHeaderBg,
                 }}>
                   <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     PO Number
@@ -2439,7 +2439,7 @@ export default function InventoryManagement({
               </div>
               <div style={{ border: `1px solid ${theme.border}`, borderRadius: '0.65rem', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead style={{ backgroundColor: '#EBEBED' }}>
+                  <thead style={{ backgroundColor: theme.tableHeaderBg }}>
                     <tr>
                       <th style={{ padding: '0.6rem 0.85rem', textAlign: 'left', fontWeight: 800, color: theme.textSecondary, fontSize: '11px' }}>Item</th>
                       <th style={{ padding: '0.6rem 0.85rem', textAlign: 'center', fontWeight: 800, color: theme.textSecondary, fontSize: '11px' }}>Qty</th>

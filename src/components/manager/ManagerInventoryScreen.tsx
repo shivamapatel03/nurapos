@@ -851,7 +851,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
             <thead>
               <tr style={{
                 borderBottom: `1px solid ${theme.border}`,
-                backgroundColor: '#EBEBED',
+                backgroundColor: theme.tableHeaderBg,
               }}>
                 <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   Product Name
@@ -1121,7 +1121,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
             <thead>
               <tr style={{
                 borderBottom: `1px solid ${theme.border}`,
-                backgroundColor: '#EBEBED',
+                backgroundColor: theme.tableHeaderBg,
               }}>
                 <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   Log Ref & Time

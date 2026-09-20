@@ -1231,7 +1231,7 @@ export default function ManagerDashboardPage() {
                   <thead>
                     <tr style={{
                       borderBottom: `1px solid ${theme.border}`,
-                      backgroundColor: '#EBEBED',
+                      backgroundColor: theme.tableHeaderBg,
                       borderRadius: '0.75rem',
                     }}>
                       <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
