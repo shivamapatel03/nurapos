@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 
 export default function PosLoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -188,36 +191,70 @@ export default function PosLoginPage() {
                 }}>
                   Password :
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder=""
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '48px',
-                    backgroundColor: '#F0F0F0',
-                    border: '1px solid transparent',
-                    borderRadius: '0.85rem',
-                    padding: '0 1.25rem',
-                    fontSize: '0.95rem',
-                    fontFamily: 'inherit',
-                    color: '#000000',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    boxShadow: 'none',
-                    transition: 'border-color 0.15s, background-color 0.15s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#000000';
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'transparent';
-                    e.currentTarget.style.backgroundColor = '#F0F0F0';
-                  }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder=""
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '48px',
+                      backgroundColor: '#F0F0F0',
+                      border: '1px solid transparent',
+                      borderRadius: '0.85rem',
+                      padding: '0 2.8rem 0 1.25rem',
+                      fontSize: '0.95rem',
+                      fontFamily: 'inherit',
+                      color: '#000000',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      boxShadow: 'none',
+                      transition: 'border-color 0.15s, background-color 0.15s',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = '#000000';
+                      e.currentTarget.style.backgroundColor = '#FFFFFF';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.backgroundColor = '#F0F0F0';
+                    }}
+                  />
+                  {password.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#525252',
+                        padding: '4px',
+                        borderRadius: '0.35rem',
+                        transition: 'color 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#000000'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#525252'; }}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
+                      ) : (
+                        <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Remember this device & Forget Password row */}

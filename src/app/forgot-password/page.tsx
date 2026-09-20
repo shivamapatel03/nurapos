@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 
 type ResetStep = 'email' | 'code' | 'success';
 
@@ -20,6 +22,8 @@ export default function ForgotPasswordPage() {
   const [otp, setOtp] = useState<string[]>(['', '', '', '']);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -550,35 +554,69 @@ export default function ForgotPasswordPage() {
                     }}>
                       New Password :
                     </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="At least 6 characters"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '46px',
-                        backgroundColor: '#F0F0F0',
-                        border: '1px solid transparent',
-                        borderRadius: '0.85rem',
-                        padding: '0 1.25rem',
-                        fontSize: '0.92rem',
-                        fontFamily: 'inherit',
-                        color: '#000000',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        transition: 'border-color 0.15s, background-color 0.15s',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = '#000000';
-                        e.currentTarget.style.backgroundColor = '#FFFFFF';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.backgroundColor = '#F0F0F0';
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        required
+                        placeholder="At least 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          height: '46px',
+                          backgroundColor: '#F0F0F0',
+                          border: '1px solid transparent',
+                          borderRadius: '0.85rem',
+                          padding: '0 2.8rem 0 1.25rem',
+                          fontSize: '0.92rem',
+                          fontFamily: 'inherit',
+                          color: '#000000',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.15s, background-color 0.15s',
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = '#000000';
+                          e.currentTarget.style.backgroundColor = '#FFFFFF';
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = 'transparent';
+                          e.currentTarget.style.backgroundColor = '#F0F0F0';
+                        }}
+                      />
+                      {newPassword.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          title={showNewPassword ? 'Hide password' : 'Show password'}
+                          aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#525252',
+                            padding: '4px',
+                            borderRadius: '0.35rem',
+                            transition: 'color 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#000000'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#525252'; }}
+                        >
+                          {showNewPassword ? (
+                            <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
+                          ) : (
+                            <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Confirm Password Field */}
@@ -592,35 +630,69 @@ export default function ForgotPasswordPage() {
                     }}>
                       Confirm Password :
                     </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Re-enter new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '46px',
-                        backgroundColor: '#F0F0F0',
-                        border: '1px solid transparent',
-                        borderRadius: '0.85rem',
-                        padding: '0 1.25rem',
-                        fontSize: '0.92rem',
-                        fontFamily: 'inherit',
-                        color: '#000000',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        transition: 'border-color 0.15s, background-color 0.15s',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = '#000000';
-                        e.currentTarget.style.backgroundColor = '#FFFFFF';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.backgroundColor = '#F0F0F0';
-                      }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Re-enter new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          height: '46px',
+                          backgroundColor: '#F0F0F0',
+                          border: '1px solid transparent',
+                          borderRadius: '0.85rem',
+                          padding: '0 2.8rem 0 1.25rem',
+                          fontSize: '0.92rem',
+                          fontFamily: 'inherit',
+                          color: '#000000',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          transition: 'border-color 0.15s, background-color 0.15s',
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = '#000000';
+                          e.currentTarget.style.backgroundColor = '#FFFFFF';
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = 'transparent';
+                          e.currentTarget.style.backgroundColor = '#F0F0F0';
+                        }}
+                      />
+                      {confirmPassword.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                          title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                          aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                          style={{
+                            position: 'absolute',
+                            right: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#525252',
+                            padding: '4px',
+                            borderRadius: '0.35rem',
+                            transition: 'color 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#000000'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = '#525252'; }}
+                        >
+                          {showConfirmPassword ? (
+                            <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
+                          ) : (
+                            <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Submit Button */}
