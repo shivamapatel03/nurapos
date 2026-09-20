@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 
 export default function PosLoginPage() {
   const router = useRouter();
@@ -47,7 +48,10 @@ export default function PosLoginPage() {
             alert('Nuradesk Terminal Support: support@nuradesk.com');
           }}
           style={{
-            fontSize: '0.95rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontSize: '0.92rem',
             fontWeight: 500,
             color: '#000000',
             textDecoration: 'none',
@@ -56,7 +60,8 @@ export default function PosLoginPage() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          Need help
+          <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+          <span>Need help</span>
         </Link>
       </header>
 

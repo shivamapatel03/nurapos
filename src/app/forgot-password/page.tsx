@@ -8,6 +8,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 
 type ResetStep = 'email' | 'code' | 'success';
 
@@ -151,7 +152,10 @@ export default function ForgotPasswordPage() {
             alert('Nuradesk Support: support@nuradesk.com');
           }}
           style={{
-            fontSize: '0.95rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontSize: '0.92rem',
             fontWeight: 500,
             color: '#000000',
             textDecoration: 'none',
@@ -160,7 +164,8 @@ export default function ForgotPasswordPage() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          Need help
+          <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+          <span>Need help</span>
         </Link>
       </header>
 

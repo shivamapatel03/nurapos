@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 
 export default function StartShiftPage() {
   const router = useRouter();
@@ -61,6 +62,9 @@ export default function StartShiftPage() {
             alert('Nuradesk Terminal Support: support@nuradesk.com');
           }}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
             fontSize: '15px',
             fontWeight: 600,
             color: '#000000',
@@ -71,7 +75,8 @@ export default function StartShiftPage() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          Need help
+          <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+          <span>Need help</span>
         </Link>
       </header>
 

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 
 interface Employee {
   id: string;
@@ -134,6 +135,9 @@ export default function OnboardingScreen4() {
             alert('Nuradesk Onboarding Support: support@nuradesk.com');
           }}
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
             fontSize: '15px',
             fontWeight: 600,
             color: '#000000',
@@ -144,7 +148,8 @@ export default function OnboardingScreen4() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
         >
-          Need help
+          <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+          <span>Need help</span>
         </Link>
       </header>
 
