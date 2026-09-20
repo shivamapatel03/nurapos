@@ -5,19 +5,24 @@
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
-  /* Strictly Monochrome Black & White Palette */
+  /* Salt and Pepper Palette (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B) */
+  --sp-salt: #FFFFFF;
+  --sp-light-gray: #D4D4D4;
+  --sp-mid-gray: #B3B3B3;
+  --sp-pepper: #2B2B2B;
+
   --bg-page: #FFFFFF;
-  --bg-surface: #FAFAFA;
-  --bg-surface-subtle: #F4F4F4;
-  --bg-surface-active: #EAEAEA;
-  --text-primary: #000000;
-  --text-secondary: #525252;
-  --text-muted: #737373;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F5F5F7;
+  --bg-surface-active: #D4D4D4;
+  --text-primary: #2B2B2B;
+  --text-secondary: #71717A;
+  --text-muted: #B3B3B3;
   --text-inverse: #FFFFFF;
   
-  --border-primary: #000000;
-  --border-light: #E5E5E5;
-  --border-dark: #262626;
+  --border-primary: #2B2B2B;
+  --border-light: #D4D4D4;
+  --border-dark: #2B2B2B;
   
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;

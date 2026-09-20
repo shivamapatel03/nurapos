@@ -166,43 +166,43 @@ export default function AdminDashboardPage() {
     { id: '3', title: 'Register Shift Reconciled', desc: 'Shift #42 was closed and verified by Alex Vance.', time: '3h ago' },
   ];
 
-  // PURE TOTALLY BLACK THEME (No Light/Dark modes, 100% Black canvas with pure White text & icons)
+  // Salt and Pepper Theme Colors (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B)
   const theme = {
-    bgPage: '#000000',
-    bgCard: '#0A0A0A',
-    bgCardHover: '#141414',
-    bgHeader: '#000000',
-    bgSidebar: '#000000',
-    border: '#1F1F1F',
-    borderCard: '#242424',
-    borderHover: '#FFFFFF',
-    textPrimary: '#FFFFFF',
-    textSecondary: '#A1A1AA',
-    textMuted: '#71717A',
-    hoverBg: '#18181B',
-    activeBg: '#FFFFFF',
-    activeText: '#000000',
-    activeIcon: '#000000',
-    badgeBg: '#FFFFFF',
-    badgeText: '#000000',
-    badgeBorder: '#FFFFFF',
-    secondaryBadgeBg: '#18181B',
-    secondaryBadgeText: '#FFFFFF',
-    secondaryBadgeBorder: '#2E2E32',
-    barDefault: '#262626',
-    barActive: '#FFFFFF',
-    barHover: '#FFFFFF',
-    tableHeaderBg: '#0D0D0D',
-    tableRowHover: '#141414',
-    posBtnBg: '#FFFFFF',
-    posBtnText: '#000000',
-    posBtnBorder: '#FFFFFF',
-    posBtnShadow: '#888888',
-    livePosBg: '#0A0A0A',
-    livePosBorder: '#2A2A2A',
-    livePosText: '#FFFFFF',
-    popoverBg: '#0A0A0A',
-    popoverBorder: '#2A2A2A',
+    bgPage: '#FFFFFF',
+    bgCard: '#F5F5F7',
+    bgCardHover: '#EBEBED',
+    bgHeader: '#FFFFFF',
+    bgSidebar: '#FFFFFF',
+    border: '#D4D4D4',
+    borderCard: '#D4D4D4',
+    borderHover: '#2B2B2B',
+    textPrimary: '#2B2B2B',
+    textSecondary: '#71717A',
+    textMuted: '#B3B3B3',
+    hoverBg: '#F0F0F0',
+    activeBg: '#2B2B2B',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#2B2B2B',
+    badgeText: '#FFFFFF',
+    badgeBorder: '#2B2B2B',
+    secondaryBadgeBg: '#D4D4D4',
+    secondaryBadgeText: '#2B2B2B',
+    secondaryBadgeBorder: '#D4D4D4',
+    barDefault: '#B3B3B3',
+    barActive: '#2B2B2B',
+    barHover: '#2B2B2B',
+    tableHeaderBg: '#F5F5F7',
+    tableRowHover: '#FAFAFA',
+    posBtnBg: '#2B2B2B',
+    posBtnText: '#FFFFFF',
+    posBtnBorder: '#2B2B2B',
+    posBtnShadow: '#D4D4D4',
+    livePosBg: '#D4D4D4',
+    livePosBorder: '#D4D4D4',
+    livePosText: '#2B2B2B',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#D4D4D4',
   };
 
   return (
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* Top Header Bar - Totally Black */}
+      {/* Top Header Bar - Salt & Pepper */}
       <header style={{
         height: '62px',
         backgroundColor: theme.bgHeader,
@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
+              color: theme.textPrimary,
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
@@ -260,13 +260,13 @@ export default function AdminDashboardPage() {
             }}
           >
             {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: '#FFFFFF' }} />
+              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
             ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: '#FFFFFF' }} />
+              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
             )}
           </button>
 
-          {/* Logo + Name in Pure White */}
+          {/* Logo + Name in Salt & Pepper */}
           <Link
             href="/dashboard"
             style={{
@@ -285,15 +285,13 @@ export default function AdminDashboardPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FFFFFF',
-              padding: '2px',
               flexShrink: 0,
             }}>
               <Image
                 src="/logo.png"
                 alt="Nuradesk Logo"
-                width={30}
-                height={30}
+                width={34}
+                height={34}
                 priority
                 style={{ objectFit: 'contain' }}
               />
@@ -302,7 +300,7 @@ export default function AdminDashboardPage() {
               fontSize: '21px',
               fontWeight: 800,
               letterSpacing: '-0.04em',
-              color: '#FFFFFF',
+              color: theme.textPrimary,
             }}>
               Nuradesk
             </span>
@@ -322,25 +320,23 @@ export default function AdminDashboardPage() {
               padding: '0 0.85rem',
               height: '34px',
               borderRadius: '0.65rem',
-              backgroundColor: '#121214',
-              border: '1px solid #27272A',
-              color: '#D4D4D8',
+              backgroundColor: theme.hoverBg,
+              border: `1px solid ${theme.border}`,
+              color: theme.textPrimary,
               fontSize: '12.5px',
               fontWeight: 700,
               textDecoration: 'none',
               transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#FFFFFF';
-              e.currentTarget.style.color = '#FFFFFF';
+              e.currentTarget.style.borderColor = theme.borderHover;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#27272A';
-              e.currentTarget.style.color = '#D4D4D8';
+              e.currentTarget.style.borderColor = theme.border;
             }}
           >
             <span>Manager View</span>
-            <ArrowOutwardRoundedIcon sx={{ fontSize: 13 }} />
+            <ArrowOutwardRoundedIcon sx={{ fontSize: 13, color: theme.textPrimary }} />
           </Link>
 
           {/* POS Terminal Link 3D Tactile Button */}
@@ -367,15 +363,15 @@ export default function AdminDashboardPage() {
             }}
             onMouseDown={(e) => {
               e.currentTarget.style.transform = 'translateY(2px)';
-              e.currentTarget.style.boxShadow = '0 1px 0 #888888';
+              e.currentTarget.style.boxShadow = `0 1px 0 ${theme.posBtnShadow}`;
             }}
             onMouseUp={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 3px 0 #888888';
+              e.currentTarget.style.boxShadow = `0 3px 0 ${theme.posBtnShadow}`;
             }}
           >
             <span>POS Terminal</span>
-            <ArrowOutwardRoundedIcon sx={{ fontSize: 15, color: '#000000' }} />
+            <ArrowOutwardRoundedIcon sx={{ fontSize: 15, color: '#FFFFFF' }} />
           </Link>
 
           {/* AI Assistant Icon Button (Future Integration) */}
@@ -393,19 +389,19 @@ export default function AdminDashboardPage() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '0.55rem',
-                border: `1px solid ${showAiModal ? '#FFFFFF' : theme.border}`,
+                border: `1px solid ${showAiModal ? theme.borderHover : theme.border}`,
                 backgroundColor: showAiModal ? theme.hoverBg : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 position: 'relative',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.borderColor = '#FFFFFF';
+                e.currentTarget.style.borderColor = theme.borderHover;
               }}
               onMouseLeave={(e) => {
                 if (!showAiModal) {
@@ -414,7 +410,7 @@ export default function AdminDashboardPage() {
                 }
               }}
             >
-              <AutoAwesomeRoundedIcon sx={{ fontSize: 20, color: '#FFFFFF' }} />
+              <AutoAwesomeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
             </button>
 
             {/* AI Assistant Popover (Future Integration Preview) */}
@@ -427,7 +423,7 @@ export default function AdminDashboardPage() {
                 backgroundColor: theme.popoverBg,
                 border: `1px solid ${theme.popoverBorder}`,
                 borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '1rem',
                 zIndex: 50,
               }}>
@@ -440,8 +436,8 @@ export default function AdminDashboardPage() {
                   marginBottom: '0.75rem',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <AutoAwesomeRoundedIcon sx={{ fontSize: 18, color: '#FFFFFF' }} />
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>Nuradesk AI</span>
+                    <AutoAwesomeRoundedIcon sx={{ fontSize: 18, color: theme.textPrimary }} />
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Nuradesk AI</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{
@@ -449,8 +445,8 @@ export default function AdminDashboardPage() {
                       fontWeight: 800,
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
-                      backgroundColor: '#FFFFFF',
-                      color: '#000000',
+                      backgroundColor: theme.badgeBg,
+                      color: theme.badgeText,
                       padding: '2px 7px',
                       borderRadius: '9999px',
                     }}>
@@ -459,58 +455,58 @@ export default function AdminDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setShowAiModal(false)}
-                      style={{ background: 'none', border: 'none', color: '#A1A1AA', cursor: 'pointer', display: 'flex', padding: '2px' }}
+                      style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', display: 'flex', padding: '2px' }}
                     >
                       <CloseRoundedIcon sx={{ fontSize: 16 }} />
                     </button>
                   </div>
                 </div>
 
-                <p style={{ fontSize: '12.5px', color: '#A1A1AA', lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
+                <p style={{ fontSize: '12.5px', color: theme.textSecondary, lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
                   AI-powered retail intelligence and autonomous assistant ready for future integrations.
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <div style={{
                     padding: '0.6rem 0.75rem',
-                    backgroundColor: '#121214',
+                    backgroundColor: theme.bgCard,
                     borderRadius: '0.55rem',
-                    border: '1px solid #242424',
+                    border: `1px solid ${theme.border}`,
                     fontSize: '12px',
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.55rem',
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FFFFFF', flexShrink: 0 }} />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
                     <span>Smart Inventory & Restock Forecasting</span>
                   </div>
                   <div style={{
                     padding: '0.6rem 0.75rem',
-                    backgroundColor: '#121214',
+                    backgroundColor: theme.bgCard,
                     borderRadius: '0.55rem',
-                    border: '1px solid #242424',
+                    border: `1px solid ${theme.border}`,
                     fontSize: '12px',
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.55rem',
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FFFFFF', flexShrink: 0 }} />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
                     <span>Real-time Sales Anomaly Detection</span>
                   </div>
                   <div style={{
                     padding: '0.6rem 0.75rem',
-                    backgroundColor: '#121214',
+                    backgroundColor: theme.bgCard,
                     borderRadius: '0.55rem',
-                    border: '1px solid #242424',
+                    border: `1px solid ${theme.border}`,
                     fontSize: '12px',
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.55rem',
                   }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FFFFFF', flexShrink: 0 }} />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
                     <span>Conversational Sales & Analytics Copilot</span>
                   </div>
                 </div>
@@ -518,7 +514,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* Notification Bell (Pure White Icon & White Indicator) */}
+          {/* Notification Bell */}
           <div style={{ position: 'relative' }}>
             <button
               type="button"
@@ -533,19 +529,19 @@ export default function AdminDashboardPage() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '0.55rem',
-                border: `1px solid ${showNotifications ? '#FFFFFF' : theme.border}`,
+                border: `1px solid ${showNotifications ? theme.borderHover : theme.border}`,
                 backgroundColor: showNotifications ? theme.hoverBg : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 position: 'relative',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.borderColor = '#FFFFFF';
+                e.currentTarget.style.borderColor = theme.borderHover;
               }}
               onMouseLeave={(e) => {
                 if (!showNotifications) {
@@ -554,8 +550,8 @@ export default function AdminDashboardPage() {
                 }
               }}
             >
-              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: '#FFFFFF' }} />
-              {/* White Indicator Dot */}
+              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              {/* Notification Indicator Dot */}
               <span style={{
                 position: 'absolute',
                 top: '7px',
@@ -563,7 +559,7 @@ export default function AdminDashboardPage() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: theme.textPrimary,
               }} />
             </button>
 
@@ -577,7 +573,7 @@ export default function AdminDashboardPage() {
                 backgroundColor: theme.popoverBg,
                 border: `1px solid ${theme.popoverBorder}`,
                 borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '0.85rem',
                 zIndex: 50,
               }}>
@@ -589,7 +585,7 @@ export default function AdminDashboardPage() {
                   borderBottom: `1px solid ${theme.border}`,
                   marginBottom: '0.65rem',
                 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
                     Notifications
                   </span>
                   <button
@@ -598,12 +594,12 @@ export default function AdminDashboardPage() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#FFFFFF',
+                      color: theme.textPrimary,
                       cursor: 'pointer',
                       display: 'flex',
                     }}
                   >
-                    <CloseRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                    <CloseRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -618,7 +614,7 @@ export default function AdminDashboardPage() {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>
                           {n.title}
                         </span>
                         <span style={{ fontSize: '10.5px', color: theme.textMuted }}>
@@ -635,7 +631,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* User Profile Badge (White Text & Icons) */}
+          {/* User Profile Badge */}
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => {
@@ -652,12 +648,12 @@ export default function AdminDashboardPage() {
                 cursor: 'pointer',
                 padding: '4px 10px',
                 borderRadius: '0.65rem',
-                border: `1px solid ${showProfileMenu ? '#FFFFFF' : theme.border}`,
-                backgroundColor: theme.bgCard,
+                border: `1px solid ${showProfileMenu ? theme.borderHover : theme.border}`,
+                backgroundColor: theme.hoverBg,
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#FFFFFF';
+                e.currentTarget.style.borderColor = theme.borderHover;
               }}
               onMouseLeave={(e) => {
                 if (!showProfileMenu) e.currentTarget.style.borderColor = theme.border;
@@ -667,8 +663,8 @@ export default function AdminDashboardPage() {
                 width: '24px',
                 height: '24px',
                 borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
-                color: '#000000',
+                backgroundColor: theme.badgeBg,
+                color: theme.badgeText,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -680,12 +676,12 @@ export default function AdminDashboardPage() {
               <span style={{
                 fontSize: '13.5px',
                 fontWeight: 700,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 letterSpacing: '-0.01em',
               }}>
                 Rahul Sharma
               </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
             </div>
 
             {/* Profile Menu Dropdown */}
@@ -698,12 +694,12 @@ export default function AdminDashboardPage() {
                 backgroundColor: theme.popoverBg,
                 border: `1px solid ${theme.popoverBorder}`,
                 borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '0.65rem',
                 zIndex: 50,
               }}>
                 <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>Rahul Sharma</div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Rahul Sharma</div>
                   <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Owner • SP CAFE</div>
                 </div>
                 <Link
@@ -715,14 +711,14 @@ export default function AdminDashboardPage() {
                     padding: '0.5rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>Manager View (Ahmedabad)</span>
                 </Link>
                 <Link
@@ -734,14 +730,14 @@ export default function AdminDashboardPage() {
                     padding: '0.5rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>Switch Store / Shift</span>
                 </Link>
                 <Link
@@ -753,14 +749,14 @@ export default function AdminDashboardPage() {
                     padding: '0.5rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     textDecoration: 'none',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <LogoutRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <LogoutRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>Log Out</span>
                 </Link>
               </div>
@@ -769,7 +765,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {/* Main Body Layout: Totally Black Animated Sidebar + Main Scrollable Area */}
+      {/* Main Body Layout: Salt & Pepper Sidebar + Main Scrollable Area */}
       <div style={{
         flex: 1,
         minHeight: 0,
@@ -777,11 +773,11 @@ export default function AdminDashboardPage() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Animated Collapsible Sidebar - TOTALLY BLACK */}
+        {/* Animated Collapsible Sidebar - Salt & Pepper */}
         <aside style={{
           width: isSidebarOpen ? '236px' : '68px',
           minWidth: isSidebarOpen ? '236px' : '68px',
-          backgroundColor: '#000000',
+          backgroundColor: theme.bgSidebar,
           borderRight: `1px solid ${theme.border}`,
           height: '100%',
           overflowY: 'auto',
@@ -821,17 +817,17 @@ export default function AdminDashboardPage() {
                       justifyContent: isSidebarOpen ? 'space-between' : 'center',
                       padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
                       borderRadius: '0.75rem',
-                      border: isActive ? '1px solid #FFFFFF' : '1px solid transparent',
-                      backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-                      color: isActive ? '#000000' : '#FFFFFF',
+                      border: isActive ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                      backgroundColor: isActive ? theme.activeBg : 'transparent',
+                      color: isActive ? theme.activeText : theme.textPrimary,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = '#18181B';
-                        e.currentTarget.style.borderColor = '#2A2A2A';
+                        e.currentTarget.style.backgroundColor = theme.hoverBg;
+                        e.currentTarget.style.borderColor = theme.border;
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -851,7 +847,7 @@ export default function AdminDashboardPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: isActive ? '#000000' : '#FFFFFF',
+                        color: isActive ? theme.activeIcon : theme.textPrimary,
                       }}>
                         {item.icon}
                       </span>
@@ -860,7 +856,7 @@ export default function AdminDashboardPage() {
                           fontSize: '14px',
                           fontWeight: isActive ? 800 : 600,
                           letterSpacing: '-0.015em',
-                          color: isActive ? '#000000' : '#FFFFFF',
+                          color: isActive ? theme.activeText : theme.textPrimary,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -870,16 +866,16 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
 
-                    {/* Submenu Accordion Chevron in White */}
+                    {/* Submenu Accordion Chevron */}
                     {hasSubItems && isSidebarOpen && (
                       <span style={{
                         display: 'flex',
                         alignItems: 'center',
-                        color: isActive ? '#000000' : '#FFFFFF',
+                        color: isActive ? theme.activeText : theme.textPrimary,
                         transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease',
                       }}>
-                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: isActive ? '#000000' : '#FFFFFF' }} />
+                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 18, color: isActive ? theme.activeText : theme.textPrimary }} />
                       </span>
                     )}
                   </button>
@@ -893,7 +889,7 @@ export default function AdminDashboardPage() {
                       paddingLeft: '0.85rem',
                       paddingTop: '0.35rem',
                       paddingBottom: '0.35rem',
-                      borderLeft: '1px solid #262626',
+                      borderLeft: `1px solid ${theme.border}`,
                       marginLeft: '1.4rem',
                     }}>
                       {item.subItems?.map((sub) => {
@@ -910,9 +906,9 @@ export default function AdminDashboardPage() {
                               textAlign: 'left',
                               padding: '0.45rem 0.65rem',
                               borderRadius: '0.55rem',
-                              border: isSubActive ? '1px solid #FFFFFF' : '1px solid transparent',
-                              backgroundColor: isSubActive ? '#FFFFFF' : 'transparent',
-                              color: isSubActive ? '#000000' : '#FFFFFF',
+                              border: isSubActive ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                              backgroundColor: isSubActive ? theme.activeBg : 'transparent',
+                              color: isSubActive ? theme.activeText : theme.textPrimary,
                               fontSize: '13px',
                               fontWeight: isSubActive ? 800 : 500,
                               cursor: 'pointer',
@@ -921,14 +917,14 @@ export default function AdminDashboardPage() {
                             }}
                             onMouseEnter={(e) => {
                               if (!isSubActive) {
-                                e.currentTarget.style.backgroundColor = '#18181B';
-                                e.currentTarget.style.color = '#FFFFFF';
+                                e.currentTarget.style.backgroundColor = theme.hoverBg;
+                                e.currentTarget.style.color = theme.textPrimary;
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isSubActive) {
                                 e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = '#FFFFFF';
+                                e.currentTarget.style.color = theme.textPrimary;
                               }
                             }}
                           >
@@ -936,7 +932,7 @@ export default function AdminDashboardPage() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isSubActive ? '#000000' : '#FFFFFF',
+                              color: isSubActive ? theme.activeIcon : theme.textPrimary,
                             }}>
                               {sub.icon}
                             </span>
@@ -957,7 +953,7 @@ export default function AdminDashboardPage() {
             })}
           </nav>
 
-          {/* Bottom Sidebar Store Indicator (Totally Black, Pure White Text & Green Live Pulse) */}
+          {/* Bottom Sidebar Store Indicator (Salt & Pepper with Green Live Pulse) */}
           <Link
             href="/pos-login"
             style={{ textDecoration: 'none', display: 'block', marginTop: '1.25rem' }}
@@ -966,14 +962,14 @@ export default function AdminDashboardPage() {
               <div
                 style={{
                   height: '46px',
-                  backgroundColor: '#0A0A0A',
-                  border: '1px solid #27272A',
+                  backgroundColor: theme.hoverBg,
+                  border: `1px solid ${theme.border}`,
                   borderRadius: '0.85rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.55rem',
-                  color: '#FFFFFF',
+                  color: theme.textPrimary,
                   fontSize: '13px',
                   fontWeight: 800,
                   letterSpacing: '-0.01em',
@@ -981,12 +977,12 @@ export default function AdminDashboardPage() {
                   transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#FFFFFF';
-                  e.currentTarget.style.backgroundColor = '#141416';
+                  e.currentTarget.style.borderColor = theme.borderHover;
+                  e.currentTarget.style.backgroundColor = theme.bgCardHover;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#27272A';
-                  e.currentTarget.style.backgroundColor = '#0A0A0A';
+                  e.currentTarget.style.borderColor = theme.border;
+                  e.currentTarget.style.backgroundColor = theme.hoverBg;
                 }}
               >
                 {/* Live Pulse Dot */}
@@ -1006,14 +1002,14 @@ export default function AdminDashboardPage() {
                 style={{
                   width: '40px',
                   height: '40px',
-                  backgroundColor: '#0A0A0A',
-                  border: '1px solid #27272A',
+                  backgroundColor: theme.hoverBg,
+                  border: `1px solid ${theme.border}`,
                   borderRadius: '0.75rem',
                   margin: '0 auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#FFFFFF',
+                  color: theme.textPrimary,
                   fontSize: '11px',
                   fontWeight: 800,
                   cursor: 'pointer',
@@ -1021,10 +1017,10 @@ export default function AdminDashboardPage() {
                   transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#FFFFFF';
+                  e.currentTarget.style.borderColor = theme.borderHover;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#27272A';
+                  e.currentTarget.style.borderColor = theme.border;
                 }}
               >
                 POS
@@ -1042,22 +1038,22 @@ export default function AdminDashboardPage() {
           </Link>
         </aside>
 
-        {/* Main Dashboard Content Area - TOTALLY BLACK */}
+        {/* Main Dashboard Content Area - Salt & Pepper */}
         <main style={{
           flex: 1,
           height: '100%',
           overflowY: 'auto',
           padding: 'clamp(1.5rem, 3vw, 2.5rem)',
-          backgroundColor: '#000000',
+          backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
           <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-            {/* Header Greeting in Pure White */}
+            {/* Header Greeting in Salt & Pepper */}
             <div style={{ marginBottom: '2rem' }}>
               <h1 style={{
                 fontSize: '25px',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 letterSpacing: '-0.04em',
                 marginBottom: '0.35rem',
               }}>
@@ -1066,7 +1062,7 @@ export default function AdminDashboardPage() {
               <p style={{
                 fontSize: '14.5px',
                 fontWeight: 500,
-                color: '#A1A1AA',
+                color: theme.textSecondary,
                 letterSpacing: '-0.01em',
                 margin: 0,
               }}>
@@ -1074,7 +1070,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
 
-            {/* 4 Metric KPI Cards Grid - Totally Black Cards, Pure White Text & Numbers */}
+            {/* 4 Metric KPI Cards Grid - Salt & Pepper (#F5F5F7, #D4D4D4, #2B2B2B) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -1084,8 +1080,8 @@ export default function AdminDashboardPage() {
               {/* Card 1: Sales */}
               <div
                 style={{
-                  backgroundColor: '#0A0A0A',
-                  border: `1px solid ${hoveredCard === 'sales' ? '#FFFFFF' : '#242424'}`,
+                  backgroundColor: theme.bgCard,
+                  border: `1px solid ${hoveredCard === 'sales' ? theme.borderHover : theme.borderCard}`,
                   borderRadius: '1.15rem',
                   padding: '1.4rem 1.5rem',
                   display: 'flex',
@@ -1101,15 +1097,15 @@ export default function AdminDashboardPage() {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#A1A1AA', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Sales
                   </span>
                   <span style={{
                     fontSize: '11.5px',
                     fontWeight: 800,
-                    backgroundColor: '#FFFFFF',
-                    color: '#000000',
-                    border: '1px solid #FFFFFF',
+                    backgroundColor: theme.badgeBg,
+                    color: theme.badgeText,
+                    border: `1px solid ${theme.badgeBorder}`,
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     letterSpacing: '0.02em',
@@ -1118,7 +1114,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.045em' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
                     ₹48,250
                   </span>
                 </div>
@@ -1127,8 +1123,8 @@ export default function AdminDashboardPage() {
               {/* Card 2: Orders */}
               <div
                 style={{
-                  backgroundColor: '#0A0A0A',
-                  border: `1px solid ${hoveredCard === 'orders' ? '#FFFFFF' : '#242424'}`,
+                  backgroundColor: theme.bgCard,
+                  border: `1px solid ${hoveredCard === 'orders' ? theme.borderHover : theme.borderCard}`,
                   borderRadius: '1.15rem',
                   padding: '1.4rem 1.5rem',
                   display: 'flex',
@@ -1144,15 +1140,15 @@ export default function AdminDashboardPage() {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#A1A1AA', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Orders
                   </span>
                   <span style={{
                     fontSize: '11.5px',
                     fontWeight: 800,
-                    backgroundColor: '#18181B',
-                    color: '#FFFFFF',
-                    border: '1px solid #2E2E32',
+                    backgroundColor: theme.secondaryBadgeBg,
+                    color: theme.secondaryBadgeText,
+                    border: `1px solid ${theme.secondaryBadgeBorder}`,
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     letterSpacing: '0.02em',
@@ -1161,7 +1157,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.045em' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
                     128
                   </span>
                 </div>
@@ -1170,8 +1166,8 @@ export default function AdminDashboardPage() {
               {/* Card 3: Products */}
               <div
                 style={{
-                  backgroundColor: '#0A0A0A',
-                  border: `1px solid ${hoveredCard === 'products' ? '#FFFFFF' : '#242424'}`,
+                  backgroundColor: theme.bgCard,
+                  border: `1px solid ${hoveredCard === 'products' ? theme.borderHover : theme.borderCard}`,
                   borderRadius: '1.15rem',
                   padding: '1.4rem 1.5rem',
                   display: 'flex',
@@ -1187,15 +1183,15 @@ export default function AdminDashboardPage() {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#A1A1AA', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Products
                   </span>
                   <span style={{
                     fontSize: '11.5px',
                     fontWeight: 800,
-                    backgroundColor: '#18181B',
-                    color: '#FFFFFF',
-                    border: '1px solid #2E2E32',
+                    backgroundColor: theme.secondaryBadgeBg,
+                    color: theme.secondaryBadgeText,
+                    border: `1px solid ${theme.secondaryBadgeBorder}`,
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     letterSpacing: '0.02em',
@@ -1204,7 +1200,7 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.045em' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
                     843
                   </span>
                 </div>
@@ -1213,8 +1209,8 @@ export default function AdminDashboardPage() {
               {/* Card 4: Staff */}
               <div
                 style={{
-                  backgroundColor: '#0A0A0A',
-                  border: `1px solid ${hoveredCard === 'staff' ? '#FFFFFF' : '#242424'}`,
+                  backgroundColor: theme.bgCard,
+                  border: `1px solid ${hoveredCard === 'staff' ? theme.borderHover : theme.borderCard}`,
                   borderRadius: '1.15rem',
                   padding: '1.4rem 1.5rem',
                   display: 'flex',
@@ -1230,15 +1226,15 @@ export default function AdminDashboardPage() {
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#A1A1AA', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Staff
                   </span>
                   <span style={{
                     fontSize: '11.5px',
                     fontWeight: 800,
-                    backgroundColor: '#18181B',
-                    color: '#FFFFFF',
-                    border: '1px solid #2E2E32',
+                    backgroundColor: theme.secondaryBadgeBg,
+                    color: theme.secondaryBadgeText,
+                    border: `1px solid ${theme.secondaryBadgeBorder}`,
                     padding: '2px 8px',
                     borderRadius: '9999px',
                     letterSpacing: '0.02em',
@@ -1247,14 +1243,14 @@ export default function AdminDashboardPage() {
                   </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.045em' }}>
+                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
                     12
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Sales Overview Section with Interactive High-Contrast Monochrome Bar Chart */}
+            {/* Sales Overview Section with Interactive Salt & Pepper Bar Chart */}
             <div style={{ marginBottom: '2.5rem' }}>
               <div style={{
                 display: 'flex',
@@ -1265,17 +1261,17 @@ export default function AdminDashboardPage() {
                 <h2 style={{
                   fontSize: '19px',
                   fontWeight: 800,
-                  color: '#FFFFFF',
+                  color: theme.textPrimary,
                   letterSpacing: '-0.03em',
                   margin: 0,
                 }}>
                   Sales Overview
                 </h2>
 
-                {/* Chart Filter Toggle (High-contrast B&W segmented pill) */}
+                {/* Chart Filter Toggle (Salt & Pepper Segmented Pill) */}
                 <div style={{
                   display: 'inline-flex',
-                  backgroundColor: '#0A0A0A',
+                  backgroundColor: theme.bgCard,
                   border: `1px solid ${theme.border}`,
                   borderRadius: '0.65rem',
                   padding: '3px',
@@ -1289,8 +1285,8 @@ export default function AdminDashboardPage() {
                       fontWeight: 700,
                       borderRadius: '0.5rem',
                       border: 'none',
-                      backgroundColor: chartTimeframe === 'weekly' ? '#FFFFFF' : 'transparent',
-                      color: chartTimeframe === 'weekly' ? '#000000' : '#A1A1AA',
+                      backgroundColor: chartTimeframe === 'weekly' ? theme.activeBg : 'transparent',
+                      color: chartTimeframe === 'weekly' ? theme.activeText : theme.textSecondary,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
@@ -1307,8 +1303,8 @@ export default function AdminDashboardPage() {
                       fontWeight: 700,
                       borderRadius: '0.5rem',
                       border: 'none',
-                      backgroundColor: chartTimeframe === 'monthly' ? '#FFFFFF' : 'transparent',
-                      color: chartTimeframe === 'monthly' ? '#000000' : '#A1A1AA',
+                      backgroundColor: chartTimeframe === 'monthly' ? theme.activeBg : 'transparent',
+                      color: chartTimeframe === 'monthly' ? theme.activeText : theme.textSecondary,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
@@ -1319,10 +1315,10 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Bar Chart Container Card - Totally Black Card, Crisp Hairline Border */}
+              {/* Bar Chart Container Card - Salt & Pepper Card */}
               <div style={{
-                backgroundColor: '#0A0A0A',
-                border: '1px solid #242424',
+                backgroundColor: theme.bgCard,
+                border: `1px solid ${theme.borderCard}`,
                 borderRadius: '1.25rem',
                 padding: '1.75rem',
                 boxSizing: 'border-box',
@@ -1336,10 +1332,10 @@ export default function AdminDashboardPage() {
                   marginBottom: '1.75rem',
                 }}>
                   <div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#A1A1AA' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textSecondary }}>
                       {chartTimeframe === 'weekly' ? 'Total Weekly Revenue' : 'Total Monthly Revenue'}
                     </span>
-                    <div style={{ fontSize: '28px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.04em', marginTop: '0.2rem' }}>
+                    <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>
                       {chartTimeframe === 'weekly' ? '₹3,48,250' : '₹38,00,000'}
                     </div>
                   </div>
@@ -1349,25 +1345,25 @@ export default function AdminDashboardPage() {
                     gap: '0.45rem',
                     fontSize: '12.5px',
                     fontWeight: 800,
-                    backgroundColor: '#18181B',
-                    border: '1px solid #2E2E32',
-                    color: '#FFFFFF',
+                    backgroundColor: '#FFFFFF',
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
                     padding: '4px 11px',
                     borderRadius: '9999px',
                   }}>
-                    <TrendingUpRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                    <TrendingUpRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                     <span>+14.8% vs last {chartTimeframe === 'weekly' ? 'week' : 'month'}</span>
                   </div>
                 </div>
 
-                {/* SVG & HTML Interactive Monochrome Bar Chart */}
+                {/* SVG & HTML Interactive Salt & Pepper Bar Chart */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'flex-end',
                   justifyContent: 'space-between',
                   height: '190px',
                   gap: 'clamp(0.75rem, 2vw, 1.75rem)',
-                  borderBottom: '1px solid #222222',
+                  borderBottom: `1px solid ${theme.border}`,
                   paddingBottom: '10px',
                   position: 'relative',
                 }}>
@@ -1396,8 +1392,8 @@ export default function AdminDashboardPage() {
                           <div style={{
                             position: 'absolute',
                             bottom: `${Math.min(barHeightPct + 10, 88)}%`,
-                            backgroundColor: '#FFFFFF',
-                            color: '#000000',
+                            backgroundColor: theme.activeBg,
+                            color: theme.activeText,
                             padding: '5px 10px',
                             borderRadius: '0.5rem',
                             fontSize: '11.5px',
@@ -1405,7 +1401,7 @@ export default function AdminDashboardPage() {
                             whiteSpace: 'nowrap',
                             zIndex: 10,
                             pointerEvents: 'none',
-                            boxShadow: '0 4px 16px rgba(255,255,255,0.2)',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
@@ -1416,23 +1412,23 @@ export default function AdminDashboardPage() {
                           </div>
                         )}
 
-                        {/* Bar Pillar */}
+                        {/* Bar Pillar (#B3B3B3 default, #2B2B2B active/hovered) */}
                         <div style={{
                           width: '100%',
                           maxWidth: '44px',
                           height: `${barHeightPct}%`,
-                          backgroundColor: isHighlighted ? '#FFFFFF' : '#262626',
+                          backgroundColor: isHighlighted ? theme.barActive : theme.barDefault,
                           borderRadius: '6px 6px 0 0',
                           transition: 'height 0.3s ease, background-color 0.2s ease',
                           cursor: 'pointer',
                         }} />
 
-                        {/* Day Label in Pure White */}
+                        {/* Day Label */}
                         <span style={{
                           marginTop: '10px',
                           fontSize: '12.5px',
                           fontWeight: item.isToday ? 800 : 600,
-                          color: '#FFFFFF',
+                          color: item.isToday ? theme.textPrimary : theme.textSecondary,
                         }}>
                           {item.day}
                         </span>
@@ -1443,7 +1439,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Recent Orders Section - Totally Black Table Container */}
+            {/* Recent Orders Section - Salt & Pepper Table Container */}
             <div>
               <div style={{
                 display: 'flex',
@@ -1454,7 +1450,7 @@ export default function AdminDashboardPage() {
                 <h2 style={{
                   fontSize: '19px',
                   fontWeight: 800,
-                  color: '#FFFFFF',
+                  color: theme.textPrimary,
                   letterSpacing: '-0.03em',
                   margin: 0,
                 }}>
@@ -1469,7 +1465,7 @@ export default function AdminDashboardPage() {
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -1485,8 +1481,8 @@ export default function AdminDashboardPage() {
 
               {/* Table Container Card */}
               <div style={{
-                backgroundColor: '#0A0A0A',
-                border: '1px solid #242424',
+                backgroundColor: theme.bgCard,
+                border: `1px solid ${theme.borderCard}`,
                 borderRadius: '1.25rem',
                 padding: '0.5rem',
                 boxSizing: 'border-box',
@@ -1501,25 +1497,25 @@ export default function AdminDashboardPage() {
                   <thead>
                     <tr style={{
                       borderBottom: `1px solid ${theme.border}`,
-                      backgroundColor: theme.tableHeaderBg,
+                      backgroundColor: '#EBEBED',
                       borderRadius: '0.75rem',
                     }}>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Order ID
                       </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Customer
                       </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Items
                       </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Amount
                       </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Status
                       </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#A1A1AA', fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         Time
                       </th>
                     </tr>
@@ -1535,16 +1531,16 @@ export default function AdminDashboardPage() {
                         onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
                         onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#FFFFFF', fontFamily: 'monospace, inherit' }}>
+                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace, inherit' }}>
                           {order.id}
                         </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 600, color: '#FFFFFF' }}>
+                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 600, color: theme.textPrimary }}>
                           {order.customer}
                         </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 500, color: '#A1A1AA' }}>
+                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 500, color: theme.textSecondary }}>
                           {order.items} items
                         </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: '#FFFFFF' }}>
+                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary }}>
                           {order.amount}
                         </td>
                         <td style={{ padding: '0.9rem 1.25rem' }}>
@@ -1552,8 +1548,8 @@ export default function AdminDashboardPage() {
                             display: 'inline-block',
                             padding: '3px 10px',
                             borderRadius: '9999px',
-                            backgroundColor: '#FFFFFF',
-                            color: '#000000',
+                            backgroundColor: theme.badgeBg,
+                            color: theme.badgeText,
                             fontSize: '11px',
                             fontWeight: 800,
                             letterSpacing: '0.04em',
@@ -1561,7 +1557,7 @@ export default function AdminDashboardPage() {
                             {order.status}
                           </span>
                         </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontSize: '13px', color: '#A1A1AA' }}>
+                        <td style={{ padding: '0.9rem 1.25rem', fontSize: '13px', color: theme.textSecondary }}>
                           {order.time}
                         </td>
                       </tr>

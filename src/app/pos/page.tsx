@@ -308,24 +308,52 @@ export default function PosMainScreen() {
     }, 1600);
   };
 
+  // Salt and Pepper Theme Colors (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B)
+  const theme = {
+    bgPage: '#FFFFFF',
+    bgCard: '#FFFFFF',
+    bgCardSubtle: '#F5F5F7',
+    bgHeader: '#FFFFFF',
+    bgSidebar: '#FFFFFF',
+    border: '#D4D4D4',
+    borderCard: '#D4D4D4',
+    borderHover: '#2B2B2B',
+    textPrimary: '#2B2B2B',
+    textSecondary: '#71717A',
+    textMuted: '#B3B3B3',
+    hoverBg: '#F0F0F0',
+    activeBg: '#2B2B2B',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#2B2B2B',
+    badgeText: '#FFFFFF',
+    secondaryBadgeBg: '#D4D4D4',
+    secondaryBadgeText: '#2B2B2B',
+    posBtnBg: '#2B2B2B',
+    posBtnText: '#FFFFFF',
+    posBtnShadow: '#D4D4D4',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#D4D4D4',
+  };
+
   return (
     <div style={{
       height: '100vh',
       maxHeight: '100vh',
       width: '100vw',
       overflow: 'hidden',
-      backgroundColor: '#000000',
-      color: '#FFFFFF',
+      backgroundColor: theme.bgPage,
+      color: theme.textPrimary,
       display: 'flex',
       flexDirection: 'column',
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* 1. TOP HEADER BAR */}
+      {/* 1. TOP HEADER BAR - Salt & Pepper */}
       <header style={{
         height: '62px',
-        backgroundColor: '#000000',
-        borderBottom: '1px solid #1F1F1F',
+        backgroundColor: theme.bgHeader,
+        borderBottom: `1px solid ${theme.border}`,
         padding: '0 1.5rem',
         display: 'flex',
         alignItems: 'center',
@@ -346,28 +374,28 @@ export default function PosMainScreen() {
               height: '36px',
               borderRadius: '0.55rem',
               backgroundColor: 'transparent',
-              border: '1px solid #27272A',
+              border: `1px solid ${theme.border}`,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
+              color: theme.textPrimary,
               transition: 'all 0.15s ease',
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#18181B';
-              e.currentTarget.style.borderColor = '#FFFFFF';
+              e.currentTarget.style.backgroundColor = theme.hoverBg;
+              e.currentTarget.style.borderColor = theme.borderHover;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = '#27272A';
+              e.currentTarget.style.borderColor = theme.border;
             }}
           >
             {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: '#FFFFFF' }} />
+              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
             ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: '#FFFFFF' }} />
+              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
             )}
           </button>
 
@@ -389,15 +417,13 @@ export default function PosMainScreen() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#FFFFFF',
-              padding: '2px',
               flexShrink: 0,
             }}>
               <Image
                 src="/logo.png"
                 alt="Nuradesk Logo"
-                width={30}
-                height={30}
+                width={34}
+                height={34}
                 priority
                 style={{ objectFit: 'contain' }}
               />
@@ -406,46 +432,46 @@ export default function PosMainScreen() {
               fontSize: '21px',
               fontWeight: 800,
               letterSpacing: '-0.04em',
-              color: '#FFFFFF',
+              color: theme.textPrimary,
             }}>
               Nuradesk
             </span>
           </Link>
 
-          {/* Store Logo Pill Badge (as in wireframe) */}
+          {/* Store Logo Pill Badge */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            backgroundColor: '#111113',
-            border: '1px solid #27272A',
+            backgroundColor: theme.bgCardSubtle,
+            border: `1px solid ${theme.border}`,
             borderRadius: '9999px',
             padding: '4px 12px',
             marginLeft: '0.25rem',
           }}>
-            <StoreRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
+            <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
+            <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.01em' }}>
               SP CAFE
             </span>
-            <span style={{ fontSize: '11px', color: '#71717A' }}>•</span>
-            <span style={{ fontSize: '11.5px', color: '#A1A1AA' }}>Ahmedabad</span>
+            <span style={{ fontSize: '11px', color: theme.border }}>•</span>
+            <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>Ahmedabad</span>
           </div>
         </div>
 
-        {/* Center: Live Time Digital Clock (as in wireframe) */}
+        {/* Center: Live Time Digital Clock */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          backgroundColor: '#0A0A0A',
-          border: '1px solid #242424',
+          backgroundColor: theme.bgCardSubtle,
+          border: `1px solid ${theme.border}`,
           borderRadius: '0.65rem',
           padding: '5px 14px',
         }}>
           <span style={{
             fontSize: '13px',
             fontWeight: 700,
-            color: '#FFFFFF',
+            color: theme.textPrimary,
             letterSpacing: '0.02em',
             fontVariantNumeric: 'tabular-nums',
           }}>
@@ -490,17 +516,23 @@ export default function PosMainScreen() {
                 cursor: 'pointer',
                 padding: '4px 10px',
                 borderRadius: '0.65rem',
-                border: `1px solid ${showProfileMenu ? '#FFFFFF' : '#27272A'}`,
-                backgroundColor: '#0A0A0A',
+                border: `1px solid ${showProfileMenu ? theme.borderHover : theme.border}`,
+                backgroundColor: theme.hoverBg,
                 transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = theme.borderHover;
+              }}
+              onMouseLeave={(e) => {
+                if (!showProfileMenu) e.currentTarget.style.borderColor = theme.border;
               }}
             >
               <div style={{
                 width: '24px',
                 height: '24px',
                 borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
-                color: '#000000',
+                backgroundColor: theme.badgeBg,
+                color: theme.badgeText,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -512,12 +544,12 @@ export default function PosMainScreen() {
               <span style={{
                 fontSize: '13.5px',
                 fontWeight: 700,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 letterSpacing: '-0.01em',
               }}>
                 Amit Patel
               </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
             </div>
 
             {/* Profile Dropdown */}
@@ -527,16 +559,16 @@ export default function PosMainScreen() {
                 top: '44px',
                 right: 0,
                 width: '220px',
-                backgroundColor: '#0A0A0A',
-                border: '1px solid #2A2A2A',
+                backgroundColor: theme.popoverBg,
+                border: `1px solid ${theme.popoverBorder}`,
                 borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
                 padding: '0.65rem',
                 zIndex: 50,
               }}>
-                <div style={{ padding: '0.4rem 0.55rem', borderBottom: '1px solid #1F1F1F', marginBottom: '0.45rem' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>Amit Patel</div>
-                  <div style={{ fontSize: '11px', color: '#A1A1AA' }}>Cashier #01 • Shift Active</div>
+                <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Amit Patel</div>
+                  <div style={{ fontSize: '11px', color: theme.textSecondary }}>Cashier #01 • Shift Active</div>
                 </div>
                 <Link
                   href="/manager"
@@ -547,14 +579,14 @@ export default function PosMainScreen() {
                     padding: '0.45rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     textDecoration: 'none',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#18181B'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>Manager Dashboard</span>
                 </Link>
                 <Link
@@ -566,14 +598,14 @@ export default function PosMainScreen() {
                     padding: '0.45rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     textDecoration: 'none',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#18181B'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <GridViewRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <GridViewRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>Admin Dashboard</span>
                 </Link>
                 <button
@@ -590,17 +622,17 @@ export default function PosMainScreen() {
                     padding: '0.45rem 0.55rem',
                     fontSize: '12.5px',
                     fontWeight: 600,
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     borderRadius: '0.45rem',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#18181B'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <ScheduleRoundedIcon sx={{ fontSize: 16, color: '#FFFFFF' }} />
+                  <ScheduleRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
                   <span>End Shift</span>
                 </button>
               </div>
@@ -620,8 +652,8 @@ export default function PosMainScreen() {
         <aside style={{
           width: isSidebarOpen ? '200px' : '68px',
           minWidth: isSidebarOpen ? '200px' : '68px',
-          backgroundColor: '#000000',
-          borderRight: '1px solid #1F1F1F',
+          backgroundColor: theme.bgSidebar,
+          borderRight: `1px solid ${theme.border}`,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -646,9 +678,9 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                 padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
                 borderRadius: '0.65rem',
-                border: activeNav === 'new_sale' ? '1px solid #FFFFFF' : '1px solid transparent',
-                backgroundColor: activeNav === 'new_sale' ? '#FFFFFF' : 'transparent',
-                color: activeNav === 'new_sale' ? '#000000' : '#FFFFFF',
+                border: activeNav === 'new_sale' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                backgroundColor: activeNav === 'new_sale' ? theme.activeBg : 'transparent',
+                color: activeNav === 'new_sale' ? theme.activeText : theme.textPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'new_sale' ? 800 : 600,
                 cursor: 'pointer',
@@ -656,7 +688,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = '#18181B';
+                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = 'transparent';
@@ -680,9 +712,9 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'space-between' : 'center',
                 padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
                 borderRadius: '0.65rem',
-                border: activeNav === 'held_sales' ? '1px solid #FFFFFF' : '1px solid transparent',
-                backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : 'transparent',
-                color: activeNav === 'held_sales' ? '#000000' : '#FFFFFF',
+                border: activeNav === 'held_sales' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                backgroundColor: activeNav === 'held_sales' ? theme.activeBg : 'transparent',
+                color: activeNav === 'held_sales' ? theme.activeText : theme.textPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'held_sales' ? 800 : 600,
                 cursor: 'pointer',
@@ -691,7 +723,7 @@ export default function PosMainScreen() {
                 position: 'relative',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = '#18181B';
+                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = 'transparent';
@@ -710,7 +742,7 @@ export default function PosMainScreen() {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: activeNav === 'held_sales' ? '#000000' : '#FFFFFF',
+                    backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : theme.textPrimary,
                   }} />
                 )}
               </div>
@@ -718,8 +750,8 @@ export default function PosMainScreen() {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  backgroundColor: activeNav === 'held_sales' ? '#000000' : '#27272A',
-                  color: activeNav === 'held_sales' ? '#FFFFFF' : '#FFFFFF',
+                  backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : theme.secondaryBadgeBg,
+                  color: activeNav === 'held_sales' ? theme.textPrimary : theme.textPrimary,
                   padding: '1px 6px',
                   borderRadius: '9999px',
                 }}>
@@ -740,9 +772,9 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                 padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
                 borderRadius: '0.65rem',
-                border: activeNav === 'invoices' ? '1px solid #FFFFFF' : '1px solid transparent',
-                backgroundColor: activeNav === 'invoices' ? '#FFFFFF' : 'transparent',
-                color: activeNav === 'invoices' ? '#000000' : '#FFFFFF',
+                border: activeNav === 'invoices' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                backgroundColor: activeNav === 'invoices' ? theme.activeBg : 'transparent',
+                color: activeNav === 'invoices' ? theme.activeText : theme.textPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'invoices' ? 800 : 600,
                 cursor: 'pointer',
@@ -750,7 +782,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = '#18181B';
+                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = 'transparent';
@@ -774,9 +806,9 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                 padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
                 borderRadius: '0.65rem',
-                border: activeNav === 'customers' ? '1px solid #FFFFFF' : '1px solid transparent',
-                backgroundColor: activeNav === 'customers' ? '#FFFFFF' : 'transparent',
-                color: activeNav === 'customers' ? '#000000' : '#FFFFFF',
+                border: activeNav === 'customers' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
+                backgroundColor: activeNav === 'customers' ? theme.activeBg : 'transparent',
+                color: activeNav === 'customers' ? theme.activeText : theme.textPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'customers' ? 800 : 600,
                 cursor: 'pointer',
@@ -784,7 +816,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = '#18181B';
+                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = 'transparent';
@@ -797,8 +829,8 @@ export default function PosMainScreen() {
             </button>
           </nav>
 
-          {/* Bottom Nav Items: End shift & Logout (as in wireframe) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid #1F1F1F', paddingTop: '1rem' }}>
+          {/* Bottom Nav Items: End shift & Logout */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: `1px solid ${theme.border}`, paddingTop: '1rem' }}>
             <button
               type="button"
               onClick={() => setShowEndShiftModal(true)}
@@ -812,7 +844,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: 'none',
                 backgroundColor: 'transparent',
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -820,10 +852,10 @@ export default function PosMainScreen() {
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#18181B'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
-              <ScheduleRoundedIcon sx={{ fontSize: 18, color: '#FFFFFF', flexShrink: 0 }} />
+              <ScheduleRoundedIcon sx={{ fontSize: 18, color: theme.textPrimary, flexShrink: 0 }} />
               {isSidebarOpen && (
                 <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>End shift</span>
               )}
@@ -839,7 +871,7 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                 padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
                 borderRadius: '0.65rem',
-                color: '#A1A1AA',
+                color: theme.textSecondary,
                 fontSize: '14px',
                 fontWeight: 600,
                 textDecoration: 'none',
@@ -847,12 +879,12 @@ export default function PosMainScreen() {
                 boxSizing: 'border-box',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#18181B';
-                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.backgroundColor = theme.hoverBg;
+                e.currentTarget.style.color = theme.textPrimary;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#A1A1AA';
+                e.currentTarget.style.color = theme.textSecondary;
               }}
             >
               <LogoutRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
@@ -870,7 +902,7 @@ export default function PosMainScreen() {
           height: '100%',
           overflowY: 'auto',
           padding: '1.25rem 1.5rem',
-          backgroundColor: '#000000',
+          backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -886,8 +918,8 @@ export default function PosMainScreen() {
             <div style={{
               flex: 1,
               height: '46px',
-              backgroundColor: '#0A0A0A',
-              border: '1px solid #27272A',
+              backgroundColor: theme.bgCardSubtle,
+              border: `1px solid ${theme.border}`,
               borderRadius: '9999px',
               display: 'flex',
               alignItems: 'center',
@@ -895,7 +927,7 @@ export default function PosMainScreen() {
               gap: '0.65rem',
               transition: 'border-color 0.15s ease',
             }}>
-              <SearchRoundedIcon sx={{ fontSize: 20, color: '#A1A1AA' }} />
+              <SearchRoundedIcon sx={{ fontSize: 20, color: theme.textMuted }} />
               <input
                 type="text"
                 value={searchQuery}
@@ -906,7 +938,7 @@ export default function PosMainScreen() {
                   background: 'none',
                   border: 'none',
                   outline: 'none',
-                  color: '#FFFFFF',
+                  color: theme.textPrimary,
                   fontSize: '14px',
                   fontFamily: 'inherit',
                 }}
@@ -915,7 +947,7 @@ export default function PosMainScreen() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  style={{ background: 'none', border: 'none', color: '#A1A1AA', cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: theme.textMuted, cursor: 'pointer' }}
                 >
                   <CloseRoundedIcon sx={{ fontSize: 16 }} />
                 </button>
@@ -931,23 +963,23 @@ export default function PosMainScreen() {
                 width: '46px',
                 height: '46px',
                 borderRadius: '9999px',
-                backgroundColor: '#0A0A0A',
-                border: '1px solid #27272A',
+                backgroundColor: theme.bgCardSubtle,
+                border: `1px solid ${theme.border}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#FFFFFF';
-                e.currentTarget.style.backgroundColor = '#18181B';
+                e.currentTarget.style.borderColor = theme.borderHover;
+                e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#27272A';
-                e.currentTarget.style.backgroundColor = '#0A0A0A';
+                e.currentTarget.style.borderColor = theme.border;
+                e.currentTarget.style.backgroundColor = theme.bgCardSubtle;
               }}
             >
               <QrCodeScannerRoundedIcon sx={{ fontSize: 20 }} />
@@ -981,9 +1013,9 @@ export default function PosMainScreen() {
                     height: '36px',
                     padding: '0 1.25rem',
                     borderRadius: '9999px',
-                    border: isSelected ? '1px solid #FFFFFF' : '1px solid #27272A',
-                    backgroundColor: isSelected ? '#FFFFFF' : '#0A0A0A',
-                    color: isSelected ? '#000000' : '#FFFFFF',
+                    border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                    backgroundColor: isSelected ? theme.activeBg : theme.bgCard,
+                    color: isSelected ? theme.activeText : theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: isSelected ? 800 : 600,
                     cursor: 'pointer',
@@ -999,14 +1031,14 @@ export default function PosMainScreen() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.borderColor = '#FFFFFF';
-                      e.currentTarget.style.backgroundColor = '#18181B';
+                      e.currentTarget.style.borderColor = theme.borderHover;
+                      e.currentTarget.style.backgroundColor = theme.hoverBg;
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.borderColor = '#27272A';
-                      e.currentTarget.style.backgroundColor = '#0A0A0A';
+                      e.currentTarget.style.borderColor = theme.border;
+                      e.currentTarget.style.backgroundColor = theme.bgCard;
                     }
                   }}
                 >
@@ -1035,8 +1067,8 @@ export default function PosMainScreen() {
                     role="button"
                     tabIndex={0}
                     style={{
-                      backgroundColor: '#0A0A0A',
-                      border: countInCart > 0 ? '1px solid #FFFFFF' : '1px solid #242424',
+                      backgroundColor: theme.bgCard,
+                      border: countInCart > 0 ? `2px solid ${theme.activeBg}` : `1px solid ${theme.borderCard}`,
                       borderRadius: '1rem',
                       overflow: 'hidden',
                       cursor: 'pointer',
@@ -1044,13 +1076,14 @@ export default function PosMainScreen() {
                       flexDirection: 'column',
                       transition: 'all 0.15s ease',
                       position: 'relative',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#FFFFFF';
+                      e.currentTarget.style.borderColor = theme.borderHover;
                       e.currentTarget.style.transform = 'translateY(-2px)';
                     }}
                     onMouseLeave={(e) => {
-                      if (countInCart === 0) e.currentTarget.style.borderColor = '#242424';
+                      if (countInCart === 0) e.currentTarget.style.borderColor = theme.borderCard;
                       e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
@@ -1059,7 +1092,7 @@ export default function PosMainScreen() {
                       position: 'relative',
                       width: '100%',
                       height: '135px',
-                      backgroundColor: '#121214',
+                      backgroundColor: theme.bgCardSubtle,
                     }}>
                       <Image
                         src={p.image}
@@ -1074,9 +1107,9 @@ export default function PosMainScreen() {
                           position: 'absolute',
                           top: '8px',
                           right: '8px',
-                          backgroundColor: '#000000',
-                          color: '#FFFFFF',
-                          border: '1px solid #FFFFFF',
+                          backgroundColor: theme.badgeBg,
+                          color: theme.badgeText,
+                          border: `1px solid ${theme.border}`,
                           borderRadius: '9999px',
                           padding: '2px 8px',
                           fontSize: '11.5px',
@@ -1090,8 +1123,8 @@ export default function PosMainScreen() {
                           position: 'absolute',
                           bottom: '8px',
                           left: '8px',
-                          backgroundColor: '#FFFFFF',
-                          color: '#000000',
+                          backgroundColor: theme.activeBg,
+                          color: theme.activeText,
                           borderRadius: '9999px',
                           padding: '2px 7px',
                           fontSize: '10px',
@@ -1103,15 +1136,15 @@ export default function PosMainScreen() {
                       )}
                     </div>
 
-                    {/* Product Details (as in wireframe: Title / Variant / Price) */}
+                    {/* Product Details */}
                     <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <span style={{ fontSize: '14.5px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.015em' }}>
+                      <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em' }}>
                         {p.name}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#A1A1AA' }}>
+                      <span style={{ fontSize: '12px', color: theme.textSecondary }}>
                         {p.variant}
                       </span>
-                      <span style={{ fontSize: '16px', fontWeight: 800, color: '#FFFFFF', marginTop: '0.35rem' }}>
+                      <span style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, marginTop: '0.35rem' }}>
                         ₹{p.price}
                       </span>
                     </div>
@@ -1123,7 +1156,7 @@ export default function PosMainScreen() {
             /* Held Sales List View */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
                   Held Sales ({heldSales.length})
                 </h3>
                 <button
@@ -1133,11 +1166,11 @@ export default function PosMainScreen() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    background: 'none',
-                    border: '1px solid #27272A',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: '0.55rem',
                     padding: '0.4rem 0.85rem',
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     fontSize: '12.5px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1149,7 +1182,14 @@ export default function PosMainScreen() {
               </div>
 
               {heldSales.length === 0 ? (
-                <div style={{ padding: '3rem', textAlign: 'center', color: '#A1A1AA', backgroundColor: '#0A0A0A', borderRadius: '1rem', border: '1px solid #242424' }}>
+                <div style={{
+                  padding: '3rem',
+                  textAlign: 'center',
+                  color: theme.textMuted,
+                  backgroundColor: theme.bgCardSubtle,
+                  borderRadius: '1rem',
+                  border: `1px solid ${theme.border}`,
+                }}>
                   No sales currently on hold.
                 </div>
               ) : (
@@ -1158,8 +1198,8 @@ export default function PosMainScreen() {
                     key={h.id}
                     style={{
                       padding: '1.1rem 1.25rem',
-                      backgroundColor: '#0A0A0A',
-                      border: '1px solid #242424',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
                       borderRadius: '0.85rem',
                       display: 'flex',
                       alignItems: 'center',
@@ -1167,10 +1207,10 @@ export default function PosMainScreen() {
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>
                         {h.id} • {h.items.length} items
                       </div>
-                      <div style={{ fontSize: '12px', color: '#A1A1AA', marginTop: '0.2rem' }}>
+                      <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '0.2rem' }}>
                         Held {h.time} • Total: ₹{h.total}
                       </div>
                     </div>
@@ -1182,10 +1222,11 @@ export default function PosMainScreen() {
                         padding: '0.5rem 1.1rem',
                         fontSize: '13px',
                         fontWeight: 700,
-                        backgroundColor: '#FFFFFF',
-                        color: '#000000',
+                        backgroundColor: theme.activeBg,
+                        color: theme.activeText,
                         borderRadius: '0.65rem',
                         cursor: 'pointer',
+                        boxShadow: `0 3px 0 #18181B`,
                       }}
                     >
                       Resume Sale
@@ -1198,7 +1239,7 @@ export default function PosMainScreen() {
             /* Invoices / Customers View */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
                   {activeNav === 'invoices' ? 'Recent Invoices' : 'Store Customer Directory'}
                 </h3>
                 <button
@@ -1208,11 +1249,11 @@ export default function PosMainScreen() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.35rem',
-                    background: 'none',
-                    border: '1px solid #27272A',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: '0.55rem',
                     padding: '0.4rem 0.85rem',
-                    color: '#FFFFFF',
+                    color: theme.textPrimary,
                     fontSize: '12.5px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1222,8 +1263,8 @@ export default function PosMainScreen() {
                   <span>Back to Sale</span>
                 </button>
               </div>
-              <div style={{ backgroundColor: '#0A0A0A', border: '1px solid #242424', borderRadius: '1rem', padding: '1.25rem' }}>
-                <p style={{ color: '#A1A1AA', fontSize: '13.5px', margin: 0 }}>
+              <div style={{ backgroundColor: theme.bgCardSubtle, border: `1px solid ${theme.border}`, borderRadius: '1rem', padding: '1.25rem' }}>
+                <p style={{ color: theme.textSecondary, fontSize: '13.5px', margin: 0 }}>
                   {activeNav === 'invoices'
                     ? 'Showing all paid invoices for SP CAFE Ahmedabad shift today.'
                     : 'Customer database with loyalty points and contact information.'}
@@ -1236,18 +1277,18 @@ export default function PosMainScreen() {
         {/* RIGHT COLUMN: CURRENT SALE TICKET / CHECKOUT */}
         <aside style={{
           width: '360px',
-          backgroundColor: '#070708',
-          borderLeft: '1px solid #1F1F1F',
+          backgroundColor: theme.bgCard,
+          borderLeft: `1px solid ${theme.border}`,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           flexShrink: 0,
           boxSizing: 'border-box',
         }}>
-          {/* Ticket Header (Current Sale title as in wireframe) */}
+          {/* Ticket Header */}
           <div style={{
             padding: '1.1rem 1.25rem',
-            borderBottom: '1px solid #1F1F1F',
+            borderBottom: `1px solid ${theme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -1256,7 +1297,7 @@ export default function PosMainScreen() {
               <h2 style={{
                 fontSize: '17px',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 letterSpacing: '-0.02em',
                 margin: 0,
               }}>
@@ -1265,8 +1306,9 @@ export default function PosMainScreen() {
               <span style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                backgroundColor: '#1C1C1E',
-                color: '#A1A1AA',
+                backgroundColor: theme.bgCardSubtle,
+                border: `1px solid ${theme.border}`,
+                color: theme.textSecondary,
                 padding: '2px 7px',
                 borderRadius: '9999px',
               }}>
@@ -1282,15 +1324,15 @@ export default function PosMainScreen() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#A1A1AA',
+                  color: theme.textMuted,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   padding: '4px',
                   borderRadius: '0.45rem',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#A1A1AA'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
               >
                 <DeleteOutlineRoundedIcon sx={{ fontSize: 19 }} />
               </button>
@@ -1300,15 +1342,15 @@ export default function PosMainScreen() {
           {/* Customer Quick Selector */}
           <div style={{
             padding: '0.65rem 1.25rem',
-            backgroundColor: '#0C0C0E',
-            borderBottom: '1px solid #1F1F1F',
+            backgroundColor: theme.bgCardSubtle,
+            borderBottom: `1px solid ${theme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: '12px', color: '#A1A1AA' }}>Customer:</span>
+            <span style={{ fontSize: '12px', color: theme.textSecondary }}>Customer:</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#FFFFFF' }}>{customerName}</span>
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>{customerName}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -1318,7 +1360,7 @@ export default function PosMainScreen() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#A1A1AA',
+                  color: theme.textSecondary,
                   cursor: 'pointer',
                   fontSize: '11px',
                   textDecoration: 'underline',
@@ -1346,12 +1388,12 @@ export default function PosMainScreen() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                color: '#71717A',
+                color: theme.textMuted,
                 gap: '0.5rem',
               }}>
-                <ReceiptLongRoundedIcon sx={{ fontSize: 36, color: '#27272A' }} />
-                <span style={{ fontSize: '13.5px', fontWeight: 600 }}>Ticket is empty</span>
-                <span style={{ fontSize: '12px', maxWidth: '200px' }}>Tap any product from the catalog to add items.</span>
+                <ReceiptLongRoundedIcon sx={{ fontSize: 36, color: theme.border }} />
+                <span style={{ fontSize: '13.5px', fontWeight: 600, color: theme.textSecondary }}>Ticket is empty</span>
+                <span style={{ fontSize: '12px', maxWidth: '200px', color: theme.textMuted }}>Tap any product from the catalog to add items.</span>
               </div>
             ) : (
               cart.map((item) => (
@@ -1362,16 +1404,16 @@ export default function PosMainScreen() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '0.65rem 0.75rem',
-                    backgroundColor: '#0F0F12',
+                    backgroundColor: theme.bgCardSubtle,
                     borderRadius: '0.65rem',
-                    border: '1px solid #1F1F24',
+                    border: `1px solid ${theme.border}`,
                   }}
                 >
                   <div style={{ minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.product.name}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#A1A1AA', marginTop: '1px' }}>
+                    <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
                       ₹{item.product.price} each
                     </div>
                   </div>
@@ -1381,9 +1423,9 @@ export default function PosMainScreen() {
                     <div style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      backgroundColor: '#18181B',
+                      backgroundColor: theme.bgCard,
                       borderRadius: '0.45rem',
-                      border: '1px solid #27272A',
+                      border: `1px solid ${theme.border}`,
                       padding: '2px',
                     }}>
                       <button
@@ -1397,7 +1439,7 @@ export default function PosMainScreen() {
                           justifyContent: 'center',
                           background: 'none',
                           border: 'none',
-                          color: '#FFFFFF',
+                          color: theme.textPrimary,
                           cursor: 'pointer',
                         }}
                       >
@@ -1408,7 +1450,7 @@ export default function PosMainScreen() {
                         textAlign: 'center',
                         fontSize: '12px',
                         fontWeight: 800,
-                        color: '#FFFFFF',
+                        color: theme.textPrimary,
                       }}>
                         {item.quantity}
                       </span>
@@ -1423,7 +1465,7 @@ export default function PosMainScreen() {
                           justifyContent: 'center',
                           background: 'none',
                           border: 'none',
-                          color: '#FFFFFF',
+                          color: theme.textPrimary,
                           cursor: 'pointer',
                         }}
                       >
@@ -1431,7 +1473,7 @@ export default function PosMainScreen() {
                       </button>
                     </div>
 
-                    <div style={{ width: '60px', textAlign: 'right', fontSize: '14px', fontWeight: 800, color: '#FFFFFF' }}>
+                    <div style={{ width: '60px', textAlign: 'right', fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>
                       ₹{item.product.price * item.quantity}
                     </div>
                   </div>
@@ -1443,17 +1485,17 @@ export default function PosMainScreen() {
           {/* Ticket Summary & Checkout Footer */}
           <div style={{
             padding: '1.1rem 1.25rem',
-            backgroundColor: '#09090B',
-            borderTop: '1px solid #1F1F1F',
+            backgroundColor: theme.bgCard,
+            borderTop: `1px solid ${theme.border}`,
             display: 'flex',
             flexDirection: 'column',
             gap: '0.85rem',
           }}>
             {/* Subtotal, Tax, Discount */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: '#A1A1AA' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: theme.textSecondary }}>
                 <span>Subtotal</span>
-                <span style={{ color: '#FFFFFF', fontWeight: 600 }}>₹{subtotal}</span>
+                <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{subtotal}</span>
               </div>
               {discountPct > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: '#22C55E' }}>
@@ -1461,18 +1503,18 @@ export default function PosMainScreen() {
                   <span>-₹{discountAmount}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: '#A1A1AA' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: theme.textSecondary }}>
                 <span>Tax (GST 5%)</span>
-                <span style={{ color: '#FFFFFF', fontWeight: 600 }}>₹{tax}</span>
+                <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{tax}</span>
               </div>
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontSize: '18px',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 paddingTop: '0.45rem',
-                borderTop: '1px solid #1F1F1F',
+                borderTop: `1px solid ${theme.border}`,
                 marginTop: '0.2rem',
               }}>
                 <span>Total Amount</span>
@@ -1490,13 +1532,14 @@ export default function PosMainScreen() {
                   flex: 1,
                   height: '36px',
                   borderRadius: '0.55rem',
-                  border: '1px solid #27272A',
-                  backgroundColor: '#121214',
-                  color: '#FFFFFF',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCardSubtle,
+                  color: theme.textPrimary,
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: cart.length === 0 ? 0.45 : 1,
+                  transition: 'all 0.15s ease',
                 }}
               >
                 Hold Sale
@@ -1509,13 +1552,14 @@ export default function PosMainScreen() {
                   flex: 1,
                   height: '36px',
                   borderRadius: '0.55rem',
-                  border: discountPct > 0 ? '1px solid #FFFFFF' : '1px solid #27272A',
-                  backgroundColor: discountPct > 0 ? '#FFFFFF' : '#121214',
-                  color: discountPct > 0 ? '#000000' : '#FFFFFF',
+                  border: discountPct > 0 ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                  backgroundColor: discountPct > 0 ? theme.activeBg : theme.bgCardSubtle,
+                  color: discountPct > 0 ? theme.activeText : theme.textPrimary,
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: cart.length === 0 ? 0.45 : 1,
+                  transition: 'all 0.15s ease',
                 }}
               >
                 {discountPct > 0 ? '10% Applied' : 'Add 10% Off'}
@@ -1532,12 +1576,12 @@ export default function PosMainScreen() {
                 width: '100%',
                 height: '46px',
                 borderRadius: '0.75rem',
-                backgroundColor: '#FFFFFF',
-                color: '#000000',
+                backgroundColor: theme.posBtnBg,
+                color: theme.posBtnText,
                 fontSize: '15px',
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
-                boxShadow: '0 4px 0 #999999',
+                boxShadow: '0 4px 0 #18181B',
                 cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                 opacity: cart.length === 0 ? 0.45 : 1,
                 display: 'flex',
@@ -1558,7 +1602,7 @@ export default function PosMainScreen() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
+          backgroundColor: 'rgba(0,0,0,0.6)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1568,19 +1612,19 @@ export default function PosMainScreen() {
           <div style={{
             width: '100%',
             maxWidth: '460px',
-            backgroundColor: '#0A0A0A',
-            border: '1px solid #27272A',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             padding: '1.75rem',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.9)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
           }}>
             {paymentSuccess ? (
               <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <CheckCircleRoundedIcon sx={{ fontSize: 64, color: '#22C55E', marginBottom: '1rem' }} />
-                <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.35rem' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.35rem' }}>
                   Payment of ₹{total} Successful!
                 </h3>
-                <p style={{ fontSize: '13px', color: '#A1A1AA', margin: 0 }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
                   Order #ORD-1025 completed • Receipt printing...
                 </p>
               </div>
@@ -1588,17 +1632,17 @@ export default function PosMainScreen() {
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+                    <h3 style={{ fontSize: '20px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
                       Complete Payment
                     </h3>
-                    <p style={{ fontSize: '12.5px', color: '#A1A1AA', margin: '0.2rem 0 0 0' }}>
+                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0.2rem 0 0 0' }}>
                       Total Due: ₹{total}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(false)}
-                    style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
                   >
                     <CloseRoundedIcon sx={{ fontSize: 20 }} />
                   </button>
@@ -1620,9 +1664,9 @@ export default function PosMainScreen() {
                         style={{
                           padding: '0.85rem 0.5rem',
                           borderRadius: '0.75rem',
-                          border: isSelected ? '1px solid #FFFFFF' : '1px solid #27272A',
-                          backgroundColor: isSelected ? '#FFFFFF' : '#141416',
-                          color: isSelected ? '#000000' : '#FFFFFF',
+                          border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                          backgroundColor: isSelected ? theme.activeBg : theme.bgCardSubtle,
+                          color: isSelected ? theme.activeText : theme.textPrimary,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -1631,6 +1675,7 @@ export default function PosMainScreen() {
                           fontFamily: 'inherit',
                           fontSize: '12px',
                           fontWeight: 700,
+                          transition: 'all 0.15s ease',
                         }}
                       >
                         {m.icon}
@@ -1643,8 +1688,8 @@ export default function PosMainScreen() {
                 {paymentMethod === 'upi' && (
                   <div style={{
                     padding: '1.25rem',
-                    backgroundColor: '#121214',
-                    border: '1px solid #222224',
+                    backgroundColor: theme.bgCardSubtle,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: '0.85rem',
                     textAlign: 'center',
                     marginBottom: '1.5rem',
@@ -1653,6 +1698,7 @@ export default function PosMainScreen() {
                       width: '120px',
                       height: '120px',
                       backgroundColor: '#FFFFFF',
+                      border: `1px solid ${theme.border}`,
                       borderRadius: '0.5rem',
                       margin: '0 auto 0.85rem auto',
                       display: 'flex',
@@ -1661,7 +1707,7 @@ export default function PosMainScreen() {
                     }}>
                       <QrCode2RoundedIcon sx={{ fontSize: 100, color: '#000000' }} />
                     </div>
-                    <span style={{ fontSize: '12.5px', color: '#A1A1AA' }}>
+                    <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>
                       Scan dynamic UPI QR code on customer display
                     </span>
                   </div>
@@ -1670,12 +1716,12 @@ export default function PosMainScreen() {
                 {paymentMethod === 'cash' && (
                   <div style={{
                     padding: '1.25rem',
-                    backgroundColor: '#121214',
-                    border: '1px solid #222224',
+                    backgroundColor: theme.bgCardSubtle,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: '0.85rem',
                     marginBottom: '1.5rem',
                   }}>
-                    <div style={{ fontSize: '13px', color: '#A1A1AA', marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '0.5rem' }}>
                       Cash Received:
                     </div>
                     <input
@@ -1684,11 +1730,11 @@ export default function PosMainScreen() {
                       style={{
                         width: '100%',
                         height: '42px',
-                        backgroundColor: '#0A0A0A',
-                        border: '1px solid #27272A',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
                         borderRadius: '0.55rem',
                         padding: '0 0.85rem',
-                        color: '#FFFFFF',
+                        color: theme.textPrimary,
                         fontSize: '18px',
                         fontWeight: 800,
                         fontFamily: 'inherit',
@@ -1701,12 +1747,12 @@ export default function PosMainScreen() {
                 {paymentMethod === 'card' && (
                   <div style={{
                     padding: '1.25rem',
-                    backgroundColor: '#121214',
-                    border: '1px solid #222224',
+                    backgroundColor: theme.bgCardSubtle,
+                    border: `1px solid ${theme.border}`,
                     borderRadius: '0.85rem',
                     textAlign: 'center',
                     marginBottom: '1.5rem',
-                    color: '#A1A1AA',
+                    color: theme.textSecondary,
                     fontSize: '13px',
                   }}>
                     Insert or tap debit/credit card on EDC terminal.
@@ -1722,11 +1768,11 @@ export default function PosMainScreen() {
                     width: '100%',
                     height: '46px',
                     borderRadius: '0.75rem',
-                    backgroundColor: '#FFFFFF',
-                    color: '#000000',
+                    backgroundColor: theme.posBtnBg,
+                    color: theme.posBtnText,
                     fontSize: '14.5px',
                     fontWeight: 800,
-                    boxShadow: '0 4px 0 #999999',
+                    boxShadow: '0 4px 0 #18181B',
                     cursor: 'pointer',
                   }}
                 >
@@ -1743,7 +1789,7 @@ export default function PosMainScreen() {
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.85)',
+          backgroundColor: 'rgba(0,0,0,0.6)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1753,36 +1799,36 @@ export default function PosMainScreen() {
           <div style={{
             width: '100%',
             maxWidth: '420px',
-            backgroundColor: '#0A0A0A',
-            border: '1px solid #27272A',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             padding: '1.75rem',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.9)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
                 End Current Shift
               </h3>
               <button
                 type="button"
                 onClick={() => setShowEndShiftModal(false)}
-                style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: '#141416', borderRadius: '0.65rem' }}>
-                <span style={{ fontSize: '13px', color: '#A1A1AA' }}>Cashier</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>Amit Patel</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Cashier</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Amit Patel</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: '#141416', borderRadius: '0.65rem' }}>
-                <span style={{ fontSize: '13px', color: '#A1A1AA' }}>Expected Drawer Cash</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#FFFFFF' }}>₹28,450</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Expected Drawer Cash</span>
+                <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>₹28,450</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: '#141416', borderRadius: '0.65rem' }}>
-                <span style={{ fontSize: '13px', color: '#A1A1AA' }}>Total Sales in Shift</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Total Sales in Shift</span>
                 <span style={{ fontSize: '13px', fontWeight: 800, color: '#22C55E' }}>₹48,250</span>
               </div>
             </div>
@@ -1799,11 +1845,12 @@ export default function PosMainScreen() {
                   flex: 1,
                   height: '42px',
                   borderRadius: '0.75rem',
-                  backgroundColor: '#FFFFFF',
-                  color: '#000000',
+                  backgroundColor: theme.posBtnBg,
+                  color: theme.posBtnText,
                   fontSize: '13px',
                   fontWeight: 800,
                   cursor: 'pointer',
+                  boxShadow: '0 4px 0 #18181B',
                 }}
               >
                 Reconcile & Close Shift
@@ -1815,9 +1862,9 @@ export default function PosMainScreen() {
                   padding: '0 1rem',
                   height: '42px',
                   borderRadius: '0.75rem',
-                  border: '1px solid #27272A',
-                  backgroundColor: '#141416',
-                  color: '#FFFFFF',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCardSubtle,
+                  color: theme.textPrimary,
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
