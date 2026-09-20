@@ -32,6 +32,8 @@ import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
+import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 
 interface Product {
   id: string;
@@ -54,6 +56,276 @@ interface HeldSale {
   time: string;
   total: number;
 }
+
+type PosThemeId = 'macos' | 'bw_dark' | 'bw_light' | 'blue_white' | 'classic_pos';
+
+interface PosThemeConfig {
+  id: PosThemeId;
+  name: string;
+  emoji: string;
+  swatch: {
+    page: string;
+    sidebar: string;
+    card: string;
+    primary: string;
+    text: string;
+  };
+  bgPage: string;
+  bgSidebar: string;
+  sidebarIsDark: boolean;
+  sidebarTextPrimary: string;
+  sidebarTextSecondary: string;
+  sidebarHoverBg: string;
+  sidebarBorder: string;
+  bgHeader: string;
+  headerIsDark: boolean;
+  headerTextPrimary: string;
+  headerBorder: string;
+  bgCard: string;
+  bgCardSubtle: string;
+  border: string;
+  borderCard: string;
+  borderHover: string;
+  textPrimary: string;
+  textSecondary: string;
+  textMuted: string;
+  hoverBg: string;
+  activeBg: string;
+  activeText: string;
+  activeIcon: string;
+  badgeBg: string;
+  badgeText: string;
+  secondaryBadgeBg: string;
+  secondaryBadgeText: string;
+  posBtnBg: string;
+  posBtnText: string;
+  posBtnShadow: string;
+  popoverBg: string;
+  popoverBorder: string;
+}
+
+const POS_THEMES: Record<PosThemeId, PosThemeConfig> = {
+  macos: {
+    id: 'macos',
+    name: 'macOS',
+    emoji: '🍎',
+    swatch: {
+      page: '#F5F5F7',
+      sidebar: '#FFFFFF',
+      card: '#FFFFFF',
+      primary: '#007AFF',
+      text: '#1D1D1F',
+    },
+    bgPage: '#F5F5F7',
+    bgSidebar: '#FFFFFF',
+    sidebarIsDark: false,
+    sidebarTextPrimary: '#1D1D1F',
+    sidebarTextSecondary: '#86868B',
+    sidebarHoverBg: '#F2F2F7',
+    sidebarBorder: '#E5E5EA',
+    bgHeader: '#FFFFFF',
+    headerIsDark: false,
+    headerTextPrimary: '#1D1D1F',
+    headerBorder: '#E5E5EA',
+    bgCard: '#FFFFFF',
+    bgCardSubtle: '#F2F2F7',
+    border: '#E5E5EA',
+    borderCard: '#E5E5EA',
+    borderHover: '#007AFF',
+    textPrimary: '#1D1D1F',
+    textSecondary: '#86868B',
+    textMuted: '#AEAEB2',
+    hoverBg: '#EFEFF4',
+    activeBg: '#007AFF',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#007AFF',
+    badgeText: '#FFFFFF',
+    secondaryBadgeBg: '#E5E5EA',
+    secondaryBadgeText: '#1D1D1F',
+    posBtnBg: '#007AFF',
+    posBtnText: '#FFFFFF',
+    posBtnShadow: '#0051A8',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#E5E5EA',
+  },
+  bw_dark: {
+    id: 'bw_dark',
+    name: 'B&W Dark',
+    emoji: '🌚',
+    swatch: {
+      page: '#000000',
+      sidebar: '#0A0A0A',
+      card: '#141414',
+      primary: '#FFFFFF',
+      text: '#FFFFFF',
+    },
+    bgPage: '#000000',
+    bgSidebar: '#0A0A0A',
+    sidebarIsDark: true,
+    sidebarTextPrimary: '#FFFFFF',
+    sidebarTextSecondary: '#A1A1AA',
+    sidebarHoverBg: '#18181B',
+    sidebarBorder: '#262626',
+    bgHeader: '#0A0A0A',
+    headerIsDark: true,
+    headerTextPrimary: '#FFFFFF',
+    headerBorder: '#262626',
+    bgCard: '#141414',
+    bgCardSubtle: '#1C1C1E',
+    border: '#262626',
+    borderCard: '#262626',
+    borderHover: '#FFFFFF',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A1A1AA',
+    textMuted: '#71717A',
+    hoverBg: '#1F1F23',
+    activeBg: '#FFFFFF',
+    activeText: '#000000',
+    activeIcon: '#000000',
+    badgeBg: '#FFFFFF',
+    badgeText: '#000000',
+    secondaryBadgeBg: '#262626',
+    secondaryBadgeText: '#FFFFFF',
+    posBtnBg: '#FFFFFF',
+    posBtnText: '#000000',
+    posBtnShadow: '#888888',
+    popoverBg: '#141414',
+    popoverBorder: '#262626',
+  },
+  bw_light: {
+    id: 'bw_light',
+    name: 'B&W Light',
+    emoji: '⚪',
+    swatch: {
+      page: '#FFFFFF',
+      sidebar: '#F5F5F5',
+      card: '#FAFAFA',
+      primary: '#000000',
+      text: '#111111',
+    },
+    bgPage: '#FFFFFF',
+    bgSidebar: '#F5F5F5',
+    sidebarIsDark: false,
+    sidebarTextPrimary: '#111111',
+    sidebarTextSecondary: '#666666',
+    sidebarHoverBg: '#EAEAEA',
+    sidebarBorder: '#E0E0E0',
+    bgHeader: '#FFFFFF',
+    headerIsDark: false,
+    headerTextPrimary: '#111111',
+    headerBorder: '#E0E0E0',
+    bgCard: '#FAFAFA',
+    bgCardSubtle: '#F0F0F0',
+    border: '#E0E0E0',
+    borderCard: '#E0E0E0',
+    borderHover: '#000000',
+    textPrimary: '#111111',
+    textSecondary: '#666666',
+    textMuted: '#999999',
+    hoverBg: '#EAEAEA',
+    activeBg: '#000000',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#000000',
+    badgeText: '#FFFFFF',
+    secondaryBadgeBg: '#E0E0E0',
+    secondaryBadgeText: '#111111',
+    posBtnBg: '#000000',
+    posBtnText: '#FFFFFF',
+    posBtnShadow: '#444444',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#E0E0E0',
+  },
+  blue_white: {
+    id: 'blue_white',
+    name: 'Blue & White',
+    emoji: '🔵',
+    swatch: {
+      page: '#F4F8FC',
+      sidebar: '#FFFFFF',
+      card: '#FFFFFF',
+      primary: '#2563EB',
+      text: '#111827',
+    },
+    bgPage: '#F4F8FC',
+    bgSidebar: '#FFFFFF',
+    sidebarIsDark: false,
+    sidebarTextPrimary: '#111827',
+    sidebarTextSecondary: '#4B5563',
+    sidebarHoverBg: '#F0F7FF',
+    sidebarBorder: '#DBEAFE',
+    bgHeader: '#FFFFFF',
+    headerIsDark: false,
+    headerTextPrimary: '#111827',
+    headerBorder: '#DBEAFE',
+    bgCard: '#FFFFFF',
+    bgCardSubtle: '#EFF6FF',
+    border: '#DBEAFE',
+    borderCard: '#DBEAFE',
+    borderHover: '#2563EB',
+    textPrimary: '#111827',
+    textSecondary: '#4B5563',
+    textMuted: '#9CA3AF',
+    hoverBg: '#F0F7FF',
+    activeBg: '#2563EB',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#2563EB',
+    badgeText: '#FFFFFF',
+    secondaryBadgeBg: '#DBEAFE',
+    secondaryBadgeText: '#1E40AF',
+    posBtnBg: '#2563EB',
+    posBtnText: '#FFFFFF',
+    posBtnShadow: '#1D4ED8',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#DBEAFE',
+  },
+  classic_pos: {
+    id: 'classic_pos',
+    name: 'Classic POS',
+    emoji: '📋',
+    swatch: {
+      page: '#F3F4F6',
+      sidebar: '#1F2937',
+      card: '#FFFFFF',
+      primary: '#2563EB',
+      text: '#111827',
+    },
+    bgPage: '#F3F4F6',
+    bgSidebar: '#1F2937',
+    sidebarIsDark: true,
+    sidebarTextPrimary: '#F9FAFB',
+    sidebarTextSecondary: '#9CA3AF',
+    sidebarHoverBg: '#374151',
+    sidebarBorder: '#374151',
+    bgHeader: '#FFFFFF',
+    headerIsDark: false,
+    headerTextPrimary: '#111827',
+    headerBorder: '#E5E7EB',
+    bgCard: '#FFFFFF',
+    bgCardSubtle: '#F9FAFB',
+    border: '#E5E7EB',
+    borderCard: '#E5E7EB',
+    borderHover: '#2563EB',
+    textPrimary: '#111827',
+    textSecondary: '#4B5563',
+    textMuted: '#9CA3AF',
+    hoverBg: '#F3F4F6',
+    activeBg: '#2563EB',
+    activeText: '#FFFFFF',
+    activeIcon: '#FFFFFF',
+    badgeBg: '#2563EB',
+    badgeText: '#FFFFFF',
+    secondaryBadgeBg: '#E5E7EB',
+    secondaryBadgeText: '#1F2937',
+    posBtnBg: '#2563EB',
+    posBtnText: '#FFFFFF',
+    posBtnShadow: '#1D4ED8',
+    popoverBg: '#FFFFFF',
+    popoverBorder: '#E5E7EB',
+  },
+};
 
 export default function PosMainScreen() {
   const router = useRouter();
@@ -308,33 +580,31 @@ export default function PosMainScreen() {
     }, 1600);
   };
 
-  // Salt and Pepper Theme Colors (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B)
-  const theme = {
-    bgPage: '#FFFFFF',
-    bgCard: '#FFFFFF',
-    bgCardSubtle: '#F5F5F7',
-    bgHeader: '#FFFFFF',
-    bgSidebar: '#FFFFFF',
-    border: '#D4D4D4',
-    borderCard: '#D4D4D4',
-    borderHover: '#2B2B2B',
-    textPrimary: '#2B2B2B',
-    textSecondary: '#71717A',
-    textMuted: '#B3B3B3',
-    hoverBg: '#F0F0F0',
-    activeBg: '#2B2B2B',
-    activeText: '#FFFFFF',
-    activeIcon: '#FFFFFF',
-    badgeBg: '#2B2B2B',
-    badgeText: '#FFFFFF',
-    secondaryBadgeBg: '#D4D4D4',
-    secondaryBadgeText: '#2B2B2B',
-    posBtnBg: '#2B2B2B',
-    posBtnText: '#FFFFFF',
-    posBtnShadow: '#D4D4D4',
-    popoverBg: '#FFFFFF',
-    popoverBorder: '#D4D4D4',
+  // POS Dynamic Theme State: 'macos' | 'bw_dark' | 'bw_light' | 'blue_white' | 'classic_pos'
+  const [currentThemeId, setCurrentThemeId] = useState<PosThemeId>('macos');
+  const [showThemeModal, setShowThemeModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nuradesk_pos_theme') as PosThemeId | null;
+      if (saved && POS_THEMES[saved]) {
+        setCurrentThemeId(saved);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const handleSelectTheme = (id: PosThemeId) => {
+    setCurrentThemeId(id);
+    try {
+      localStorage.setItem('nuradesk_pos_theme', id);
+    } catch {
+      // Ignore localStorage errors
+    }
   };
+
+  const theme = POS_THEMES[currentThemeId] || POS_THEMES.macos;
 
   return (
     <div style={{
@@ -349,17 +619,18 @@ export default function PosMainScreen() {
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* 1. TOP HEADER BAR - Salt & Pepper */}
+      {/* 1. TOP HEADER BAR */}
       <header style={{
         height: '62px',
         backgroundColor: theme.bgHeader,
-        borderBottom: `1px solid ${theme.border}`,
+        borderBottom: `1px solid ${theme.headerBorder}`,
         padding: '0 1.5rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexShrink: 0,
         zIndex: 30,
+        color: theme.headerTextPrimary,
       }}>
         {/* Left: Sidebar Toggle + Nuradesk Logo + Store Logo Pill Badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
@@ -374,12 +645,12 @@ export default function PosMainScreen() {
               height: '36px',
               borderRadius: '0.55rem',
               backgroundColor: 'transparent',
-              border: `1px solid ${theme.border}`,
+              border: `1px solid ${theme.headerBorder}`,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: theme.textPrimary,
+              color: theme.headerTextPrimary,
               transition: 'all 0.15s ease',
               flexShrink: 0,
             }}
@@ -389,13 +660,13 @@ export default function PosMainScreen() {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.border;
+              e.currentTarget.style.borderColor = theme.headerBorder;
             }}
           >
             {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary }} />
             ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary }} />
             )}
           </button>
 
@@ -425,14 +696,17 @@ export default function PosMainScreen() {
                 width={34}
                 height={34}
                 priority
-                style={{ objectFit: 'contain' }}
+                style={{
+                  objectFit: 'contain',
+                  filter: theme.headerIsDark ? 'invert(1)' : 'none',
+                }}
               />
             </div>
             <span style={{
               fontSize: '21px',
               fontWeight: 800,
               letterSpacing: '-0.04em',
-              color: theme.textPrimary,
+              color: theme.headerTextPrimary,
             }}>
               Nuradesk
             </span>
@@ -449,8 +723,8 @@ export default function PosMainScreen() {
             padding: '4px 12px',
             marginLeft: '0.25rem',
           }}>
-            <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-            <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.01em' }}>
+            <StoreRoundedIcon sx={{ fontSize: 16, color: theme.headerTextPrimary }} />
+            <span style={{ fontSize: '12px', fontWeight: 800, color: theme.headerTextPrimary, letterSpacing: '-0.01em' }}>
               SP CAFE
             </span>
             <span style={{ fontSize: '11px', color: theme.border }}>•</span>
@@ -471,7 +745,7 @@ export default function PosMainScreen() {
           <span style={{
             fontSize: '13px',
             fontWeight: 700,
-            color: theme.textPrimary,
+            color: theme.headerTextPrimary,
             letterSpacing: '0.02em',
             fontVariantNumeric: 'tabular-nums',
           }}>
@@ -544,12 +818,12 @@ export default function PosMainScreen() {
               <span style={{
                 fontSize: '13.5px',
                 fontWeight: 700,
-                color: theme.textPrimary,
+                color: theme.headerTextPrimary,
                 letterSpacing: '-0.01em',
               }}>
                 Amit Patel
               </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
+              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.headerTextPrimary }} />
             </div>
 
             {/* Profile Dropdown */}
@@ -653,7 +927,7 @@ export default function PosMainScreen() {
           width: isSidebarOpen ? '200px' : '68px',
           minWidth: isSidebarOpen ? '200px' : '68px',
           backgroundColor: theme.bgSidebar,
-          borderRight: `1px solid ${theme.border}`,
+          borderRight: `1px solid ${theme.sidebarBorder}`,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -680,7 +954,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: activeNav === 'new_sale' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                 backgroundColor: activeNav === 'new_sale' ? theme.activeBg : 'transparent',
-                color: activeNav === 'new_sale' ? theme.activeText : theme.textPrimary,
+                color: activeNav === 'new_sale' ? theme.activeText : theme.sidebarTextPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'new_sale' ? 800 : 600,
                 cursor: 'pointer',
@@ -688,7 +962,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = theme.hoverBg;
+                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = 'transparent';
@@ -714,7 +988,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: activeNav === 'held_sales' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                 backgroundColor: activeNav === 'held_sales' ? theme.activeBg : 'transparent',
-                color: activeNav === 'held_sales' ? theme.activeText : theme.textPrimary,
+                color: activeNav === 'held_sales' ? theme.activeText : theme.sidebarTextPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'held_sales' ? 800 : 600,
                 cursor: 'pointer',
@@ -723,7 +997,7 @@ export default function PosMainScreen() {
                 position: 'relative',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = theme.hoverBg;
+                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = 'transparent';
@@ -742,7 +1016,7 @@ export default function PosMainScreen() {
                     width: '7px',
                     height: '7px',
                     borderRadius: '50%',
-                    backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : theme.textPrimary,
+                    backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : theme.activeBg,
                   }} />
                 )}
               </div>
@@ -750,8 +1024,8 @@ export default function PosMainScreen() {
                 <span style={{
                   fontSize: '11px',
                   fontWeight: 800,
-                  backgroundColor: activeNav === 'held_sales' ? '#FFFFFF' : theme.secondaryBadgeBg,
-                  color: activeNav === 'held_sales' ? theme.textPrimary : theme.textPrimary,
+                  backgroundColor: activeNav === 'held_sales' ? 'rgba(255,255,255,0.25)' : theme.secondaryBadgeBg,
+                  color: activeNav === 'held_sales' ? '#FFFFFF' : theme.secondaryBadgeText,
                   padding: '1px 6px',
                   borderRadius: '9999px',
                 }}>
@@ -774,7 +1048,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: activeNav === 'invoices' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                 backgroundColor: activeNav === 'invoices' ? theme.activeBg : 'transparent',
-                color: activeNav === 'invoices' ? theme.activeText : theme.textPrimary,
+                color: activeNav === 'invoices' ? theme.activeText : theme.sidebarTextPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'invoices' ? 800 : 600,
                 cursor: 'pointer',
@@ -782,7 +1056,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = theme.hoverBg;
+                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = 'transparent';
@@ -808,7 +1082,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: activeNav === 'customers' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
                 backgroundColor: activeNav === 'customers' ? theme.activeBg : 'transparent',
-                color: activeNav === 'customers' ? theme.activeText : theme.textPrimary,
+                color: activeNav === 'customers' ? theme.activeText : theme.sidebarTextPrimary,
                 fontSize: '14px',
                 fontWeight: activeNav === 'customers' ? 800 : 600,
                 cursor: 'pointer',
@@ -816,7 +1090,7 @@ export default function PosMainScreen() {
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = theme.hoverBg;
+                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
               }}
               onMouseLeave={(e) => {
                 if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = 'transparent';
@@ -829,8 +1103,15 @@ export default function PosMainScreen() {
             </button>
           </nav>
 
-          {/* Bottom Nav Items: End shift & Logout */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: `1px solid ${theme.border}`, paddingTop: '1rem' }}>
+          {/* Bottom Nav Items: End shift, Logout & Theme */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.4rem',
+            borderTop: `1px solid ${theme.sidebarBorder}`,
+            paddingTop: '0.85rem',
+          }}>
+            {/* End shift button */}
             <button
               type="button"
               onClick={() => setShowEndShiftModal(true)}
@@ -844,7 +1125,7 @@ export default function PosMainScreen() {
                 borderRadius: '0.65rem',
                 border: 'none',
                 backgroundColor: 'transparent',
-                color: theme.textPrimary,
+                color: theme.sidebarTextPrimary,
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -852,15 +1133,16 @@ export default function PosMainScreen() {
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.sidebarHoverBg; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
             >
-              <ScheduleRoundedIcon sx={{ fontSize: 18, color: theme.textPrimary, flexShrink: 0 }} />
+              <ScheduleRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
               {isSidebarOpen && (
                 <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>End shift</span>
               )}
             </button>
 
+            {/* Logout link */}
             <Link
               href="/pos-login"
               title={!isSidebarOpen ? 'Logout' : undefined}
@@ -871,7 +1153,7 @@ export default function PosMainScreen() {
                 justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                 padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
                 borderRadius: '0.65rem',
-                color: theme.textSecondary,
+                color: theme.sidebarTextSecondary,
                 fontSize: '14px',
                 fontWeight: 600,
                 textDecoration: 'none',
@@ -879,12 +1161,12 @@ export default function PosMainScreen() {
                 boxSizing: 'border-box',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.color = theme.textPrimary;
+                e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
+                e.currentTarget.style.color = theme.sidebarTextPrimary;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = theme.textSecondary;
+                e.currentTarget.style.color = theme.sidebarTextSecondary;
               }}
             >
               <LogoutRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
@@ -892,6 +1174,59 @@ export default function PosMainScreen() {
                 <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Logout</span>
               )}
             </Link>
+
+            {/* Theme switcher button - LAST IN SIDEBAR */}
+            <button
+              type="button"
+              onClick={() => setShowThemeModal(true)}
+              title={!isSidebarOpen ? `Theme: ${theme.name}` : undefined}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: isSidebarOpen ? 'space-between' : 'center',
+                padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
+                borderRadius: '0.65rem',
+                border: showThemeModal ? `1px solid ${theme.borderHover}` : 'none',
+                backgroundColor: showThemeModal ? theme.sidebarHoverBg : 'transparent',
+                color: theme.sidebarTextPrimary,
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.sidebarHoverBg; }}
+              onMouseLeave={(e) => {
+                if (!showThemeModal) e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <PaletteRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
+                {isSidebarOpen && (
+                  <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Theme</span>
+                )}
+              </div>
+              {isSidebarOpen && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  backgroundColor: theme.activeBg,
+                  color: theme.activeText,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  lineHeight: 1.2,
+                }}>
+                  <span>{theme.emoji}</span>
+                  <span>{theme.name}</span>
+                </span>
+              )}
+            </button>
           </div>
         </aside>
 
@@ -1581,7 +1916,7 @@ export default function PosMainScreen() {
                 fontSize: '15px',
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
-                boxShadow: '0 4px 0 #18181B',
+                boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
                 cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                 opacity: cart.length === 0 ? 0.45 : 1,
                 display: 'flex',
@@ -1772,7 +2107,7 @@ export default function PosMainScreen() {
                     color: theme.posBtnText,
                     fontSize: '14.5px',
                     fontWeight: 800,
-                    boxShadow: '0 4px 0 #18181B',
+                    boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
                     cursor: 'pointer',
                   }}
                 >
@@ -1850,7 +2185,7 @@ export default function PosMainScreen() {
                   fontSize: '13px',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 0 #18181B',
+                  boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
                 }}
               >
                 Reconcile & Close Shift
@@ -1871,6 +2206,203 @@ export default function PosMainScreen() {
                 }}
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5-THEME SELECTION MODAL (EXCLUSIVELY FOR POS) */}
+      {showThemeModal && (
+        <div
+          onClick={() => setShowThemeModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 150,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              backgroundColor: theme.popoverBg,
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1.25rem',
+              padding: '1.5rem 1.75rem',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.1rem',
+            }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <PaletteRoundedIcon sx={{ fontSize: 22, color: theme.activeBg }} />
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    Select POS Theme
+                  </h3>
+                </div>
+                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0.25rem 0 0 0' }}>
+                  Choose from 5 accurate design presets tailored exclusively for POS
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowThemeModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: theme.textSecondary,
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '0.45rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {/* 5 Themes List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {(Object.keys(POS_THEMES) as PosThemeId[]).map((tid) => {
+                const t = POS_THEMES[tid];
+                const isCurrent = currentThemeId === tid;
+
+                return (
+                  <div
+                    key={tid}
+                    onClick={() => handleSelectTheme(tid)}
+                    role="button"
+                    tabIndex={0}
+                    style={{
+                      padding: '0.85rem 1.1rem',
+                      borderRadius: '0.85rem',
+                      border: isCurrent ? `2px solid ${t.swatch.primary}` : `1px solid ${theme.border}`,
+                      backgroundColor: isCurrent ? theme.bgCardSubtle : theme.bgCard,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCurrent) e.currentTarget.style.borderColor = theme.borderHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCurrent) e.currentTarget.style.borderColor = theme.border;
+                    }}
+                  >
+                    {/* Left: Emoji + Name + Active badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '22px' }}>{t.emoji}</span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary }}>
+                            {t.name}
+                          </span>
+                          {isCurrent && (
+                            <span style={{
+                              fontSize: '10.5px',
+                              fontWeight: 800,
+                              backgroundColor: t.swatch.primary,
+                              color: '#FFFFFF',
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}>
+                              <CheckRoundedIcon sx={{ fontSize: 12 }} />
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '2px' }}>
+                          Primary: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.swatch.primary}</span> • Text: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.swatch.text}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Color Swatches Preview Bar (Page, Sidebar, Card, Primary, Text) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      {[
+                        { label: 'Page', color: t.swatch.page },
+                        { label: 'Sidebar', color: t.swatch.sidebar },
+                        { label: 'Card', color: t.swatch.card },
+                        { label: 'Primary', color: t.swatch.primary },
+                        { label: 'Text', color: t.swatch.text },
+                      ].map((sw, idx) => (
+                        <div
+                          key={idx}
+                          title={`${sw.label}: ${sw.color}`}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '50%',
+                              backgroundColor: sw.color,
+                              border: sw.color === '#FFFFFF' ? '1px solid #D4D4D4' : '1px solid rgba(0,0,0,0.15)',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                            }}
+                          />
+                          <span style={{ fontSize: '9px', fontWeight: 600, color: theme.textMuted }}>{sw.label[0]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '0.65rem',
+              borderTop: `1px solid ${theme.border}`,
+              fontSize: '12px',
+              color: theme.textSecondary,
+            }}>
+              <span>Selected theme is saved to your register device.</span>
+              <button
+                type="button"
+                onClick={() => setShowThemeModal(false)}
+                style={{
+                  padding: '0.45rem 1.25rem',
+                  borderRadius: '0.55rem',
+                  backgroundColor: theme.posBtnBg,
+                  color: theme.posBtnText,
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: `0 3px 0 ${theme.posBtnShadow}`,
+                }}
+              >
+                Done
               </button>
             </div>
           </div>
