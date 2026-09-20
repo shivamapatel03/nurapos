@@ -13,11 +13,9 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Swagger
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
 
 // Configure the HTTP request pipeline.
