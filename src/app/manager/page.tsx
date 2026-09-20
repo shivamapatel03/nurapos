@@ -25,6 +25,7 @@ import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import ManagerInventoryScreen from '@/components/manager/ManagerInventoryScreen';
 
 interface NavItem {
   id: string;
@@ -37,7 +38,7 @@ export default function ManagerDashboardPage() {
 
   // Sidebar collapse/expand state with smooth animation
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeTabId, setActiveTabId] = useState('dashboard');
+  const [activeTabId, setActiveTabId] = useState('inventory');
   const [chartTimeframe, setChartTimeframe] = useState<'weekly' | 'monthly'>('weekly');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -823,8 +824,11 @@ export default function ManagerDashboardPage() {
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-            {/* Header Greeting - Exact text: Good evening, Amit 👋 \n Ahmedabad Store. */}
+          {activeTabId === 'inventory' ? (
+            <ManagerInventoryScreen theme={theme} />
+          ) : (
+            <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
+              {/* Header Greeting - Exact text: Good evening, Amit 👋 \n Ahmedabad Store. */}
             <div style={{ marginBottom: '2rem' }}>
               <h1 style={{
                 fontSize: '25px',
@@ -1285,6 +1289,7 @@ export default function ManagerDashboardPage() {
               </div>
             </div>
           </div>
+          )}
         </main>
       </div>
 

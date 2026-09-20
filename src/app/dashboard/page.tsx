@@ -37,6 +37,10 @@ import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
+import InventoryManagement from '@/components/admin/InventoryManagement';
+import ProductManagement from '@/components/admin/ProductManagement';
+import ReportsManagement from '@/components/admin/ReportsManagement';
+import SalesManagement from '@/components/admin/SalesManagement';
 
 interface SubNavItem {
   id: string;
@@ -57,21 +61,46 @@ export default function AdminDashboardPage() {
   // Sidebar collapse/expand state with smooth animation
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Accordion state for expandable menu items
+  // Accordion state for expandable menu items (inventory expanded by default)
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
     sales: true,
     catalog: false,
-    inventory: false,
+    inventory: true,
     reports: false,
   });
 
-  const [activeTabId, setActiveTabId] = useState('dashboard');
+  const [activeTabId, setActiveTabId] = useState('po');
   const [chartTimeframe, setChartTimeframe] = useState<'weekly' | 'monthly'>('weekly');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
+
+  const isSalesActive =
+    activeTabId === 'sales' ||
+    activeTabId === 'orders' ||
+    activeTabId === 'returns' ||
+    activeTabId === 'payments';
+
+  const isInventoryActive =
+    activeTabId === 'inventory' ||
+    activeTabId === 'stock' ||
+    activeTabId === 'adjustment' ||
+    activeTabId === 'po';
+
+  const isCatalogActive =
+    activeTabId === 'catalog' ||
+    activeTabId === 'products' ||
+    activeTabId === 'categories' ||
+    activeTabId === 'brands';
+
+  const isReportsActive =
+    activeTabId === 'reports' ||
+    activeTabId === 'rep_sales' ||
+    activeTabId === 'rep_inventory' ||
+    activeTabId === 'rep_customers' ||
+    activeTabId === 'rep_performance';
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus((prev) => ({ ...prev, [menuId]: !prev[menuId] }));
@@ -805,6 +834,18 @@ export default function AdminDashboardPage() {
                     onClick={() => {
                       if (hasSubItems) {
                         toggleMenu(item.id);
+                        if (item.id === 'sales' && !isSalesActive) {
+                          setActiveTabId('orders');
+                        }
+                        if (item.id === 'inventory' && !isInventoryActive) {
+                          setActiveTabId('stock');
+                        }
+                        if (item.id === 'catalog' && !isCatalogActive) {
+                          setActiveTabId('products');
+                        }
+                        if (item.id === 'reports' && !isReportsActive) {
+                          setActiveTabId('rep_sales');
+                        }
                       } else {
                         setActiveTabId(item.id);
                       }
@@ -898,7 +939,21 @@ export default function AdminDashboardPage() {
                           <button
                             key={sub.id}
                             type="button"
-                            onClick={() => setActiveTabId(sub.id)}
+                            onClick={() => {
+                              setActiveTabId(sub.id);
+                              if (item.id === 'sales') {
+                                setExpandedMenus((prev) => ({ ...prev, sales: true }));
+                              }
+                              if (item.id === 'inventory') {
+                                setExpandedMenus((prev) => ({ ...prev, inventory: true }));
+                              }
+                              if (item.id === 'catalog') {
+                                setExpandedMenus((prev) => ({ ...prev, catalog: true }));
+                              }
+                              if (item.id === 'reports') {
+                                setExpandedMenus((prev) => ({ ...prev, reports: true }));
+                              }
+                            }}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -1047,8 +1102,58 @@ export default function AdminDashboardPage() {
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-            {/* Header Greeting in Salt & Pepper */}
+          {isSalesActive ? (
+            <SalesManagement
+              activeSubTab={
+                activeTabId === 'returns' ? 'returns' :
+                activeTabId === 'payments' ? 'payments' : 'orders'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                setExpandedMenus((prev) => ({ ...prev, sales: true }));
+              }}
+              theme={theme}
+            />
+          ) : isReportsActive ? (
+            <ReportsManagement
+              activeSubTab={
+                activeTabId === 'rep_inventory' ? 'rep_inventory' :
+                activeTabId === 'rep_customers' ? 'rep_customers' :
+                activeTabId === 'rep_performance' ? 'rep_performance' : 'rep_sales'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                setExpandedMenus((prev) => ({ ...prev, reports: true }));
+              }}
+              theme={theme}
+            />
+          ) : isCatalogActive ? (
+            <ProductManagement
+              activeSubTab={
+                activeTabId === 'categories' ? 'categories' :
+                activeTabId === 'brands' ? 'brands' : 'products'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                setExpandedMenus((prev) => ({ ...prev, catalog: true }));
+              }}
+              theme={theme}
+            />
+          ) : isInventoryActive ? (
+            <InventoryManagement
+              activeSubTab={
+                activeTabId === 'adjustment' ? 'adjustment' :
+                activeTabId === 'po' ? 'po' : 'stock'
+              }
+              onSelectSubTab={(tab) => {
+                setActiveTabId(tab);
+                setExpandedMenus((prev) => ({ ...prev, inventory: true }));
+              }}
+              theme={theme}
+            />
+          ) : (
+            <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
+              {/* Header Greeting in Salt & Pepper */}
             <div style={{ marginBottom: '2rem' }}>
               <h1 style={{
                 fontSize: '25px',
@@ -1567,6 +1672,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+          )}
         </main>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,11 @@ import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded';
+import SellRoundedIcon from '@mui/icons-material/SellRounded';
+import PriceChangeRoundedIcon from '@mui/icons-material/PriceChangeRounded';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 
 interface Product {
   id: string;
@@ -48,6 +53,10 @@ interface Product {
 interface CartItem {
   product: Product;
   quantity: number;
+  customPrice?: number;
+  discountPct?: number;
+  discountAmount?: number;
+  itemNote?: string;
 }
 
 interface HeldSale {
@@ -55,6 +64,8 @@ interface HeldSale {
   items: CartItem[];
   time: string;
   total: number;
+  saleNote?: string;
+  paymentNote?: string;
 }
 
 type PosThemeId = 'macos' | 'bw_dark' | 'bw_light' | 'blue_white' | 'classic_pos';
@@ -537,8 +548,87 @@ export default function PosMainScreen() {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
+  // Notes & Item Editing State
+  const [saleNote, setSaleNote] = useState<string>('');
+  const [paymentNote, setPaymentNote] = useState<string>('');
+  const [showSaleNoteModal, setShowSaleNoteModal] = useState(false);
+  const [showPaymentNoteModal, setShowPaymentNoteModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
+
+  // Item Editor Form state
+  const [itemFormPrice, setItemFormPrice] = useState<number>(0);
+  const [itemFormDiscountType, setItemFormDiscountType] = useState<'pct' | 'fixed'>('pct');
+  const [itemFormDiscountVal, setItemFormDiscountVal] = useState<number>(0);
+  const [itemFormNote, setItemFormNote] = useState<string>('');
+  const [itemFormQuantity, setItemFormQuantity] = useState<number>(1);
+
+  // Item-level calculation helpers
+  const getItemUnitPrice = (item: CartItem): number => {
+    return item.customPrice !== undefined ? item.customPrice : item.product.price;
+  };
+
+  const getItemDiscountAmount = (item: CartItem): number => {
+    const unitPrice = getItemUnitPrice(item);
+    const gross = unitPrice * item.quantity;
+    if (item.discountAmount !== undefined) {
+      return item.discountAmount;
+    }
+    if (item.discountPct && item.discountPct > 0) {
+      return Math.round((gross * item.discountPct) / 100);
+    }
+    return 0;
+  };
+
+  const getItemLineTotal = (item: CartItem): number => {
+    const unitPrice = getItemUnitPrice(item);
+    const gross = unitPrice * item.quantity;
+    const disc = getItemDiscountAmount(item);
+    return Math.max(0, gross - disc);
+  };
+
+  const openItemEditor = (item: CartItem) => {
+    setEditingItem(item);
+    setItemFormPrice(item.customPrice !== undefined ? item.customPrice : item.product.price);
+    if (item.discountAmount !== undefined && item.discountAmount > 0) {
+      setItemFormDiscountType('fixed');
+      setItemFormDiscountVal(item.discountAmount);
+    } else if (item.discountPct && item.discountPct > 0) {
+      setItemFormDiscountType('pct');
+      setItemFormDiscountVal(item.discountPct);
+    } else {
+      setItemFormDiscountType('pct');
+      setItemFormDiscountVal(0);
+    }
+    setItemFormNote(item.itemNote || '');
+    setItemFormQuantity(item.quantity);
+  };
+
+  const saveItemEditor = () => {
+    if (!editingItem) return;
+    setCart((prev) =>
+      prev.map((it) => {
+        if (it.product.id === editingItem.product.id) {
+          const isCustom = itemFormPrice !== it.product.price;
+          const isPct = itemFormDiscountType === 'pct';
+          return {
+            ...it,
+            quantity: Math.max(1, itemFormQuantity),
+            customPrice: isCustom ? itemFormPrice : undefined,
+            discountPct: isPct && itemFormDiscountVal > 0 ? itemFormDiscountVal : undefined,
+            discountAmount: !isPct && itemFormDiscountVal > 0 ? itemFormDiscountVal : undefined,
+            itemNote: itemFormNote.trim() || undefined,
+          };
+        }
+        return it;
+      })
+    );
+    setEditingItem(null);
+  };
+
   const clearCart = () => {
     setCart([]);
+    setSaleNote('');
+    setPaymentNote('');
   };
 
   // Hold Sale
@@ -549,21 +639,27 @@ export default function PosMainScreen() {
       items: [...cart],
       time: 'Just now',
       total: calculateTotal(),
+      saleNote: saleNote.trim() || undefined,
+      paymentNote: paymentNote.trim() || undefined,
     };
     setHeldSales((prev) => [newHold, ...prev]);
     setCart([]);
+    setSaleNote('');
+    setPaymentNote('');
   };
 
   const restoreHeldSale = (hold: HeldSale) => {
     setCart(hold.items);
+    if (hold.saleNote) setSaleNote(hold.saleNote);
+    if (hold.paymentNote) setPaymentNote(hold.paymentNote);
     setHeldSales((prev) => prev.filter((h) => h.id !== hold.id));
     setActiveNav('new_sale');
   };
 
   // Calculations
-  const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  const subtotal = cart.reduce((acc, item) => acc + getItemLineTotal(item), 0);
   const discountAmount = Math.round((subtotal * discountPct) / 100);
-  const taxableAmount = subtotal - discountAmount;
+  const taxableAmount = Math.max(0, subtotal - discountAmount);
   const tax = Math.round(taxableAmount * 0.05); // 5% GST
   const total = taxableAmount + tax;
 
@@ -577,12 +673,29 @@ export default function PosMainScreen() {
       setPaymentSuccess(false);
       setShowPaymentModal(false);
       setCart([]);
+      setSaleNote('');
+      setPaymentNote('');
     }, 1600);
   };
 
   // POS Dynamic Theme State: 'macos' | 'bw_dark' | 'bw_light' | 'blue_white' | 'classic_pos'
   const [currentThemeId, setCurrentThemeId] = useState<PosThemeId>('macos');
-  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
+        setShowThemeDropdown(false);
+      }
+    }
+    if (showThemeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showThemeDropdown]);
 
   useEffect(() => {
     try {
@@ -645,7 +758,7 @@ export default function PosMainScreen() {
               height: '36px',
               borderRadius: '0.55rem',
               backgroundColor: 'transparent',
-              border: `1px solid ${theme.headerBorder}`,
+              border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -656,11 +769,9 @@ export default function PosMainScreen() {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = theme.hoverBg;
-              e.currentTarget.style.borderColor = theme.borderHover;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.headerBorder;
             }}
           >
             {isSidebarOpen ? (
@@ -737,10 +848,6 @@ export default function PosMainScreen() {
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          backgroundColor: theme.bgCardSubtle,
-          border: `1px solid ${theme.border}`,
-          borderRadius: '0.65rem',
-          padding: '5px 14px',
         }}>
           <span style={{
             fontSize: '13px',
@@ -788,17 +895,17 @@ export default function PosMainScreen() {
                 alignItems: 'center',
                 gap: '0.55rem',
                 cursor: 'pointer',
-                padding: '4px 10px',
-                borderRadius: '0.65rem',
-                border: `1px solid ${showProfileMenu ? theme.borderHover : theme.border}`,
-                backgroundColor: theme.hoverBg,
+                padding: '4px 8px',
+                borderRadius: '0.55rem',
+                border: 'none',
+                backgroundColor: 'transparent',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = theme.borderHover;
+                e.currentTarget.style.backgroundColor = theme.hoverBg;
               }}
               onMouseLeave={(e) => {
-                if (!showProfileMenu) e.currentTarget.style.borderColor = theme.border;
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
               <div style={{
@@ -935,8 +1042,9 @@ export default function PosMainScreen() {
           flexShrink: 0,
           boxSizing: 'border-box',
           transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflowX: 'hidden',
-          overflowY: 'auto',
+          overflow: 'visible',
+          zIndex: 40,
+          position: 'relative',
         }}>
           {/* Top Nav Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -1175,58 +1283,140 @@ export default function PosMainScreen() {
               )}
             </Link>
 
-            {/* Theme switcher button - LAST IN SIDEBAR */}
-            <button
-              type="button"
-              onClick={() => setShowThemeModal(true)}
-              title={!isSidebarOpen ? `Theme: ${theme.name}` : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'space-between' : 'center',
-                padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
-                borderRadius: '0.65rem',
-                border: showThemeModal ? `1px solid ${theme.borderHover}` : 'none',
-                backgroundColor: showThemeModal ? theme.sidebarHoverBg : 'transparent',
-                color: theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textAlign: 'left',
-                transition: 'all 0.15s ease',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.sidebarHoverBg; }}
-              onMouseLeave={(e) => {
-                if (!showThemeModal) e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+            {/* Theme switcher button & upward dropdown - LAST IN SIDEBAR */}
+            <div ref={themeDropdownRef} style={{ position: 'relative', width: '100%' }}>
+              {/* Upward Dropdown Menu */}
+              {showThemeDropdown && (
+                <>
+                  <style>{`
+                    @keyframes posThemeSlideUp {
+                      0% {
+                        opacity: 0;
+                        transform: translateY(14px);
+                      }
+                      100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+                  `}</style>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 'calc(100% + 8px)',
+                      left: 0,
+                      width: isSidebarOpen ? '100%' : '190px',
+                      minWidth: isSidebarOpen ? undefined : '190px',
+                      backgroundColor: theme.popoverBg,
+                      border: `1px solid ${theme.popoverBorder}`,
+                      borderRadius: '0.85rem',
+                      boxShadow: '0 16px 40px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.1)',
+                      padding: '0.45rem',
+                      zIndex: 100,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.2rem',
+                      boxSizing: 'border-box',
+                      animation: 'posThemeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                      transformOrigin: 'bottom center',
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{
+                      padding: '0.35rem 0.6rem 0.4rem',
+                      borderBottom: `1px solid ${theme.border}`,
+                      marginBottom: '0.2rem',
+                    }}>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        color: theme.textSecondary,
+                      }}>
+                        Select Theme
+                      </span>
+                    </div>
+
+                    {/* 5 Themes List */}
+                    {(Object.keys(POS_THEMES) as PosThemeId[]).map((tid) => {
+                      const t = POS_THEMES[tid];
+                      const isCurrent = currentThemeId === tid;
+
+                      return (
+                        <button
+                          key={tid}
+                          type="button"
+                          onClick={() => {
+                            handleSelectTheme(tid);
+                            setShowThemeDropdown(false);
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '0.55rem 0.75rem',
+                            borderRadius: '0.55rem',
+                            border: isCurrent ? `1px solid ${theme.borderHover}` : '1px solid transparent',
+                            backgroundColor: isCurrent ? theme.sidebarHoverBg : 'transparent',
+                            color: isCurrent ? theme.activeBg : theme.textPrimary,
+                            fontSize: '13.5px',
+                            fontWeight: isCurrent ? 800 : 500,
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            textAlign: 'left',
+                            transition: 'all 0.12s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isCurrent) e.currentTarget.style.backgroundColor = theme.hoverBg;
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isCurrent) e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
+                          <span style={{ whiteSpace: 'nowrap' }}>{t.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Theme Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setShowThemeDropdown((prev) => !prev)}
+                title={!isSidebarOpen ? `Theme: ${theme.name}` : undefined}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isSidebarOpen ? 'flex-start' : 'center',
+                  padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
+                  borderRadius: '0.65rem',
+                  border: showThemeDropdown ? `1px solid ${theme.borderHover}` : 'none',
+                  backgroundColor: showThemeDropdown ? theme.sidebarHoverBg : 'transparent',
+                  color: theme.sidebarTextPrimary,
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease',
+                  boxSizing: 'border-box',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.sidebarHoverBg; }}
+                onMouseLeave={(e) => {
+                  if (!showThemeDropdown) e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
                 <PaletteRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
                 {isSidebarOpen && (
                   <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Theme</span>
                 )}
-              </div>
-              {isSidebarOpen && (
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '9999px',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  lineHeight: 1.2,
-                }}>
-                  <span>{theme.emoji}</span>
-                  <span>{theme.name}</span>
-                </span>
-              )}
-            </button>
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -1706,6 +1896,78 @@ export default function PosMainScreen() {
             </div>
           </div>
 
+          {/* Quick Notes Bar: Sale Note & Payment Note */}
+          <div style={{
+            padding: '0.45rem 1.25rem',
+            backgroundColor: theme.bgCard,
+            borderBottom: `1px solid ${theme.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}>
+            {/* Sale Note Pill Button */}
+            <button
+              type="button"
+              onClick={() => setShowSaleNoteModal(true)}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '0.5rem',
+                border: saleNote ? `1px solid ${theme.activeBg}` : `1px dashed ${theme.border}`,
+                backgroundColor: saleNote ? theme.bgCardSubtle : 'transparent',
+                color: saleNote ? theme.activeBg : theme.textSecondary,
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+              title={saleNote ? `Sale Note: ${saleNote}` : 'Add Sale Note'}
+            >
+              <NoteAltRoundedIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {saleNote ? `Note: ${saleNote}` : '+ Sale Note'}
+              </span>
+            </button>
+
+            {/* Payment Note Pill Button */}
+            <button
+              type="button"
+              onClick={() => setShowPaymentNoteModal(true)}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.35rem 0.65rem',
+                borderRadius: '0.5rem',
+                border: paymentNote ? `1px solid ${theme.activeBg}` : `1px dashed ${theme.border}`,
+                backgroundColor: paymentNote ? theme.bgCardSubtle : 'transparent',
+                color: paymentNote ? theme.activeBg : theme.textSecondary,
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+              title={paymentNote ? `Payment Note: ${paymentNote}` : 'Add Payment Note'}
+            >
+              <PaymentsRoundedIcon sx={{ fontSize: 14, flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {paymentNote ? `Pay: ${paymentNote}` : '+ Pay Note'}
+              </span>
+            </button>
+          </div>
+
           {/* Cart Items List */}
           <div style={{
             flex: 1,
@@ -1731,89 +1993,160 @@ export default function PosMainScreen() {
                 <span style={{ fontSize: '12px', maxWidth: '200px', color: theme.textMuted }}>Tap any product from the catalog to add items.</span>
               </div>
             ) : (
-              cart.map((item) => (
-                <div
-                  key={item.product.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.65rem 0.75rem',
-                    backgroundColor: theme.bgCardSubtle,
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div style={{ minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {item.product.name}
-                    </div>
-                    <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
-                      ₹{item.product.price} each
-                    </div>
-                  </div>
+              cart.map((item) => {
+                const hasCustomPrice = item.customPrice !== undefined && item.customPrice !== item.product.price;
+                const discAmt = getItemDiscountAmount(item);
+                const lineTotal = getItemLineTotal(item);
 
-                  {/* Quantity Stepper */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      backgroundColor: theme.bgCard,
-                      borderRadius: '0.45rem',
+                return (
+                  <div
+                    key={item.product.id}
+                    onClick={() => openItemEditor(item)}
+                    role="button"
+                    tabIndex={0}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      padding: '0.65rem 0.75rem',
+                      backgroundColor: theme.bgCardSubtle,
+                      borderRadius: '0.65rem',
                       border: `1px solid ${theme.border}`,
-                      padding: '2px',
-                    }}>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.product.id, -1)}
-                        style={{
-                          width: '22px',
-                          height: '22px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.borderHover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.border; }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span style={{
+                          fontSize: '13.5px',
+                          fontWeight: 800,
+                          color: theme.textPrimary,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}>
+                          {item.product.name}
+                        </span>
+                        <EditRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary, opacity: 0.6 }} />
+                      </div>
+
+                      {/* Pricing & Discount Badges */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', flexWrap: 'wrap' }}>
+                        {hasCustomPrice ? (
+                          <span style={{ fontSize: '11px', color: theme.textSecondary }}>
+                            <s style={{ opacity: 0.5 }}>₹{item.product.price}</s>{' '}
+                            <strong style={{ color: theme.activeBg }}>₹{item.customPrice}</strong> each
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '11px', color: theme.textSecondary }}>
+                            ₹{item.product.price} each
+                          </span>
+                        )}
+
+                        {discAmt > 0 && (
+                          <span style={{
+                            fontSize: '9.5px',
+                            fontWeight: 800,
+                            backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                            color: '#16A34A',
+                            padding: '1px 5px',
+                            borderRadius: '4px',
+                          }}>
+                            {item.discountPct ? `${item.discountPct}% OFF` : `-₹${item.discountAmount}`}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Item Note */}
+                      {item.itemNote && (
+                        <div style={{
+                          marginTop: '3px',
+                          fontSize: '10.5px',
+                          color: theme.activeBg,
+                          fontWeight: 600,
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'none',
-                          border: 'none',
+                          gap: '3px',
+                        }}>
+                          <span>📝 {item.itemNote}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quantity Stepper & Line Total */}
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        backgroundColor: theme.bgCard,
+                        borderRadius: '0.45rem',
+                        border: `1px solid ${theme.border}`,
+                        padding: '2px',
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.product.id, -1)}
+                          style={{
+                            width: '22px',
+                            height: '22px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'none',
+                            border: 'none',
+                            color: theme.textPrimary,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <RemoveRoundedIcon sx={{ fontSize: 13 }} />
+                        </button>
+                        <span style={{
+                          width: '22px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          fontWeight: 800,
                           color: theme.textPrimary,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <RemoveRoundedIcon sx={{ fontSize: 13 }} />
-                      </button>
-                      <span style={{
-                        width: '22px',
-                        textAlign: 'center',
-                        fontSize: '12px',
+                        }}>
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.product.id, 1)}
+                          style={{
+                            width: '22px',
+                            height: '22px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'none',
+                            border: 'none',
+                            color: theme.textPrimary,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <AddRoundedIcon sx={{ fontSize: 13 }} />
+                        </button>
+                      </div>
+
+                      <div style={{
+                        width: '60px',
+                        textAlign: 'right',
+                        fontSize: '14px',
                         fontWeight: 800,
                         color: theme.textPrimary,
                       }}>
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.product.id, 1)}
-                        style={{
-                          width: '22px',
-                          height: '22px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'none',
-                          border: 'none',
-                          color: theme.textPrimary,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <AddRoundedIcon sx={{ fontSize: 13 }} />
-                      </button>
-                    </div>
-
-                    <div style={{ width: '60px', textAlign: 'right', fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>
-                      ₹{item.product.price * item.quantity}
+                        ₹{lineTotal}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -1959,9 +2292,26 @@ export default function PosMainScreen() {
                 <h3 style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.35rem' }}>
                   Payment of ₹{total} Successful!
                 </h3>
-                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 0.5rem 0' }}>
                   Order #ORD-1025 completed • Receipt printing...
                 </p>
+                {(saleNote || paymentNote) && (
+                  <div style={{
+                    display: 'inline-flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    textAlign: 'left',
+                    backgroundColor: theme.bgCardSubtle,
+                    padding: '0.5rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    fontSize: '11.5px',
+                    marginTop: '0.5rem',
+                  }}>
+                    {saleNote && <div><strong>Sale Note:</strong> {saleNote}</div>}
+                    {paymentNote && <div><strong>Pay Ref:</strong> {paymentNote}</div>}
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -2094,6 +2444,66 @@ export default function PosMainScreen() {
                   </div>
                 )}
 
+                {/* Notes in Payment Modal */}
+                <div style={{
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.65rem',
+                }}>
+                  {saleNote && (
+                    <div style={{
+                      padding: '0.55rem 0.75rem',
+                      backgroundColor: theme.bgCardSubtle,
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                    }}>
+                      <span style={{ color: theme.textSecondary, fontWeight: 700 }}>Sale Note:</span>
+                      <span style={{ color: theme.textPrimary }}>{saleNote}</span>
+                    </div>
+                  )}
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary }}>
+                        Payment Note / Reference:
+                      </label>
+                      {paymentNote && (
+                        <button
+                          type="button"
+                          onClick={() => setPaymentNote('')}
+                          style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '11px', cursor: 'pointer' }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. UPI txn ref, Cheque #, Split info..."
+                      value={paymentNote}
+                      onChange={(e) => setPaymentNote(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '38px',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: '0.55rem',
+                        padding: '0 0.75rem',
+                        color: theme.textPrimary,
+                        fontSize: '13px',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
                 {/* Submit Payment Button */}
                 <button
                   type="button"
@@ -2212,53 +2622,69 @@ export default function PosMainScreen() {
         </div>
       )}
 
-      {/* 5-THEME SELECTION MODAL (EXCLUSIVELY FOR POS) */}
-      {showThemeModal && (
+      {/* ITEM EDITOR MODAL */}
+      {editingItem && (
         <div
-          onClick={() => setShowThemeModal(false)}
+          onClick={() => setEditingItem(null)}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 150,
-            backgroundColor: 'rgba(0,0,0,0.55)',
+            backgroundColor: 'rgba(0,0,0,0.6)',
             backdropFilter: 'blur(3px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1.5rem',
+            zIndex: 140,
+            padding: '1.25rem',
           }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: '450px',
               backgroundColor: theme.popoverBg,
               border: `1px solid ${theme.border}`,
               borderRadius: '1.25rem',
-              padding: '1.5rem 1.75rem',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+              padding: '1.5rem',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.1rem',
+              gap: '1rem',
+              boxSizing: 'border-box',
             }}
           >
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <PaletteRoundedIcon sx={{ fontSize: 22, color: theme.activeBg }} />
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                    Select POS Theme
-                  </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  position: 'relative',
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '0.65rem',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  backgroundColor: theme.bgCardSubtle,
+                }}>
+                  <Image
+                    src={editingItem.product.image}
+                    alt={editingItem.product.name}
+                    fill
+                    style={{ objectFit: 'cover' }}
+                  />
                 </div>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0.25rem 0 0 0' }}>
-                  Choose from 5 accurate design presets tailored exclusively for POS
-                </p>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    {editingItem.product.name}
+                  </h3>
+                  <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                    {editingItem.product.variant} • Base Price: ₹{editingItem.product.price}
+                  </div>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowThemeModal(false)}
+                onClick={() => setEditingItem(null)}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -2266,148 +2692,625 @@ export default function PosMainScreen() {
                   cursor: 'pointer',
                   padding: '4px',
                   borderRadius: '0.45rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
-            {/* 5 Themes List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {(Object.keys(POS_THEMES) as PosThemeId[]).map((tid) => {
-                const t = POS_THEMES[tid];
-                const isCurrent = currentThemeId === tid;
+            {/* Price & Quantity Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {/* Unit Price */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>
+                    Unit Price (₹)
+                  </label>
+                  {itemFormPrice !== editingItem.product.price && (
+                    <button
+                      type="button"
+                      onClick={() => setItemFormPrice(editingItem.product.price)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: theme.activeBg,
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        padding: 0,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={itemFormPrice}
+                  onChange={(e) => setItemFormPrice(Math.max(0, Number(e.target.value) || 0))}
+                  style={{
+                    height: '38px',
+                    borderRadius: '0.55rem',
+                    border: itemFormPrice !== editingItem.product.price ? `1.5px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.textPrimary,
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    padding: '0 0.75rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
 
-                return (
-                  <div
-                    key={tid}
-                    onClick={() => handleSelectTheme(tid)}
-                    role="button"
-                    tabIndex={0}
+              {/* Quantity Stepper */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>
+                  Quantity
+                </label>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '38px',
+                  borderRadius: '0.55rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCard,
+                  padding: '2px',
+                  boxSizing: 'border-box',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setItemFormQuantity((q) => Math.max(1, q - 1))}
                     style={{
-                      padding: '0.85rem 1.1rem',
-                      borderRadius: '0.85rem',
-                      border: isCurrent ? `2px solid ${t.swatch.primary}` : `1px solid ${theme.border}`,
-                      backgroundColor: isCurrent ? theme.bgCardSubtle : theme.bgCard,
-                      cursor: 'pointer',
+                      flex: 1,
+                      height: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isCurrent) e.currentTarget.style.borderColor = theme.borderHover;
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isCurrent) e.currentTarget.style.borderColor = theme.border;
+                      justifyContent: 'center',
+                      background: 'none',
+                      border: 'none',
+                      color: theme.textPrimary,
+                      cursor: 'pointer',
                     }}
                   >
-                    {/* Left: Emoji + Name + Active badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '22px' }}>{t.emoji}</span>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary }}>
-                            {t.name}
-                          </span>
-                          {isCurrent && (
-                            <span style={{
-                              fontSize: '10.5px',
-                              fontWeight: 800,
-                              backgroundColor: t.swatch.primary,
-                              color: '#FFFFFF',
-                              padding: '2px 7px',
-                              borderRadius: '9999px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '3px',
-                            }}>
-                              <CheckRoundedIcon sx={{ fontSize: 12 }} />
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '2px' }}>
-                          Primary: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.swatch.primary}</span> • Text: <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.swatch.text}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right: Color Swatches Preview Bar (Page, Sidebar, Card, Primary, Text) */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      {[
-                        { label: 'Page', color: t.swatch.page },
-                        { label: 'Sidebar', color: t.swatch.sidebar },
-                        { label: 'Card', color: t.swatch.card },
-                        { label: 'Primary', color: t.swatch.primary },
-                        { label: 'Text', color: t.swatch.text },
-                      ].map((sw, idx) => (
-                        <div
-                          key={idx}
-                          title={`${sw.label}: ${sw.color}`}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '3px',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: '22px',
-                              height: '22px',
-                              borderRadius: '50%',
-                              backgroundColor: sw.color,
-                              border: sw.color === '#FFFFFF' ? '1px solid #D4D4D4' : '1px solid rgba(0,0,0,0.15)',
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-                            }}
-                          />
-                          <span style={{ fontSize: '9px', fontWeight: 600, color: theme.textMuted }}>{sw.label[0]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+                    <RemoveRoundedIcon sx={{ fontSize: 16 }} />
+                  </button>
+                  <span style={{
+                    width: '32px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    color: theme.textPrimary,
+                  }}>
+                    {itemFormQuantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setItemFormQuantity((q) => q + 1)}
+                    style={{
+                      flex: 1,
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'none',
+                      border: 'none',
+                      color: theme.textPrimary,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <AddRoundedIcon sx={{ fontSize: 16 }} />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Footer */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingTop: '0.65rem',
-              borderTop: `1px solid ${theme.border}`,
-              fontSize: '12px',
-              color: theme.textSecondary,
-            }}>
-              <span>Selected theme is saved to your register device.</span>
+            {/* Item Discount Section */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>
+                  Item Discount
+                </label>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setItemFormDiscountType('pct');
+                      setItemFormDiscountVal(0);
+                    }}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: '4px',
+                      border: itemFormDiscountType === 'pct' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                      backgroundColor: itemFormDiscountType === 'pct' ? theme.activeBg : 'transparent',
+                      color: itemFormDiscountType === 'pct' ? theme.activeText : theme.textSecondary,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    %
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setItemFormDiscountType('fixed');
+                      setItemFormDiscountVal(0);
+                    }}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: '4px',
+                      border: itemFormDiscountType === 'fixed' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                      backgroundColor: itemFormDiscountType === 'fixed' ? theme.activeBg : 'transparent',
+                      color: itemFormDiscountType === 'fixed' ? theme.activeText : theme.textSecondary,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ₹
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick % chips if percentage */}
+              {itemFormDiscountType === 'pct' ? (
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {[0, 5, 10, 15, 20, 25].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setItemFormDiscountVal(pct)}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '0.45rem',
+                        border: itemFormDiscountVal === pct ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                        backgroundColor: itemFormDiscountVal === pct ? theme.activeBg : theme.bgCard,
+                        color: itemFormDiscountVal === pct ? theme.activeText : theme.textPrimary,
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {pct === 0 ? 'None' : `${pct}%`}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Discount in ₹"
+                  value={itemFormDiscountVal || ''}
+                  onChange={(e) => setItemFormDiscountVal(Math.max(0, Number(e.target.value) || 0))}
+                  style={{
+                    height: '38px',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.textPrimary,
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    padding: '0 0.75rem',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Item Note / Custom Instructions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>
+                Item Note / Special Instructions
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Less spicy, No onion, Extra sauce..."
+                value={itemFormNote}
+                onChange={(e) => setItemFormNote(e.target.value)}
+                style={{
+                  height: '38px',
+                  borderRadius: '0.55rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCard,
+                  color: theme.textPrimary,
+                  fontSize: '13px',
+                  padding: '0 0.75rem',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+              {/* Quick note suggestions */}
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                {['No onion', 'Less spicy', 'Extra cheese', 'Extra sauce', 'Pack separately', 'Hot'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      setItemFormNote((prev) => (prev ? `${prev}, ${preset}` : preset));
+                    }}
+                    style={{
+                      padding: '2px 7px',
+                      borderRadius: '9999px',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textSecondary,
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    +{preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Calculated Line Total Preview */}
+            {(() => {
+              const gross = itemFormPrice * itemFormQuantity;
+              const disc = itemFormDiscountType === 'pct'
+                ? Math.round((gross * itemFormDiscountVal) / 100)
+                : itemFormDiscountVal;
+              const net = Math.max(0, gross - disc);
+
+              return (
+                <div style={{
+                  padding: '0.65rem 0.85rem',
+                  backgroundColor: theme.bgCardSubtle,
+                  borderRadius: '0.65rem',
+                  border: `1px solid ${theme.border}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                  <div style={{ fontSize: '12px', color: theme.textSecondary }}>
+                    <span>₹{itemFormPrice} × {itemFormQuantity}</span>
+                    {disc > 0 && <span style={{ color: '#22C55E' }}> - ₹{disc} discount</span>}
+                  </div>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary }}>
+                    ₹{net}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Footer Buttons */}
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
               <button
                 type="button"
-                onClick={() => setShowThemeModal(false)}
+                onClick={() => {
+                  removeFromCart(editingItem.product.id);
+                  setEditingItem(null);
+                }}
                 style={{
-                  padding: '0.45rem 1.25rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.posBtnBg,
-                  color: theme.posBtnText,
-                  border: 'none',
-                  fontSize: '13px',
+                  padding: '0 0.85rem',
+                  height: '42px',
+                  borderRadius: '0.65rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: 'transparent',
+                  color: '#EF4444',
+                  fontSize: '12.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  boxShadow: `0 3px 0 ${theme.posBtnShadow}`,
                 }}
               >
-                Done
+                Remove
+              </button>
+              <button
+                type="button"
+                onClick={saveItemEditor}
+                className="button-20-3d"
+                style={{
+                  flex: 1,
+                  height: '42px',
+                  borderRadius: '0.65rem',
+                  backgroundColor: theme.posBtnBg,
+                  color: theme.posBtnText,
+                  fontSize: '13.5px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
+                }}
+              >
+                Save Changes
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* SALE NOTE MODAL */}
+      {showSaleNoteModal && (
+        <div
+          onClick={() => setShowSaleNoteModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 140,
+            padding: '1.25rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              backgroundColor: theme.popoverBg,
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1.25rem',
+              padding: '1.5rem',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <NoteAltRoundedIcon sx={{ fontSize: 20, color: theme.activeBg }} />
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Order / Sale Note
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSaleNoteModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '-0.3rem 0 0 0' }}>
+              Add special instructions for kitchen preparation, packing, or customer receipt.
+            </p>
+
+            {/* Quick preset chips */}
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {['Takeaway Order', 'Urgent / Priority', 'Pack Cutlery', 'Allergy Alert', 'Customer Self-Pickup', 'Gift Packaging'].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setSaleNote((prev) => (prev ? `${prev}, ${chip}` : chip));
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '9999px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textSecondary,
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  +{chip}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              rows={3}
+              placeholder="Type order or sale note here..."
+              value={saleNote}
+              onChange={(e) => setSaleNote(e.target.value)}
+              style={{
+                width: '100%',
+                backgroundColor: theme.bgCard,
+                border: `1px solid ${theme.border}`,
+                borderRadius: '0.65rem',
+                padding: '0.65rem 0.75rem',
+                color: theme.textPrimary,
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                resize: 'none',
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              {saleNote && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaleNote('');
+                    setShowSaleNoteModal(false);
+                  }}
+                  style={{
+                    padding: '0 0.85rem',
+                    height: '40px',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: 'transparent',
+                    color: '#EF4444',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowSaleNoteModal(false)}
+                className="button-20-3d"
+                style={{
+                  flex: 1,
+                  height: '40px',
+                  borderRadius: '0.65rem',
+                  backgroundColor: theme.posBtnBg,
+                  color: theme.posBtnText,
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
+                }}
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT NOTE MODAL */}
+      {showPaymentNoteModal && (
+        <div
+          onClick={() => setShowPaymentNoteModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 140,
+            padding: '1.25rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '420px',
+              backgroundColor: theme.popoverBg,
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1.25rem',
+              padding: '1.5rem',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <PaymentsRoundedIcon sx={{ fontSize: 20, color: theme.activeBg }} />
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Payment Note / Reference
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPaymentNoteModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '-0.3rem 0 0 0' }}>
+              Record transaction ID, UPI reference, cheque number, or staff payment approval.
+            </p>
+
+            {/* Quick preset chips */}
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {['UPI Ref: ', 'Split: 50% Cash / 50% UPI', 'Cheque #', 'Manager Approved', 'Pending Confirmation', 'Card Last 4: '].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setPaymentNote((prev) => (prev ? `${prev} | ${chip}` : chip));
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '9999px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textSecondary,
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  +{chip}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              rows={3}
+              placeholder="e.g. GPay UPI Ref #892019, Cheque 40291..."
+              value={paymentNote}
+              onChange={(e) => setPaymentNote(e.target.value)}
+              style={{
+                width: '100%',
+                backgroundColor: theme.bgCard,
+                border: `1px solid ${theme.border}`,
+                borderRadius: '0.65rem',
+                padding: '0.65rem 0.75rem',
+                color: theme.textPrimary,
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                resize: 'none',
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
+              {paymentNote && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentNote('');
+                    setShowPaymentNoteModal(false);
+                  }}
+                  style={{
+                    padding: '0 0.85rem',
+                    height: '40px',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: 'transparent',
+                    color: '#EF4444',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowPaymentNoteModal(false)}
+                className="button-20-3d"
+                style={{
+                  flex: 1,
+                  height: '40px',
+                  borderRadius: '0.65rem',
+                  backgroundColor: theme.posBtnBg,
+                  color: theme.posBtnText,
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: `0 4px 0 ${theme.posBtnShadow}`,
+                }}
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
