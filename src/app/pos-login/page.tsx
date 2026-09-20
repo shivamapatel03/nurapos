@@ -253,11 +253,7 @@ export default function PosLoginPage() {
                 </label>
 
                 <Link
-                  href="#forgot-password"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Password reset link sent to your administrator.');
-                  }}
+                  href="/forgot-password"
                   style={{
                     fontWeight: 600,
                     color: '#000000',

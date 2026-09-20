@@ -277,11 +277,7 @@ export default function SigninPage() {
                 {/* Forget Password link (right-aligned) */}
                 <div style={{ textAlign: 'right', marginTop: '-0.2rem' }}>
                   <Link
-                    href="#forgot-password"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('Password reset link has been dispatched to your email.');
-                    }}
+                    href="/forgot-password"
                     style={{
                       fontSize: '0.85rem',
                       fontWeight: 700,
