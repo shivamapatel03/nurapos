@@ -1,3 +1,12 @@
 'use client';
 
-export { default } from '../dashboard/page';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function AdminDashboardRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, [router]);
+  return null;
+}

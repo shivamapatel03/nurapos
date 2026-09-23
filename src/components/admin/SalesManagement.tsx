@@ -120,6 +120,7 @@ export interface SalesManagementProps {
     tableRowHover: string;
     popoverBg: string;
     popoverBorder: string;
+    sidebarIsDark: boolean;
   };
 }
 
