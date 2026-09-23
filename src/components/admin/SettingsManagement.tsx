@@ -38,6 +38,8 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KitchenRoundedIcon from '@mui/icons-material/KitchenRounded';
 import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import { ThemeId, APP_THEMES } from '@/lib/themeConfig';
 
 // ============================================================================
@@ -79,6 +81,46 @@ export default function SettingsManagement({
       setToastMessage(null);
     }, 3200);
   };
+
+  // Modern animated Toggle Switch component
+  const renderToggle = (checked: boolean, onToggle: () => void) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onToggle}
+      style={{
+        width: '42px',
+        height: '24px',
+        borderRadius: '9999px',
+        backgroundColor: checked
+          ? theme.activeBg
+          : (theme.headerIsDark ? '#3F3F46' : '#D1D5DB'),
+        position: 'relative',
+        transition: 'background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        flexShrink: 0,
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+        outline: 'none',
+        display: 'inline-block',
+      }}
+    >
+      <div
+        style={{
+          width: '18px',
+          height: '18px',
+          borderRadius: '50%',
+          backgroundColor: checked ? theme.activeText : '#FFFFFF',
+          position: 'absolute',
+          top: '3px',
+          left: checked ? '21px' : '3px',
+          transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        }}
+      />
+    </button>
+  );
 
   // 1. STORE PROFILE STATE
   const [storeName, setStoreName] = useState('SP CAFE & Bistro');
@@ -207,10 +249,6 @@ export default function SettingsManagement({
     { id: 'sec-4', timestamp: '2026-09-19 21:15', user: 'Alex Vance (Manager)', action: 'Void Order #9812 Approved', ip: '192.168.1.110' },
   ]);
 
-  // 10. APPEARANCE STATE
-  const [uiScaling, setUiScaling] = useState<'Compact' | 'Standard' | 'Touch-Optimized'>('Standard');
-  const [soundScheme, setSoundScheme] = useState<'Subtle Click' | 'Mechanical Register' | 'Muted'>('Subtle Click');
-  const [receiptTemplate, setReceiptTemplate] = useState<'Classic Minimal' | 'Modern Detailed' | 'Compact Slip'>('Modern Detailed');
 
 
   return (
@@ -871,22 +909,7 @@ export default function SettingsManagement({
                   Synchronize central inventory catalogs while maintaining branch-specific registers, pricing, and shift ledgers.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsMultiOutletEnabled(!isMultiOutletEnabled)}
-                style={{
-                  padding: '0.45rem 1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: isMultiOutletEnabled ? theme.activeBg : theme.hoverBg,
-                  color: isMultiOutletEnabled ? theme.activeText : theme.textSecondary,
-                  border: `1px solid ${theme.border}`,
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                {isMultiOutletEnabled ? 'Enabled' : 'Disabled'}
-              </button>
+              {renderToggle(isMultiOutletEnabled, () => setIsMultiOutletEnabled(!isMultiOutletEnabled))}
             </div>
 
             {isMultiOutletEnabled && (
@@ -1370,27 +1393,12 @@ export default function SettingsManagement({
                         </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPaymentMethods((prev) => ({
-                          ...prev,
-                          [tender.key]: !(prev as any)[tender.key],
-                        }))
-                      }
-                      style={{
-                        padding: '0.35rem 0.75rem',
-                        borderRadius: '0.45rem',
-                        backgroundColor: isEnabled ? theme.badgeBg : theme.hoverBg,
-                        color: isEnabled ? theme.badgeText : theme.textSecondary,
-                        border: `1px solid ${theme.border}`,
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {isEnabled ? 'Active' : 'Disabled'}
-                    </button>
+                    {renderToggle(isEnabled, () =>
+                      setPaymentMethods((prev) => ({
+                        ...prev,
+                        [tender.key]: !(prev as any)[tender.key],
+                      }))
+                    )}
                   </div>
                 );
               })}
@@ -1465,22 +1473,7 @@ export default function SettingsManagement({
               <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
                 Auto-generate bill-amount embedded dynamic QR code on checkout screen
               </span>
-              <button
-                type="button"
-                onClick={() => setAutoDynamicUpiQr(!autoDynamicUpiQr)}
-                style={{
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '0.45rem',
-                  backgroundColor: autoDynamicUpiQr ? theme.activeBg : theme.hoverBg,
-                  color: autoDynamicUpiQr ? theme.activeText : theme.textSecondary,
-                  border: `1px solid ${theme.border}`,
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                {autoDynamicUpiQr ? 'Enabled' : 'Disabled'}
-              </button>
+              {renderToggle(autoDynamicUpiQr, () => setAutoDynamicUpiQr(!autoDynamicUpiQr))}
             </div>
           </div>
 
@@ -1577,22 +1570,7 @@ export default function SettingsManagement({
                   Round fractional bill totals to nearest ₹1.00 (e.g. ₹249.75 to ₹250.00)
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setAutoRoundOff(!autoRoundOff)}
-                style={{
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '0.45rem',
-                  backgroundColor: autoRoundOff ? theme.activeBg : theme.hoverBg,
-                  color: autoRoundOff ? theme.activeText : theme.textSecondary,
-                  border: `1px solid ${theme.border}`,
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                }}
-              >
-                {autoRoundOff ? 'Enabled' : 'Disabled'}
-              </button>
+              {renderToggle(autoRoundOff, () => setAutoRoundOff(!autoRoundOff))}
             </div>
           </div>
         </div>
@@ -1714,22 +1692,7 @@ export default function SettingsManagement({
                   <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Auto Paper Cutter</div>
                   <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Cut paper after ticket completes</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAutoCutter(!autoCutter)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: autoCutter ? theme.activeBg : theme.hoverBg,
-                    color: autoCutter ? theme.activeText : theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {autoCutter ? 'Enabled' : 'Disabled'}
-                </button>
+                {renderToggle(autoCutter, () => setAutoCutter(!autoCutter))}
               </div>
             </div>
           </div>
@@ -1837,22 +1800,7 @@ export default function SettingsManagement({
                   <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
                     Kick drawer automatically on cash sale
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setCashDrawerPulseOnCash(!cashDrawerPulseOnCash)}
-                    style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: cashDrawerPulseOnCash ? theme.activeBg : theme.hoverBg,
-                      color: cashDrawerPulseOnCash ? theme.activeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {cashDrawerPulseOnCash ? 'Enabled' : 'Disabled'}
-                  </button>
+                  {renderToggle(cashDrawerPulseOnCash, () => setCashDrawerPulseOnCash(!cashDrawerPulseOnCash))}
                 </div>
               </div>
             </div>
@@ -1937,22 +1885,7 @@ export default function SettingsManagement({
                       {item.desc}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={item.toggle}
-                    style={{
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: item.state ? theme.activeBg : theme.hoverBg,
-                      color: item.state ? theme.activeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {item.state ? 'Enabled' : 'Disabled'}
-                  </button>
+                  {renderToggle(item.state, item.toggle)}
                 </div>
               ))}
             </div>
@@ -2019,22 +1952,7 @@ export default function SettingsManagement({
                       Notify immediately when ingredients or merchandise fall below reorder threshold.
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setNotifyLowStock(!notifyLowStock)}
-                    style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: notifyLowStock ? theme.activeBg : theme.hoverBg,
-                      color: notifyLowStock ? theme.activeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {notifyLowStock ? 'Enabled' : 'Disabled'}
-                  </button>
+                  {renderToggle(notifyLowStock, () => setNotifyLowStock(!notifyLowStock))}
                 </div>
                 {notifyLowStock && (
                   <input
@@ -2073,22 +1991,7 @@ export default function SettingsManagement({
                       Automated executive summary dispatched daily at 11:30 PM with revenue, order count, and payment tenders.
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setNotifyEndOfDaySummary(!notifyEndOfDaySummary)}
-                    style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: notifyEndOfDaySummary ? theme.activeBg : theme.hoverBg,
-                      color: notifyEndOfDaySummary ? theme.activeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {notifyEndOfDaySummary ? 'Enabled' : 'Disabled'}
-                  </button>
+                  {renderToggle(notifyEndOfDaySummary, () => setNotifyEndOfDaySummary(!notifyEndOfDaySummary))}
                 </div>
                 {notifyEndOfDaySummary && (
                   <input
@@ -2129,22 +2032,7 @@ export default function SettingsManagement({
                     Alert manager if actual till cash deviates from expected balance by more than ₹{discrepancyThreshold}.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setNotifyShiftDiscrepancy(!notifyShiftDiscrepancy)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: notifyShiftDiscrepancy ? theme.activeBg : theme.hoverBg,
-                    color: notifyShiftDiscrepancy ? theme.activeText : theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {notifyShiftDiscrepancy ? 'Enabled' : 'Disabled'}
-                </button>
+                {renderToggle(notifyShiftDiscrepancy, () => setNotifyShiftDiscrepancy(!notifyShiftDiscrepancy))}
               </div>
 
               {/* Void & Refund Alert */}
@@ -2167,22 +2055,7 @@ export default function SettingsManagement({
                     Immediately send push alert when a cashier cancels a settled invoice or applies a discount over 15%.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setNotifyOrderVoidRefund(!notifyOrderVoidRefund)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: notifyOrderVoidRefund ? theme.activeBg : theme.hoverBg,
-                    color: notifyOrderVoidRefund ? theme.activeText : theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {notifyOrderVoidRefund ? 'Enabled' : 'Disabled'}
-                </button>
+                {renderToggle(notifyOrderVoidRefund, () => setNotifyOrderVoidRefund(!notifyOrderVoidRefund))}
               </div>
             </div>
           </div>
@@ -2410,22 +2283,7 @@ export default function SettingsManagement({
                     Prompt cashier for PIN when starting a new transaction or switching active registers.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEnforceCashierPin(!enforceCashierPin)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: enforceCashierPin ? theme.activeBg : theme.hoverBg,
-                    color: enforceCashierPin ? theme.activeText : theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {enforceCashierPin ? 'Enabled' : 'Disabled'}
-                </button>
+                {renderToggle(enforceCashierPin, () => setEnforceCashierPin(!enforceCashierPin))}
               </div>
 
               <div
@@ -2447,22 +2305,7 @@ export default function SettingsManagement({
                     Require TOTP authenticator code when logging into dashboard from new devices.
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setTwoFactorAuth(!twoFactorAuth)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: twoFactorAuth ? theme.activeBg : theme.hoverBg,
-                    color: twoFactorAuth ? theme.activeText : theme.textSecondary,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {twoFactorAuth ? 'Enabled' : 'Disabled'}
-                </button>
+                {renderToggle(twoFactorAuth, () => setTwoFactorAuth(!twoFactorAuth))}
               </div>
             </div>
           </div>
@@ -2553,71 +2396,71 @@ export default function SettingsManagement({
                 </div>
               </div>
 
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                fontSize: '12px',
-                fontWeight: 700,
-                color: theme.activeBg,
-                backgroundColor: theme.hoverBg,
-                border: `1px solid ${theme.border}`,
-                padding: '4px 10px',
-                borderRadius: '9999px',
-              }}>
-                <CheckCircleRoundedIcon sx={{ fontSize: 15 }} />
-                <span>Active: {APP_THEMES[currentThemeId]?.name || currentThemeId}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: theme.activeBg,
+                  backgroundColor: theme.hoverBg,
+                  border: `1px solid ${theme.border}`,
+                  padding: '4px 10px',
+                  borderRadius: '9999px',
+                }}>
+                  <CheckCircleRoundedIcon sx={{ fontSize: 15 }} />
+                  <span>Active: {APP_THEMES[currentThemeId]?.name || (currentThemeId === 'dark' ? 'Dark Mode' : 'Light Mode')}</span>
+                </div>
+                {renderToggle(
+                  currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos',
+                  () => {
+                    const isDark = currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos';
+                    const target = isDark ? 'light' : 'dark';
+                    onSelectTheme?.(target);
+                    showToast(`Switched to ${target === 'dark' ? 'Dark Mode' : 'Light Mode'}.`);
+                  }
+                )}
               </div>
             </div>
 
-            {/* 5 Themes Grid - Simple & Clean */}
+            {/* Light / Dark Mode Cards */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '1rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: '1.25rem',
               marginTop: '1.25rem',
             }}>
-              {(Object.keys(APP_THEMES) as ThemeId[]).map((tid) => {
-                const th = APP_THEMES[tid];
-                const isCurrent = currentThemeId === tid;
+              {(['light', 'dark'] as const).map((mode) => {
+                const th = APP_THEMES[mode];
+                const isCurrent = (currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos')
+                  ? mode === 'dark'
+                  : mode === 'light';
 
                 return (
                   <div
-                    key={tid}
+                    key={mode}
                     onClick={() => {
-                      onSelectTheme?.(tid);
+                      onSelectTheme?.(mode);
                       showToast(`Switched theme to ${th.name}.`);
                     }}
                     style={{
-                      padding: '0.85rem',
-                      borderRadius: '0.75rem',
+                      padding: '1.1rem',
+                      borderRadius: '0.85rem',
                       backgroundColor: isCurrent ? theme.hoverBg : theme.bgPage,
                       border: isCurrent ? `2px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
                       cursor: 'pointer',
-                      transition: 'all 0.15s ease',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '0.75rem',
-                      boxShadow: isCurrent ? '0 4px 12px rgba(0,0,0,0.06)' : 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isCurrent) {
-                        e.currentTarget.style.borderColor = theme.borderHover || theme.textPrimary;
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isCurrent) {
-                        e.currentTarget.style.borderColor = theme.border;
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }
+                      gap: '0.85rem',
+                      boxShadow: isCurrent ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
                     }}
                   >
                     {/* Visual UI Preview Thumbnail */}
                     <div style={{
                       width: '100%',
-                      height: '56px',
-                      borderRadius: '0.5rem',
+                      height: '70px',
+                      borderRadius: '0.55rem',
                       overflow: 'hidden',
                       display: 'flex',
                       border: `1px solid ${th.border}`,
@@ -2625,15 +2468,20 @@ export default function SettingsManagement({
                     }}>
                       {/* Mini Sidebar */}
                       <div style={{
-                        width: '32%',
+                        width: '30%',
                         backgroundColor: th.swatch.sidebar,
                         borderRight: `1px solid ${th.border}`,
-                        padding: '6px 5px',
+                        padding: '7px 6px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '3px',
+                        gap: '4px',
                       }}>
-                        <div style={{ width: '65%', height: '4px', borderRadius: '2px', backgroundColor: th.swatch.primary }} />
+                        <div style={{
+                          width: '65%',
+                          height: '5px',
+                          borderRadius: '2px',
+                          backgroundColor: th.sidebarActiveBg || th.swatch.primary,
+                        }} />
                         <div style={{ width: '85%', height: '3px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.35 }} />
                         <div style={{ width: '70%', height: '3px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.35 }} />
                       </div>
@@ -2641,28 +2489,28 @@ export default function SettingsManagement({
                       {/* Mini Page Content */}
                       <div style={{
                         flex: 1,
-                        padding: '6px',
+                        padding: '7px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '4px',
+                        gap: '5px',
                         backgroundColor: th.swatch.page,
                       }}>
                         <div style={{
-                          height: '20px',
-                          borderRadius: '3px',
+                          height: '24px',
+                          borderRadius: '4px',
                           backgroundColor: th.swatch.card,
                           border: `1px solid ${th.border}`,
                           display: 'flex',
                           alignItems: 'center',
-                          padding: '0 5px',
+                          padding: '0 6px',
                           justifyContent: 'space-between',
                         }}>
-                          <div style={{ width: '40%', height: '3px', borderRadius: '1.5px', backgroundColor: th.textSecondary, opacity: 0.4 }} />
-                          <div style={{ width: '12px', height: '8px', borderRadius: '2px', backgroundColor: th.swatch.primary }} />
+                          <div style={{ width: '45%', height: '4px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.4 }} />
+                          <div style={{ width: '22px', height: '12px', borderRadius: '3px', backgroundColor: th.posBtnBg }} />
                         </div>
                         <div style={{
-                          height: '14px',
-                          borderRadius: '3px',
+                          height: '16px',
+                          borderRadius: '4px',
                           backgroundColor: th.swatch.card,
                           border: `1px solid ${th.border}`,
                         }} />
@@ -2671,7 +2519,7 @@ export default function SettingsManagement({
 
                     {/* Label & Active Radio Indicator */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <div style={{
                           width: '18px',
                           height: '18px',
@@ -2682,130 +2530,36 @@ export default function SettingsManagement({
                           boxSizing: 'border-box',
                           flexShrink: 0,
                         }} />
-                        <span style={{ fontSize: '13px', fontWeight: isCurrent ? 800 : 600, color: theme.textPrimary }}>
-                          {th.name}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                          {mode === 'light' ? (
+                            <LightModeRoundedIcon sx={{ fontSize: 17, color: '#EAB308' }} />
+                          ) : (
+                            <DarkModeRoundedIcon sx={{ fontSize: 17, color: theme.textPrimary }} />
+                          )}
+                          <span style={{ fontSize: '14px', fontWeight: isCurrent ? 800 : 600, color: theme.textPrimary }}>
+                            {th.name}
+                          </span>
+                        </div>
                       </div>
 
                       <span style={{
-                        fontSize: '10.5px',
+                        fontSize: '11px',
                         fontWeight: 600,
                         color: theme.textSecondary,
                         backgroundColor: theme.hoverBg,
-                        padding: '2px 7px',
+                        padding: '2px 8px',
                         borderRadius: '9999px',
                       }}>
-                        {th.sidebarIsDark ? 'Dark' : 'Light'}
+                        {mode === 'light' ? '#fcfcfc / #fafafa' : 'Dark'}
                       </span>
                     </div>
+
+                    <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                      {th.description}
+                    </p>
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* Secondary Preferences: Touch Target Density & Thermal Receipt Template */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-            gap: '1.5rem',
-          }}>
-            {/* POS UI Scaling */}
-            <div
-              style={{
-                padding: '1.5rem',
-                backgroundColor: theme.bgCard,
-                borderRadius: '0.85rem',
-                border: `1px solid ${theme.border}`,
-              }}
-            >
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.25rem' }}>
-                POS Screen Density & Touch Target Size
-              </label>
-              <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0 0 1rem 0' }}>
-                Adjust button sizing and grid spacing for hardware touch monitors or compact displays.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {[
-                  { name: 'Compact', desc: 'Dense grids, optimized for mouse & keyboard operations' },
-                  { name: 'Standard', desc: 'Balanced layout suitable for all desktop screens' },
-                  { name: 'Touch-Optimized', desc: 'Large tap targets designed for 10"-15" touch monitors' },
-                ].map((scale) => {
-                  const isSelected = uiScaling === scale.name;
-                  return (
-                    <div
-                      key={scale.name}
-                      onClick={() => {
-                        setUiScaling(scale.name as any);
-                        showToast(`Touch scaling updated to ${scale.name}.`);
-                      }}
-                      style={{
-                        padding: '0.75rem 1rem',
-                        borderRadius: '0.55rem',
-                        backgroundColor: isSelected ? theme.activeBg : theme.bgPage,
-                        color: isSelected ? theme.activeText : theme.textPrimary,
-                        border: `1px solid ${isSelected ? theme.activeBg : theme.border}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontSize: '13px', fontWeight: 800 }}>{scale.name}</div>
-                      <div style={{ fontSize: '11.5px', color: isSelected ? theme.activeText : theme.textSecondary, opacity: 0.85 }}>
-                        {scale.desc}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Receipt Thermal Template */}
-            <div
-              style={{
-                padding: '1.5rem',
-                backgroundColor: theme.bgCard,
-                borderRadius: '0.85rem',
-                border: `1px solid ${theme.border}`,
-              }}
-            >
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.25rem' }}>
-                Receipt Thermal Template
-              </label>
-              <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0 0 1rem 0' }}>
-                Configure printed receipt typography, layout density, and QR tax formatting.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {[
-                  { name: 'Modern Detailed', desc: 'Itemized lines, full tax breakdown, and QR footer' },
-                  { name: 'Classic Minimal', desc: 'Clean, fast printing with basic total & tender summary' },
-                  { name: 'Compact Slip', desc: 'Ultra-condensed paper-saver mode for quick counter items' },
-                ].map((rc) => {
-                  const isSelected = receiptTemplate === rc.name;
-                  return (
-                    <div
-                      key={rc.name}
-                      onClick={() => {
-                        setReceiptTemplate(rc.name as any);
-                        showToast(`Receipt template updated to ${rc.name}.`);
-                      }}
-                      style={{
-                        padding: '0.75rem 1rem',
-                        borderRadius: '0.55rem',
-                        backgroundColor: isSelected ? theme.activeBg : theme.bgPage,
-                        color: isSelected ? theme.activeText : theme.textPrimary,
-                        border: `1px solid ${isSelected ? theme.activeBg : theme.border}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontSize: '13px', fontWeight: 800 }}>{rc.name}</div>
-                      <div style={{ fontSize: '11.5px', color: isSelected ? theme.activeText : theme.textSecondary, opacity: 0.85 }}>
-                        {rc.desc}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </div>

@@ -26,6 +26,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import ManagerInventoryScreen from '@/components/manager/ManagerInventoryScreen';
+import { AppTheme, ThemeMode, APP_THEMES, getStoredThemeMode } from '@/lib/themeConfig';
 
 interface NavItem {
   id: string;
@@ -105,43 +106,23 @@ export default function ManagerDashboardPage() {
     { id: '3', title: 'Stock Notice', desc: 'Espresso Blend 1kg has 4 bags remaining.', time: '2h ago' },
   ];
 
-  // Salt and Pepper Theme Colors (#FFFFFF, #D4D4D4, #B3B3B3, #2B2B2B)
-  const theme = {
-    bgPage: '#FFFFFF',
-    bgCard: '#F5F5F7',
-    bgCardHover: '#EBEBED',
-    bgHeader: '#FFFFFF',
-    bgSidebar: '#FFFFFF',
-    border: '#D4D4D4',
-    borderCard: '#D4D4D4',
-    borderHover: '#2B2B2B',
-    textPrimary: '#2B2B2B',
-    textSecondary: '#71717A',
-    textMuted: '#B3B3B3',
-    hoverBg: '#F0F0F0',
-    activeBg: '#2B2B2B',
-    activeText: '#FFFFFF',
-    activeIcon: '#FFFFFF',
-    badgeBg: '#2B2B2B',
-    badgeText: '#FFFFFF',
-    badgeBorder: '#2B2B2B',
-    secondaryBadgeBg: '#D4D4D4',
-    secondaryBadgeText: '#2B2B2B',
-    secondaryBadgeBorder: '#D4D4D4',
-    barDefault: '#B3B3B3',
-    barActive: '#2B2B2B',
-    tableHeaderBg: '#EBEBED',
-    tableRowHover: '#FAFAFA',
-    posBtnBg: '#2B2B2B',
-    posBtnText: '#FFFFFF',
-    posBtnBorder: '#2B2B2B',
-    posBtnShadow: '#D4D4D4',
-    livePosBg: '#D4D4D4',
-    livePosBorder: '#D4D4D4',
-    livePosText: '#2B2B2B',
-    popoverBg: '#FFFFFF',
-    popoverBorder: '#D4D4D4',
-  };
+  // Dynamic Manager Dark / Light Mode State
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+
+  React.useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    const handleThemeSync = () => {
+      setThemeMode(getStoredThemeMode());
+    };
+    window.addEventListener('storage', handleThemeSync);
+    window.addEventListener('nuradesk_theme_change', handleThemeSync);
+    return () => {
+      window.removeEventListener('storage', handleThemeSync);
+      window.removeEventListener('nuradesk_theme_change', handleThemeSync);
+    };
+  }, []);
+
+  const theme: AppTheme = APP_THEMES[themeMode] || APP_THEMES.light;
 
   return (
     <div style={{
@@ -291,9 +272,10 @@ export default function ManagerDashboardPage() {
             <span>Admin View</span>
           </Link>
 
-          {/* POS Terminal 3D Button */}
+          {/* POS Terminal Quick Access */}
           <Link
             href="/pos"
+            className="button-20"
             role="button"
             style={{
               height: '35px',
@@ -307,19 +289,8 @@ export default function ManagerDashboardPage() {
               textDecoration: 'none',
               backgroundColor: theme.posBtnBg,
               color: theme.posBtnText,
-              border: `1px solid ${theme.posBtnBorder}`,
-              boxShadow: `0 3px 0 ${theme.posBtnShadow}`,
-              transform: 'translateY(0)',
-              transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+              border: 'none',
               cursor: 'pointer',
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'translateY(2px)';
-              e.currentTarget.style.boxShadow = `0 1px 0 ${theme.posBtnShadow}`;
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 3px 0 ${theme.posBtnShadow}`;
             }}
           >
             <span>POS Terminal</span>
@@ -618,9 +589,9 @@ export default function ManagerDashboardPage() {
                       justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                       padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
                       borderRadius: '0.75rem',
-                      border: isActive ? `1px solid ${theme.activeBg}` : '1px solid transparent',
-                      backgroundColor: isActive ? theme.activeBg : 'transparent',
-                      color: isActive ? theme.activeText : theme.textPrimary,
+                      border: 'none',
+                      backgroundColor: isActive ? theme.sidebarActiveBg : 'transparent',
+                      color: isActive ? theme.sidebarActiveText : theme.textPrimary,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
@@ -628,14 +599,12 @@ export default function ManagerDashboardPage() {
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = theme.hoverBg;
-                        e.currentTarget.style.borderColor = theme.border;
+                        e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'transparent';
                       }
                     }}
                   >
@@ -643,7 +612,7 @@ export default function ManagerDashboardPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: isActive ? theme.activeIcon : theme.textPrimary,
+                      color: isActive ? theme.sidebarActiveText : theme.textPrimary,
                     }}>
                       {item.icon}
                     </span>
@@ -652,7 +621,7 @@ export default function ManagerDashboardPage() {
                         fontSize: '14px',
                         fontWeight: isActive ? 800 : 600,
                         letterSpacing: '-0.015em',
-                        color: isActive ? theme.activeText : theme.textPrimary,
+                        color: isActive ? theme.sidebarActiveText : theme.textPrimary,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',

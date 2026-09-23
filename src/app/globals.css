@@ -38,8 +38,6 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
-  /* Enforce no shadows across custom elements */
-  box-shadow: none;
 }
 
 html,
@@ -60,16 +58,16 @@ a {
 }
 
 /* ==========================================================================
-   BUTTON-20: Black & White Edition (No Shadows, No Gradients, Rounded)
+   BUTTON-20: Black Edition (with Gradient & Inset Highlight)
    ========================================================================== */
 
 .button-20 {
   appearance: button;
-  background-color: #000000;
-  background-image: none;
-  border: 1px solid #000000;
+  background-color: #191a19;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, 0));
+  border: 1px solid #191a19;
   border-radius: 1rem;
-  box-shadow: none;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, rgba(46, 54, 80, 0.075) 0 1px 1px;
   box-sizing: border-box;
   color: #FFFFFF;
   cursor: pointer;
@@ -77,16 +75,16 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-family: var(--font-inter);
-  font-size: 0.95rem;
+  font-family: Inter, sans-serif;
+  font-size: 1rem;
   font-weight: 500;
   line-height: 1.5;
   margin: 0;
-  padding: 0.55rem 1.25rem;
+  padding: .5rem 1rem;
   text-align: center;
   text-decoration: none;
   text-transform: none;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -95,33 +93,36 @@ a {
 
 .button-20:focus:not(:focus-visible),
 .button-20:focus {
-  outline: 2px solid #000000;
-  outline-offset: 2px;
+  outline: 0;
 }
 
 .button-20:hover {
-  background-color: #262626;
-  border-color: #262626;
+  background-color: #272827;
+  border-color: #272827;
   color: #FFFFFF;
 }
 
+.button-20:focus {
+  background-color: #222322;
+  border-color: #191a19;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, rgba(46, 54, 80, 0.075) 0 1px 1px, rgba(25, 26, 25, 0.4) 0 0 0 .2rem;
+}
+
 .button-20:active {
-  background-color: #404040;
+  background-color: #0f100f;
   background-image: none;
-  border-color: #404040;
-  box-shadow: none;
+  border-color: #0d0e0d;
+  box-shadow: rgba(46, 54, 80, 0.125) 0 3px 5px inset;
 }
 
 .button-20:active:focus {
-  box-shadow: none;
-  outline: 2px solid #000000;
-  outline-offset: 2px;
+  box-shadow: rgba(46, 54, 80, 0.125) 0 3px 5px inset, rgba(25, 26, 25, 0.4) 0 0 0 .2rem;
 }
 
 .button-20:disabled {
   background-image: none;
   box-shadow: none;
-  opacity: 0.45;
+  opacity: .65;
   pointer-events: none;
 }
 
@@ -129,27 +130,27 @@ a {
 .button-20-secondary {
   appearance: button;
   background-color: #FFFFFF;
-  background-image: none;
-  border: 1px solid #000000;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+  border: 1px solid #191a19;
   border-radius: 1rem;
-  box-shadow: none;
+  box-shadow: rgba(0, 0, 0, 0.05) 0 1px 1px;
   box-sizing: border-box;
-  color: #000000;
+  color: #191a19;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-family: var(--font-inter);
-  font-size: 0.95rem;
+  font-family: var(--font-inter, Inter, sans-serif);
+  font-size: 1rem;
   font-weight: 500;
   line-height: 1.5;
   margin: 0;
-  padding: 0.55rem 1.25rem;
+  padding: .5rem 1rem;
   text-align: center;
   text-decoration: none;
   text-transform: none;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -158,27 +159,18 @@ a {
 
 .button-20-secondary:focus:not(:focus-visible),
 .button-20-secondary:focus {
-  outline: 2px solid #000000;
-  outline-offset: 2px;
+  outline: 0;
 }
 
 .button-20-secondary:hover {
-  background-color: #000000;
-  border-color: #000000;
-  color: #FFFFFF;
+  background-color: #F4F4F4;
+  border-color: #191a19;
+  color: #191a19;
 }
 
 .button-20-secondary:active {
-  background-color: #262626;
-  border-color: #262626;
-  color: #FFFFFF;
-  box-shadow: none;
-}
-
-.button-20-secondary:active:focus {
-  box-shadow: none;
-  outline: 2px solid #000000;
-  outline-offset: 2px;
+  background-color: #EAEAEA;
+  box-shadow: rgba(0, 0, 0, 0.08) 0 2px 4px inset;
 }
 
 .button-20-secondary:disabled {
@@ -191,11 +183,11 @@ a {
 /* 3D Tactile Button-20 */
 .button-20-3d {
   appearance: button;
-  background-color: #000000;
-  background-image: none;
-  border: 1px solid #000000;
+  background-color: #191a19;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, 0));
+  border: 1px solid #191a19;
   border-radius: 1rem;
-  box-shadow: 0 4px 0 #262626;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, 0 3px 0 #0d0e0d;
   box-sizing: border-box;
   color: #FFFFFF;
   cursor: pointer;
@@ -203,16 +195,16 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  font-family: var(--font-inter);
+  font-family: var(--font-inter, Inter, sans-serif);
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.5;
   margin: 0;
-  padding: 0.55rem 1.25rem;
+  padding: .5rem 1rem;
   text-align: center;
   text-decoration: none;
   transform: translateY(0);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background-color 0.15s ease-in-out;
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -220,20 +212,30 @@ a {
 }
 
 .button-20-3d:hover {
-  background-color: #171717;
-  box-shadow: 0 4px 0 #333333;
+  background-color: #272827;
+  border-color: #272827;
+  box-shadow: rgba(255, 255, 255, 0.18) 0 1px 0 inset, 0 3px 0 #0d0e0d;
+  color: #FFFFFF;
 }
 
 .button-20-3d:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #262626;
-  background-color: #262626;
+  transform: translateY(2px);
+  box-shadow: rgba(0, 0, 0, 0.35) 0 2px 4px inset, 0 1px 0 #0d0e0d;
+  background-color: #0f100f;
+  background-image: none;
 }
 
 .button-20-3d:focus:not(:focus-visible),
 .button-20-3d:focus {
-  outline: 2px solid #000000;
-  outline-offset: 2px;
+  outline: 0;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, 0 3px 0 #0d0e0d, rgba(25, 26, 25, 0.4) 0 0 0 .2rem;
+}
+
+.button-20-3d:disabled {
+  background-image: none;
+  box-shadow: none;
+  opacity: .65;
+  pointer-events: none;
 }
 
 /* Ghost / Pill Button-20 */

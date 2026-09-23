@@ -657,101 +657,40 @@ export default function SalesManagement({
       {/* ==================================================================== */}
       {currentTab === 'orders' && (
         <>
-          {/* Top KPI Cards */}
+          {/* Top KPI Card: Total Orders Only */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))',
             gap: '1.25rem',
             marginBottom: '1.5rem',
           }}>
             {/* Total Orders */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Orders
-                </span>
-                <ReceiptLongRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Orders
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {totalOrdersCount}
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   tickets rung
-                </span>
-              </div>
-            </div>
-
-            {/* Total Gross Revenue */}
-            <div style={{
-              backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Completed Volume
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#16A34A' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
-                  ₹{totalGrossRevenue.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: '#15803D', marginLeft: '0.35rem', fontWeight: 700 }}>
-                  net tender
-                </span>
-              </div>
-            </div>
-
-            {/* Average Order Value */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Average Order Value
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
-                  ₹{avgOrderValue}
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  per order ticket
-                </span>
-              </div>
-            </div>
-
-            {/* In Progress / Active */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active in Kitchen
-                </span>
-                <AccessTimeRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
-                  {orders.filter((o) => o.orderStatus === 'In Progress').length}
-                </span>
-                <span style={{ fontSize: '12px', color: '#B45309', marginLeft: '0.35rem', fontWeight: 700 }}>
-                  kitchen prep
                 </span>
               </div>
             </div>
@@ -876,32 +815,23 @@ export default function SalesManagement({
               <thead>
                 <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: `1px solid ${theme.border}` }}>
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    Order ID & Time
+                    Order ID
                   </th>
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     Customer
                   </th>
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    Items Rung
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    Total (₹)
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    Tender
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'center' }}>
-                    Status
+                    Total
                   </th>
                   <th style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'right' }}>
-                    Actions
+                    Status
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ padding: '3rem 1rem', textAlign: 'center', color: theme.textSecondary }}>
+                    <td colSpan={4} style={{ padding: '3rem 1rem', textAlign: 'center', color: theme.textSecondary }}>
                       No orders match your filter criteria.
                     </td>
                   </tr>
@@ -909,14 +839,16 @@ export default function SalesManagement({
                   filteredOrders.map((ord, idx) => (
                     <tr
                       key={ord.id}
+                      onClick={() => setViewingOrder(ord)}
                       style={{
                         borderBottom: idx < filteredOrders.length - 1 ? `1px solid ${theme.border}` : 'none',
+                        cursor: 'pointer',
                         transition: 'background-color 0.15s ease',
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
                       onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                     >
-                      {/* Order Ref & Time */}
+                      {/* Order ID */}
                       <td style={{ padding: '0.85rem 1rem' }}>
                         <div style={{ fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace', fontSize: '13.5px' }}>
                           {ord.id}
@@ -936,16 +868,6 @@ export default function SalesManagement({
                         </div>
                       </td>
 
-                      {/* Items */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ fontWeight: 700, color: theme.textPrimary }}>
-                          {ord.items.length} {ord.items.length === 1 ? 'item' : 'items'}
-                        </div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {ord.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                        </div>
-                      </td>
-
                       {/* Total */}
                       <td style={{ padding: '0.85rem 1rem' }}>
                         <div style={{ fontWeight: 800, color: theme.textPrimary, fontSize: '14px' }}>
@@ -958,28 +880,8 @@ export default function SalesManagement({
                         )}
                       </td>
 
-                      {/* Payment Method */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          fontSize: '11.5px',
-                          fontWeight: 700,
-                          backgroundColor: theme.hoverBg,
-                          padding: '3px 8px',
-                          borderRadius: '0.4rem',
-                          border: `1px solid ${theme.border}`,
-                        }}>
-                          {ord.paymentMethod === 'UPI' && <QrCodeRoundedIcon sx={{ fontSize: 13 }} />}
-                          {ord.paymentMethod === 'Card' && <CreditCardRoundedIcon sx={{ fontSize: 13 }} />}
-                          {ord.paymentMethod === 'Cash' && <AttachMoneyRoundedIcon sx={{ fontSize: 13 }} />}
-                          <span>{ord.paymentMethod}</span>
-                        </span>
-                      </td>
-
-                      {/* Order Status */}
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+                      {/* Status (in last) */}
+                      <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
                         <span style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -1008,57 +910,6 @@ export default function SalesManagement({
                           }} />
                           <span>{ord.orderStatus.toUpperCase()}</span>
                         </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => setViewingOrder(ord)}
-                            title="Inspect Order Details"
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: theme.hoverBg,
-                              color: theme.textPrimary,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                            }}
-                          >
-                            <VisibilityRoundedIcon sx={{ fontSize: 13 }} />
-                            <span>Details</span>
-                          </button>
-
-                          {ord.orderStatus === 'Completed' && (
-                            <button
-                              type="button"
-                              onClick={() => handleInitiateReturn(ord)}
-                              title="Process Refund / Return"
-                              style={{
-                                padding: '4px 7px',
-                                borderRadius: '0.45rem',
-                                border: '1px solid #FECACA',
-                                backgroundColor: '#FEF2F2',
-                                color: '#DC2626',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontSize: '11px',
-                                fontWeight: 800,
-                              }}
-                            >
-                              <AssignmentReturnRoundedIcon sx={{ fontSize: 13 }} />
-                              <span>Refund</span>
-                            </button>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   ))
