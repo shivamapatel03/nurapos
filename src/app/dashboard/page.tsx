@@ -25,6 +25,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import CampaignRoundedIcon from '@mui/icons-material/CampaignRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
@@ -66,12 +67,14 @@ interface SubNavItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  href?: string;
 }
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  href?: string;
   subItems?: SubNavItem[];
 }
 
@@ -90,15 +93,11 @@ export default function AdminDashboardPage() {
     employees: false,
     customers: false,
     settings: false,
+    announcements: false,
   });
 
   const [activeTabId, setActiveTabId] = useState('dashboard');
-  const [chartTimeframe, setChartTimeframe] = useState<'weekly' | 'monthly'>('weekly');
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
 
@@ -158,6 +157,8 @@ export default function AdminDashboardPage() {
     activeTabId === 'rep_customers' ||
     activeTabId === 'rep_performance';
 
+  const isAnnouncementsActive = activeTabId === 'announcements';
+
   // Accordion navigation helpers: only ONE menu expanded at a time
   const openSingleMenu = (menuId: string) => {
     setExpandedMenus({
@@ -168,6 +169,7 @@ export default function AdminDashboardPage() {
       employees: menuId === 'employees',
       customers: menuId === 'customers',
       settings: menuId === 'settings',
+      news: menuId === 'announcements',
     });
   };
 
@@ -180,6 +182,7 @@ export default function AdminDashboardPage() {
       employees: false,
       customers: false,
       settings: false,
+      announcements: false,
     });
   };
 
@@ -196,6 +199,7 @@ export default function AdminDashboardPage() {
           employees: false,
           customers: false,
           settings: false,
+          announcements: false,
         };
       }
       // Open this menu and automatically close all other menus
@@ -207,6 +211,7 @@ export default function AdminDashboardPage() {
         employees: menuId === 'employees',
         customers: menuId === 'customers',
         settings: menuId === 'settings',
+        announcements: menuId === 'announcements',
       };
     });
   };
@@ -281,6 +286,12 @@ export default function AdminDashboardPage() {
       ],
     },
     {
+      id: 'terminal',
+      label: 'Go to terminal',
+      icon: <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} />,
+      href: '/pos',
+    },
+    {
       id: 'settings',
       label: 'Settings',
       icon: <SettingsRoundedIcon sx={{ fontSize: 18 }} />,
@@ -295,43 +306,16 @@ export default function AdminDashboardPage() {
         { id: 'set_users', label: 'Users & Permissions', icon: <SecurityRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_security', label: 'Security', icon: <LockRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_appearance', label: 'Appearance', icon: <PaletteRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'set_logout', label: 'Log Out', icon: <LogoutRoundedIcon sx={{ fontSize: 14 }} />, href: '/signin' },
       ],
+    },
+    {
+      id: 'announcements',
+      label: 'announcements',
+      icon: <CampaignRoundedIcon sx={{ fontSize: 18 }} />,
     },
   ];
 
-  // Weekly bar chart data
-  const weeklySalesData = [
-    { day: 'Mon', sales: 38400, orders: 104 },
-    { day: 'Tue', sales: 42100, orders: 112 },
-    { day: 'Wed', sales: 35800, orders: 98 },
-    { day: 'Thu', sales: 48250, orders: 128, isToday: true },
-    { day: 'Fri', sales: 52400, orders: 142 },
-    { day: 'Sat', sales: 68900, orders: 186 },
-    { day: 'Sun', sales: 62400, orders: 165 },
-  ];
-
-  // Monthly bar chart data
-  const monthlySalesData = [
-    { day: 'Jan', sales: 420000, orders: 1120 },
-    { day: 'Feb', sales: 480000, orders: 1240 },
-    { day: 'Mar', sales: 510000, orders: 1350 },
-    { day: 'Apr', sales: 460000, orders: 1210 },
-    { day: 'May', sales: 580000, orders: 1540 },
-    { day: 'Jun', sales: 640000, orders: 1720 },
-    { day: 'Jul', sales: 710000, orders: 1890, isToday: true },
-  ];
-
-  const chartData = chartTimeframe === 'weekly' ? weeklySalesData : monthlySalesData;
-  const maxSales = chartTimeframe === 'weekly' ? 75000 : 750000;
-
-  // Recent orders list
-  const recentOrders = [
-    { id: '#1024', customer: 'Rahul', amount: '₹2,499', status: 'PAID', time: '10 mins ago', items: 3 },
-    { id: '#1023', customer: 'Amit', amount: '₹1,299', status: 'PAID', time: '25 mins ago', items: 2 },
-    { id: '#1022', customer: 'Priya', amount: '₹850', status: 'PAID', time: '42 mins ago', items: 1 },
-    { id: '#1021', customer: 'Sneha Patel', amount: '₹3,400', status: 'PAID', time: '1 hour ago', items: 4 },
-    { id: '#1020', customer: 'Vikram Shah', amount: '₹1,120', status: 'PAID', time: '2 hours ago', items: 2 },
-  ];
 
   // System notifications (Strictly monochrome)
   const notifications = [
@@ -393,461 +377,7 @@ export default function AdminDashboardPage() {
         }
       `}</style>
 
-      {/* Top Header Bar */}
-      <header style={{
-        height: '62px',
-        backgroundColor: theme.bgHeader,
-        borderBottom: `1px solid ${theme.headerBorder || theme.border}`,
-        padding: '0 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-        zIndex: 30,
-        color: theme.headerTextPrimary || theme.textPrimary,
-      }}>
-        {/* Left: Brand Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-          {/* Logo + Name */}
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.65rem',
-              textDecoration: 'none',
-            }}
-          >
-            <div style={{
-              width: '34px',
-              height: '34px',
-              position: 'relative',
-              borderRadius: '9999px',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <Image
-                src="/logo.png"
-                alt="Nuradesk Logo"
-                width={34}
-                height={34}
-                priority
-                style={{
-                  objectFit: 'contain',
-                  filter: theme.headerIsDark ? 'invert(1)' : 'none',
-                }}
-              />
-            </div>
-            <span style={{
-              fontSize: '21px',
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              color: theme.headerTextPrimary || theme.textPrimary,
-            }}>
-              Nuradesk
-            </span>
-          </Link>
-        </div>
-
-        {/* Right Controls: Manager View + POS Terminal Button + Bell + Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {/* AI Assistant Icon Button (Future Integration) */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowAiModal((prev) => !prev);
-                setShowNotifications(false);
-                setShowProfileMenu(false);
-              }}
-              title="Nuradesk AI Assistant (Future Integration)"
-              aria-label="AI Assistant"
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '0.55rem',
-                border: 'none',
-                backgroundColor: 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative',
-                transition: 'all 0.15s ease',
-                padding: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.hoverBg;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <AutoAwesomeRoundedIcon sx={{ fontSize: 20, color: theme.headerTextPrimary || theme.textPrimary }} />
-            </button>
-
-            {/* AI Assistant Popover (Future Integration Preview) */}
-            {showAiModal && (
-              <div style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '320px',
-                backgroundColor: theme.popoverBg,
-                border: `1px solid ${theme.popoverBorder}`,
-                borderRadius: '0.85rem',
-                padding: '1rem',
-                zIndex: 50,
-                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                transformOrigin: 'top right',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingBottom: '0.65rem',
-                  borderBottom: `1px solid ${theme.border}`,
-                  marginBottom: '0.75rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <AutoAwesomeRoundedIcon sx={{ fontSize: 18, color: theme.textPrimary }} />
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Nuradesk AI</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      backgroundColor: theme.badgeBg,
-                      color: theme.badgeText,
-                      padding: '2px 7px',
-                      borderRadius: '9999px',
-                    }}>
-                      Coming Soon
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowAiModal(false)}
-                      style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', display: 'flex', padding: '2px' }}
-                    >
-                      <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                    </button>
-                  </div>
-                </div>
-
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
-                  AI-powered retail intelligence and autonomous assistant ready for future integrations.
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div style={{
-                    padding: '0.6rem 0.75rem',
-                    backgroundColor: theme.bgCard,
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '12px',
-                    color: theme.textPrimary,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                  }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
-                    <span>Smart Inventory & Restock Forecasting</span>
-                  </div>
-                  <div style={{
-                    padding: '0.6rem 0.75rem',
-                    backgroundColor: theme.bgCard,
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '12px',
-                    color: theme.textPrimary,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                  }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
-                    <span>Real-time Sales Anomaly Detection</span>
-                  </div>
-                  <div style={{
-                    padding: '0.6rem 0.75rem',
-                    backgroundColor: theme.bgCard,
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '12px',
-                    color: theme.textPrimary,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.55rem',
-                  }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: theme.textPrimary, flexShrink: 0 }} />
-                    <span>Conversational Sales & Analytics Copilot</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Notification Bell */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowNotifications((prev) => !prev);
-                setShowProfileMenu(false);
-                setShowAiModal(false);
-              }}
-              title="Store Notifications"
-              aria-label="Notifications"
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '0.55rem',
-                border: 'none',
-                backgroundColor: showNotifications ? theme.hoverBg : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: theme.textPrimary,
-                position: 'relative',
-                transition: 'all 0.15s ease',
-                padding: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.hoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (!showNotifications) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary || theme.textPrimary }} />
-              {/* Notification Indicator Dot */}
-              <span style={{
-                position: 'absolute',
-                top: '7px',
-                right: '7px',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: theme.headerTextPrimary || theme.textPrimary,
-              }} />
-            </button>
-
-            {/* Notifications Dropdown Popover */}
-            {showNotifications && (
-              <div style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '320px',
-                backgroundColor: theme.popoverBg,
-                border: `1px solid ${theme.popoverBorder}`,
-                borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
-                padding: '0.85rem',
-                zIndex: 50,
-                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                transformOrigin: 'top right',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingBottom: '0.65rem',
-                  borderBottom: `1px solid ${theme.border}`,
-                  marginBottom: '0.65rem',
-                }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
-                    Notifications
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNotifications(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: theme.textPrimary,
-                      cursor: 'pointer',
-                      display: 'flex',
-                    }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      style={{
-                        padding: '0.55rem 0.65rem',
-                        borderRadius: '0.5rem',
-                        backgroundColor: theme.hoverBg,
-                        border: `1px solid ${theme.border}`,
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>
-                          {n.title}
-                        </span>
-                        <span style={{ fontSize: '10.5px', color: theme.textMuted }}>
-                          {n.time}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0.25rem 0 0 0', lineHeight: 1.35 }}>
-                        {n.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* User Profile Badge */}
-          <div style={{ position: 'relative' }}>
-            <div
-              onClick={() => {
-                setShowProfileMenu((prev) => !prev);
-                setShowNotifications(false);
-                setShowAiModal(false);
-              }}
-              role="button"
-              tabIndex={0}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: showProfileMenu ? theme.hoverBg : 'transparent',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.hoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (!showProfileMenu) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                backgroundColor: theme.badgeBg,
-                color: theme.badgeText,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-                fontWeight: 800,
-              }}>
-                RS
-              </div>
-              <span style={{
-                fontSize: '13.5px',
-                fontWeight: 700,
-                color: theme.headerTextPrimary || theme.textPrimary,
-                letterSpacing: '-0.01em',
-              }}>
-                Rahul Sharma
-              </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.headerTextPrimary || theme.textPrimary }} />
-            </div>
-
-            {/* Profile Menu Dropdown */}
-            {showProfileMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '240px',
-                backgroundColor: theme.popoverBg,
-                border: `1px solid ${theme.popoverBorder}`,
-                borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
-                padding: '0.65rem',
-                zIndex: 50,
-                animation: 'fadeInSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                transformOrigin: 'top right',
-              }}>
-                <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Rahul Sharma</div>
-                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Owner • SP CAFE</div>
-                </div>
-                <Link
-                  href="/manager"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Manager View (Ahmedabad)</span>
-                </Link>
-                <Link
-                  href="/start-shift"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Switch Store / Shift</span>
-                </Link>
-                <Link
-                  href="/signin"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <LogoutRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Log Out</span>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Body Layout: Salt & Pepper Sidebar + Main Scrollable Area */}
+      {/* Main Body Layout: Sidebar + Main Scrollable Area */}
       <div style={{
         flex: 1,
         minHeight: 0,
@@ -863,7 +393,7 @@ export default function AdminDashboardPage() {
           backgroundColor: theme.bgSidebar,
           borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
           height: '100%',
-          overflowY: 'auto',
+          overflowY: 'hidden',
           overflowX: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -871,8 +401,54 @@ export default function AdminDashboardPage() {
           boxSizing: 'border-box',
           flexShrink: 0,
         }}>
-          {/* Navigation Links List */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+          {/* Brand Logo & Name inside Left Sidebar */}
+          <Link
+            href="/dashboard"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              textDecoration: 'none',
+              padding: '0.45rem 0.55rem 0.75rem 0.55rem',
+              marginBottom: '0.45rem',
+              borderBottom: `1px solid ${theme.sidebarBorder || theme.border}`,
+            }}
+          >
+            <div style={{
+              width: '28px',
+              height: '28px',
+              position: 'relative',
+              borderRadius: '9999px',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Image
+                src="/logo.png"
+                alt="Nuradesk Logo"
+                width={28}
+                height={28}
+                priority
+                style={{
+                  objectFit: 'contain',
+                  filter: theme.sidebarIsDark ? 'invert(1)' : 'none',
+                }}
+              />
+            </div>
+            <span style={{
+              fontSize: '17px',
+              fontWeight: 800,
+              letterSpacing: '-0.035em',
+              color: theme.sidebarTextPrimary || theme.textPrimary,
+            }}>
+              Nuradesk
+            </span>
+          </Link>
+
+          {/* Navigation Links List — scrollable area */}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
             {navItems.map((item) => {
               const hasSubItems = item.subItems && item.subItems.length > 0;
               const isExpanded = expandedMenus[item.id] ?? false;
@@ -884,6 +460,10 @@ export default function AdminDashboardPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (item.href) {
+                        router.push(item.href);
+                        return;
+                      }
                       if (hasSubItems) {
                         toggleMenu(item.id);
                       } else {
@@ -943,8 +523,8 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
 
-                    {/* Submenu Accordion Chevron */}
-                    {hasSubItems && (
+                    {/* Submenu Accordion Chevron or Link Arrow */}
+                    {hasSubItems ? (
                       <span style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -954,7 +534,16 @@ export default function AdminDashboardPage() {
                       }}>
                         <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary) }} />
                       </span>
-                    )}
+                    ) : item.href ? (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: theme.sidebarTextSecondary || theme.textSecondary,
+                        opacity: 0.7,
+                      }}>
+                        <ArrowOutwardRoundedIcon sx={{ fontSize: 13 }} />
+                      </span>
+                    ) : null}
                   </button>
 
                   {/* Submenu List with Icons - Smooth CSS Grid Transition */}
@@ -988,6 +577,61 @@ export default function AdminDashboardPage() {
                         >
                       {item.subItems?.map((sub) => {
                         const isSubActive = activeTabId === sub.id;
+
+                        if (sub.href) {
+                          return (
+                            <Link
+                              key={sub.id}
+                              href={sub.href}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.55rem',
+                                textAlign: 'left',
+                                padding: '0.32rem 0.5rem',
+                                borderRadius: '0.45rem',
+                                border: 'none',
+                                textDecoration: 'none',
+                                backgroundColor: isSubActive ? theme.sidebarActiveBg : 'transparent',
+                                color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                fontSize: '12px',
+                                fontWeight: isSubActive ? 800 : 500,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSubActive) {
+                                  e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                                  e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSubActive) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
+                                }
+                              }}
+                            >
+                              <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                              }}>
+                                {sub.icon}
+                              </span>
+                              <span style={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>
+                                {sub.label}
+                              </span>
+                            </Link>
+                          );
+                        }
+
                         return (
                           <button
                             key={sub.id}
@@ -1052,9 +696,8 @@ export default function AdminDashboardPage() {
             })}
           </nav>
 
-          {/* Bottom Sidebar Section (Subscription Card + What's New strictly last) */}
+          {/* Bottom Sidebar Section — sticky, never scrolls */}
           <div style={{
-            marginTop: 'auto',
             paddingTop: '0.65rem',
             display: 'flex',
             flexDirection: 'column',
@@ -1065,9 +708,10 @@ export default function AdminDashboardPage() {
             <div
               style={{
                 padding: '0.55rem 0.6rem',
-                backgroundColor: theme.sidebarHoverBg || theme.hoverBg,
-                border: `1px solid ${theme.sidebarBorder || theme.border}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
                 borderRadius: '0.65rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '0.45rem',
@@ -1089,9 +733,9 @@ export default function AdminDashboardPage() {
                 <span style={{
                   fontSize: '9.5px',
                   fontWeight: 700,
-                  color: theme.activeBg,
-                  backgroundColor: theme.hoverBg,
-                  border: `1px solid ${theme.border}`,
+                  color: theme.sidebarTextPrimary || theme.textPrimary,
+                  backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F3F4F6',
+                  border: `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
                   padding: '1px 5px',
                   borderRadius: '9999px',
                   whiteSpace: 'nowrap',
@@ -1117,7 +761,7 @@ export default function AdminDashboardPage() {
                 <div style={{
                   width: '100%',
                   height: '4px',
-                  backgroundColor: theme.border,
+                  backgroundColor: (theme as any).sidebarIsDark ? theme.border : '#E5E7EB',
                   borderRadius: '9999px',
                   overflow: 'hidden',
                 }}>
@@ -1134,111 +778,28 @@ export default function AdminDashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowUpgradeModal(true)}
+                className="button-20"
                 style={{
                   width: '100%',
-                  height: '26px',
-                  borderRadius: '0.45rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: 'none',
-                  fontSize: '11px',
+                  height: '24px',
+                  fontSize: '10px',
                   fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  borderRadius: '0.4rem',
+                  padding: 0,
+                  marginTop: '0.1rem',
+                  border: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.25rem',
-                  transition: 'opacity 0.15s ease',
-                  padding: 0,
+                  gap: '0.2rem',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
               >
                 <span>Upgrade Plan</span>
-                <ArrowOutwardRoundedIcon sx={{ fontSize: 11 }} />
+                <ArrowOutwardRoundedIcon sx={{ fontSize: 10 }} />
               </button>
             </div>
 
-            {/* What's New in Nuradesk (Last in Sidebar) */}
-            <div
-              style={{
-                backgroundColor: theme.sidebarHoverBg || theme.hoverBg,
-                border: `1px solid ${theme.sidebarBorder || theme.border}`,
-                borderRadius: '0.65rem',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 0.15s ease',
-                boxSizing: 'border-box',
-              }}
-            >
-              {/* Thumbnail image with tag */}
-              <div style={{ height: '46px', width: '100%', position: 'relative', overflow: 'hidden' }}>
-                <img
-                  src="https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=600&auto=format&fit=crop"
-                  alt="What's New in Nuradesk"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '4px',
-                  left: '4px',
-                  backgroundColor: 'rgba(25, 26, 25, 0.85)',
-                  backdropFilter: 'blur(6px)',
-                  color: '#FFFFFF',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  fontSize: '8px',
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                }}>
-                  v2.4 UPDATE
-                </div>
-              </div>
 
-              {/* Content */}
-              <div style={{ padding: '0.45rem 0.55rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <AutoAwesomeRoundedIcon sx={{ fontSize: 11, color: '#F59E0B' }} />
-                  <span style={{ fontSize: '10.5px', fontWeight: 800, color: theme.sidebarTextPrimary || theme.textPrimary }}>
-                    What&apos;s New
-                  </span>
-                </div>
-                <p style={{
-                  fontSize: '9.5px',
-                  color: theme.sidebarTextSecondary || theme.textSecondary,
-                  margin: 0,
-                  lineHeight: 1.25,
-                }}>
-                  UPI QR codes, split payments & thermal receipt print.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setShowWhatsNewModal(true)}
-                  className="button-20"
-                  style={{
-                    width: '100%',
-                    height: '24px',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    borderRadius: '0.4rem',
-                    padding: 0,
-                    marginTop: '0.1rem',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.2rem',
-                  }}
-                >
-                  <span>View Updates</span>
-                  <ArrowOutwardRoundedIcon sx={{ fontSize: 10 }} />
-                </button>
-              </div>
-            </div>
           </div>
         </aside>
 
@@ -1246,12 +807,118 @@ export default function AdminDashboardPage() {
         <main style={{
           flex: 1,
           height: '100%',
-          overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive) ? 'auto' : 'hidden',
-          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
+          overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'auto' : 'hidden',
+          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          {isSettingsActive ? (
+          {isAnnouncementsActive ? (
+            <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+              {/* News Page Header */}
+              <div style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                  <AutoAwesomeRoundedIcon sx={{ fontSize: 22, color: '#F59E0B' }} />
+                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.03em' }}>
+                    Announcements
+                  </h1>
+                </div>
+                <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0, fontWeight: 500 }}>
+                  Stay up to date with the latest features, updates and improvements.
+                </p>
+              </div>
+
+              {/* Release cards */}
+              {[
+                {
+                  version: 'v2.4.0',
+                  date: 'September 2026',
+                  badge: 'Latest',
+                  badgeColor: '#10B981',
+                  title: 'UPI QR, Split Payments & Thermal Receipts',
+                  img: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=800&auto=format&fit=crop',
+                  items: [
+                    'UPI QR code generation at checkout for seamless digital payments.',
+                    'Split payment support — split bills across cash, card & UPI.',
+                    'Thermal receipt printing with custom logo & GST breakdown.',
+                    'Improved POS speed with offline-first transaction caching.',
+                  ],
+                },
+                {
+                  version: 'v2.3.0',
+                  date: 'August 2026',
+                  badge: 'Previous',
+                  badgeColor: '#6B7280',
+                  title: 'Employee Shifts & Attendance Tracking',
+                  img: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
+                  items: [
+                    'Shift scheduling for all store roles with weekly view.',
+                    'Attendance clock-in/clock-out with biometric PIN option.',
+                    'Employee performance dashboard with daily sales targets.',
+                    'Role-based permissions for manager vs. cashier access.',
+                  ],
+                },
+                {
+                  version: 'v2.2.0',
+                  date: 'July 2026',
+                  badge: 'Previous',
+                  badgeColor: '#6B7280',
+                  title: 'Loyalty Program & Customer Groups',
+                  img: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop',
+                  items: [
+                    'Points-based loyalty program with configurable rewards.',
+                    'Customer groups for targeted promotions and discounts.',
+                    'Feedback & review collection at checkout.',
+                    'Purchase history with exportable CSV reports.',
+                  ],
+                },
+              ].map((release) => (
+                <div
+                  key={release.version}
+                  style={{
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '1rem',
+                    overflow: 'hidden',
+                    marginBottom: '1.25rem',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  {/* Image banner */}
+                  <div style={{ height: '140px', width: '100%', overflow: 'hidden', position: 'relative' }}>
+                    <img
+                      src={release.img}
+                      alt={release.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    <div style={{
+                      position: 'absolute', top: '10px', left: '12px',
+                      backgroundColor: release.badgeColor,
+                      color: '#fff', fontSize: '10px', fontWeight: 800,
+                      padding: '2px 8px', borderRadius: '9999px', letterSpacing: '0.04em', textTransform: 'uppercase',
+                    }}>
+                      {release.badge}
+                    </div>
+                  </div>
+                  {/* Body */}
+                  <div style={{ padding: '1.1rem 1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: theme.textSecondary }}>{release.version}</span>
+                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>·</span>
+                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>{release.date}</span>
+                    </div>
+                    <h2 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.75rem 0', letterSpacing: '-0.02em' }}>
+                      {release.title}
+                    </h2>
+                    <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      {release.items.map((item, i) => (
+                        <li key={i} style={{ fontSize: '13px', color: theme.textSecondary, lineHeight: 1.5 }}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isSettingsActive ? (
             <SettingsManagement
               activeSubTab={
                 activeTabId === 'set_business' ? 'set_business' :
@@ -1385,70 +1052,59 @@ export default function AdminDashboardPage() {
                       letterSpacing: '-0.01em',
                       margin: 0,
                     }}>
-                      Manage your store setup, explore fresh features, and review sales.
+                      Set up your business. Run it smarter.
                     </p>
                   </div>
 
                   {/* ========================================================
                       SECTION 1: 3-CARD SETUP / ONBOARDING GUIDE
                       ======================================================== */}
-                  <div style={{ marginBottom: '2.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div style={{ marginBottom: '1.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{
-                          fontSize: '12px',
+                          fontSize: '12.5px',
                           fontWeight: 800,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          color: theme.textSecondary,
+                          letterSpacing: '-0.01em',
+                          color: theme.textPrimary,
                         }}>
-                          Store Setup Guide
-                        </span>
-                        <span style={{
-                          fontSize: '10.5px',
-                          fontWeight: 800,
-                          backgroundColor: theme.badgeBg,
-                          color: theme.badgeText,
-                          border: `1px solid ${theme.badgeBorder}`,
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                        }}>
-                          3 Steps
+                          Store Setup · 3 Simple Steps
                         </span>
                       </div>
                     </div>
 
-                    {/* 3 Setup Cards Grid - Modern Reference-Style UI */}
+                    {/* 3 Setup Cards Grid - Compact Modern UI */}
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                      gap: '1.25rem',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                      gap: '0.85rem',
                     }}>
                       {/* Card 1: Add your first product (UP NEXT) */}
                       <div
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
                           border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '1.25rem',
-                          padding: '1.6rem 1.45rem',
+                          borderRadius: '0.9rem',
+                          padding: '1.15rem 1.15rem',
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          minHeight: '215px',
+                          minHeight: '170px',
                           boxSizing: 'border-box',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                         }}
                       >
                         <div>
                           {/* Top Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '1.15rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
                             <span style={{
-                              fontSize: '11px',
+                              fontSize: '10px',
                               fontWeight: 800,
                               color: '#16A34A',
                               backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                              padding: '2px 8px',
+                              padding: '2px 7px',
                               borderRadius: '9999px',
-                              letterSpacing: '0.06em',
+                              letterSpacing: '0.05em',
                               textTransform: 'uppercase',
                             }}>
                               UP NEXT
@@ -1457,21 +1113,21 @@ export default function AdminDashboardPage() {
 
                           {/* Headline */}
                           <h3 style={{
-                            fontSize: '17px',
+                            fontSize: '15px',
                             fontWeight: 800,
                             color: theme.textPrimary,
-                            letterSpacing: '-0.025em',
-                            margin: '0 0 0.5rem 0',
-                            lineHeight: 1.3,
+                            letterSpacing: '-0.02em',
+                            margin: '0 0 0.35rem 0',
+                            lineHeight: 1.25,
                           }}>
                             Add your first product
                           </h3>
 
                           {/* Description */}
                           <p style={{
-                            fontSize: '13px',
+                            fontSize: '12px',
                             color: theme.textSecondary,
-                            lineHeight: 1.5,
+                            lineHeight: 1.45,
                             margin: 0,
                             fontWeight: 450,
                           }}>
@@ -1480,7 +1136,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* Bottom Action */}
-                        <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <button
                             type="button"
                             onClick={() => {
@@ -1491,8 +1147,8 @@ export default function AdminDashboardPage() {
                               backgroundColor: theme.activeBg,
                               color: theme.activeText,
                               borderRadius: '9999px',
-                              padding: '0.55rem 1.35rem',
-                              fontSize: '13px',
+                              padding: '0.45rem 1.1rem',
+                              fontSize: '12px',
                               fontWeight: 700,
                               border: 'none',
                               cursor: 'pointer',
@@ -1516,38 +1172,39 @@ export default function AdminDashboardPage() {
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
                           border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '1.25rem',
-                          padding: '1.6rem 1.45rem',
+                          borderRadius: '0.9rem',
+                          padding: '1.15rem 1.15rem',
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          minHeight: '215px',
+                          minHeight: '170px',
                           boxSizing: 'border-box',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                         }}
                       >
                         <div>
                           {/* Top Icon */}
-                          <div style={{ display: 'flex', alignItems: 'center', height: '22px', marginBottom: '1.15rem' }}>
-                            <PaymentsRoundedIcon sx={{ fontSize: 22, color: theme.textSecondary }} />
+                          <div style={{ display: 'flex', alignItems: 'center', height: '18px', marginBottom: '0.75rem' }}>
+                            <PaymentsRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
                           </div>
 
                           {/* Headline */}
                           <h3 style={{
-                            fontSize: '17px',
+                            fontSize: '15px',
                             fontWeight: 800,
                             color: theme.textPrimary,
-                            letterSpacing: '-0.025em',
-                            margin: '0 0 0.5rem 0',
-                            lineHeight: 1.3,
+                            letterSpacing: '-0.02em',
+                            margin: '0 0 0.35rem 0',
+                            lineHeight: 1.25,
                           }}>
                             Set up payments & tax
                           </h3>
 
                           {/* Description */}
                           <p style={{
-                            fontSize: '13px',
+                            fontSize: '12px',
                             color: theme.textSecondary,
-                            lineHeight: 1.5,
+                            lineHeight: 1.45,
                             margin: 0,
                             fontWeight: 450,
                           }}>
@@ -1556,7 +1213,7 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <button
                             type="button"
                             onClick={() => {
@@ -1567,8 +1224,8 @@ export default function AdminDashboardPage() {
                               backgroundColor: theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF',
                               color: theme.textPrimary,
                               borderRadius: '9999px',
-                              padding: '0.55rem 1.15rem',
-                              fontSize: '13px',
+                              padding: '0.45rem 0.95rem',
+                              fontSize: '12px',
                               fontWeight: 700,
                               border: `1px solid ${theme.border}`,
                               boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
@@ -1595,10 +1252,10 @@ export default function AdminDashboardPage() {
                               background: 'none',
                               border: 'none',
                               color: theme.textPrimary,
-                              fontSize: '13px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
-                              padding: '0.55rem 0.5rem',
+                              padding: '0.45rem 0.45rem',
                               display: 'inline-flex',
                               alignItems: 'center',
                               fontFamily: 'inherit',
@@ -1617,38 +1274,39 @@ export default function AdminDashboardPage() {
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
                           border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '1.25rem',
-                          padding: '1.6rem 1.45rem',
+                          borderRadius: '0.9rem',
+                          padding: '1.15rem 1.15rem',
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          minHeight: '215px',
+                          minHeight: '170px',
                           boxSizing: 'border-box',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                         }}
                       >
                         <div>
                           {/* Top Icon */}
-                          <div style={{ display: 'flex', alignItems: 'center', height: '22px', marginBottom: '1.15rem' }}>
-                            <PointOfSaleRoundedIcon sx={{ fontSize: 22, color: theme.textSecondary }} />
+                          <div style={{ display: 'flex', alignItems: 'center', height: '18px', marginBottom: '0.75rem' }}>
+                            <PointOfSaleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
                           </div>
 
                           {/* Headline */}
                           <h3 style={{
-                            fontSize: '17px',
+                            fontSize: '15px',
                             fontWeight: 800,
                             color: theme.textPrimary,
-                            letterSpacing: '-0.025em',
-                            margin: '0 0 0.5rem 0',
-                            lineHeight: 1.3,
+                            letterSpacing: '-0.02em',
+                            margin: '0 0 0.35rem 0',
+                            lineHeight: 1.25,
                           }}>
                             Start selling on POS
                           </h3>
 
                           {/* Description */}
                           <p style={{
-                            fontSize: '13px',
+                            fontSize: '12px',
                             color: theme.textSecondary,
-                            lineHeight: 1.5,
+                            lineHeight: 1.45,
                             margin: 0,
                             fontWeight: 450,
                           }}>
@@ -1657,15 +1315,15 @@ export default function AdminDashboardPage() {
                         </div>
 
                         {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <Link
                             href="/pos"
                             style={{
                               backgroundColor: theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF',
                               color: theme.textPrimary,
                               borderRadius: '9999px',
-                              padding: '0.55rem 1.15rem',
-                              fontSize: '13px',
+                              padding: '0.45rem 0.95rem',
+                              fontSize: '12px',
                               fontWeight: 700,
                               border: `1px solid ${theme.border}`,
                               boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
@@ -1694,10 +1352,10 @@ export default function AdminDashboardPage() {
                               background: 'none',
                               border: 'none',
                               color: theme.textPrimary,
-                              fontSize: '13px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
-                              padding: '0.55rem 0.5rem',
+                              padding: '0.45rem 0.45rem',
                               display: 'inline-flex',
                               alignItems: 'center',
                               fontFamily: 'inherit',
@@ -1710,327 +1368,6 @@ export default function AdminDashboardPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* ========================================================
-                      SECTION 3: SALES OVERVIEW (INTERACTIVE BAR CHART)
-                      ======================================================== */}
-                  <div style={{ marginBottom: '2.5rem' }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '1rem',
-                    }}>
-                      <h2 style={{
-                        fontSize: '19px',
-                        fontWeight: 800,
-                        color: theme.textPrimary,
-                        letterSpacing: '-0.03em',
-                        margin: 0,
-                      }}>
-                        Sales Overview
-                      </h2>
-
-                      {/* Chart Filter Toggle (Segmented Pill) */}
-                      <div style={{
-                        display: 'inline-flex',
-                        backgroundColor: theme.bgCard,
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '0.65rem',
-                        padding: '3px',
-                      }}>
-                        <button
-                          type="button"
-                          onClick={() => setChartTimeframe('weekly')}
-                          style={{
-                            padding: '4px 14px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            borderRadius: '0.5rem',
-                            border: 'none',
-                            backgroundColor: chartTimeframe === 'weekly' ? theme.activeBg : 'transparent',
-                            color: chartTimeframe === 'weekly' ? theme.activeText : theme.textSecondary,
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          Weekly
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setChartTimeframe('monthly')}
-                          style={{
-                            padding: '4px 14px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            borderRadius: '0.5rem',
-                            border: 'none',
-                            backgroundColor: chartTimeframe === 'monthly' ? theme.activeBg : 'transparent',
-                            color: chartTimeframe === 'monthly' ? theme.activeText : theme.textSecondary,
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          Monthly
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bar Chart Container Card */}
-                    <div style={{
-                      backgroundColor: theme.bgCard,
-                      border: `1px solid ${theme.borderCard}`,
-                      borderRadius: '1.25rem',
-                      padding: '1.75rem',
-                      boxSizing: 'border-box',
-                      position: 'relative',
-                    }}>
-                      {/* Bar Chart Header Stats */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '1.75rem',
-                      }}>
-                        <div>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textSecondary }}>
-                            {chartTimeframe === 'weekly' ? 'Total Weekly Revenue' : 'Total Monthly Revenue'}
-                          </span>
-                          <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>
-                            {chartTimeframe === 'weekly' ? '₹3,48,250' : '₹38,00,000'}
-                          </div>
-                        </div>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          fontSize: '12.5px',
-                          fontWeight: 800,
-                          backgroundColor: theme.secondaryBadgeBg,
-                          border: `1px solid ${theme.secondaryBadgeBorder}`,
-                          color: theme.secondaryBadgeText,
-                          padding: '4px 11px',
-                          borderRadius: '9999px',
-                        }}>
-                          <TrendingUpRoundedIcon sx={{ fontSize: 16, color: theme.secondaryBadgeText }} />
-                          <span>+14.8% vs last {chartTimeframe === 'weekly' ? 'week' : 'month'}</span>
-                        </div>
-                      </div>
-
-                      {/* SVG & HTML Interactive Bar Chart */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        justifyContent: 'space-between',
-                        height: '190px',
-                        gap: 'clamp(0.75rem, 2vw, 1.75rem)',
-                        borderBottom: `1px solid ${theme.border}`,
-                        paddingBottom: '10px',
-                        position: 'relative',
-                      }}>
-                        {chartData.map((item, index) => {
-                          const barHeightPct = (item.sales / maxSales) * 100;
-                          const isHovered = hoveredBar === index;
-                          const isHighlighted = item.isToday || isHovered;
-
-                          return (
-                            <div
-                              key={item.day}
-                              style={{
-                                flex: 1,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                height: '100%',
-                                justifyContent: 'flex-end',
-                                position: 'relative',
-                              }}
-                              onMouseEnter={() => setHoveredBar(index)}
-                              onMouseLeave={() => setHoveredBar(null)}
-                            >
-                              {/* Interactive Floating Tooltip */}
-                              {isHovered && (
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: `${Math.min(barHeightPct + 10, 88)}%`,
-                                  backgroundColor: theme.activeBg,
-                                  color: theme.activeText,
-                                  padding: '5px 10px',
-                                  borderRadius: '0.5rem',
-                                  fontSize: '11.5px',
-                                  fontWeight: 800,
-                                  whiteSpace: 'nowrap',
-                                  zIndex: 10,
-                                  pointerEvents: 'none',
-                                  boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  gap: '2px',
-                                }}>
-                                  <span>₹{item.sales.toLocaleString('en-IN')}</span>
-                                  <span style={{ fontSize: '10px', opacity: 0.75 }}>{item.orders} orders</span>
-                                </div>
-                              )}
-
-                              {/* Bar Pillar */}
-                              <div style={{
-                                width: '100%',
-                                maxWidth: '44px',
-                                height: `${barHeightPct}%`,
-                                backgroundColor: isHighlighted ? theme.barActive : theme.barDefault,
-                                borderRadius: '6px 6px 0 0',
-                                transition: 'height 0.3s ease, background-color 0.2s ease',
-                                cursor: 'pointer',
-                              }} />
-
-                              {/* Day Label */}
-                              <span style={{
-                                marginTop: '10px',
-                                fontSize: '12.5px',
-                                fontWeight: item.isToday ? 800 : 600,
-                                color: item.isToday ? theme.textPrimary : theme.textSecondary,
-                              }}>
-                                {item.day}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ========================================================
-                      SECTION 4: RECENT ORDERS TABLE
-                      ======================================================== */}
-                  <div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '1rem',
-                    }}>
-                      <h2 style={{
-                        fontSize: '19px',
-                        fontWeight: 800,
-                        color: theme.textPrimary,
-                        letterSpacing: '-0.03em',
-                        margin: 0,
-                      }}>
-                        Recent Orders
-                      </h2>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTabId('orders');
-                          openSingleMenu('sales');
-                        }}
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: theme.textPrimary,
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
-                        <span>View all orders &gt;&gt;</span>
-                      </button>
-                    </div>
-
-                    {/* Table Container Card */}
-                    <div style={{
-                      backgroundColor: theme.bgCard,
-                      border: `1px solid ${theme.borderCard}`,
-                      borderRadius: '1.25rem',
-                      padding: '0.5rem',
-                      boxSizing: 'border-box',
-                      overflowX: 'auto',
-                    }}>
-                      <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse',
-                        textAlign: 'left',
-                        fontSize: '14px',
-                      }}>
-                        <thead>
-                          <tr style={{
-                            borderBottom: `1px solid ${theme.border}`,
-                            backgroundColor: theme.tableHeaderBg,
-                            borderRadius: '0.75rem',
-                          }}>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Order ID
-                            </th>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Customer
-                            </th>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Items
-                            </th>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Amount
-                            </th>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Status
-                            </th>
-                            <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                              Time
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {recentOrders.map((order, i) => (
-                            <tr
-                              key={order.id}
-                              style={{
-                                borderBottom: i < recentOrders.length - 1 ? `1px solid ${theme.border}` : 'none',
-                                transition: 'background-color 0.15s ease',
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                            >
-                              <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace, inherit' }}>
-                                {order.id}
-                              </td>
-                              <td style={{ padding: '0.9rem 1.25rem', fontWeight: 600, color: theme.textPrimary }}>
-                                {order.customer}
-                              </td>
-                              <td style={{ padding: '0.9rem 1.25rem', fontWeight: 500, color: theme.textSecondary }}>
-                                {order.items} items
-                              </td>
-                              <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary }}>
-                                {order.amount}
-                              </td>
-                              <td style={{ padding: '0.9rem 1.25rem' }}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  padding: '3px 10px',
-                                  borderRadius: '9999px',
-                                  backgroundColor: theme.badgeBg,
-                                  color: theme.badgeText,
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  letterSpacing: '0.04em',
-                                }}>
-                                  {order.status}
-                                </span>
-                              </td>
-                              <td style={{ padding: '0.9rem 1.25rem', fontSize: '13px', color: theme.textSecondary }}>
-                                {order.time}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
                     </div>
                   </div>
                 </div>
@@ -2180,11 +1517,76 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Notifications - Simple Card matching Sales/Orders/Products */}
+                <div
+                  style={{
+                    backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '1rem',
+                    padding: '1.4rem 1.35rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                  }}>
+                    <span style={{
+                      fontSize: '14.5px',
+                      fontWeight: 500,
+                      color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+                      letterSpacing: '-0.01em',
+                    }}>
+                      Notifications
+                    </span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: theme.textSecondary,
+                    }}>
+                      {notifications.length} recent
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {notifications.map((n, idx) => (
+                      <div
+                        key={n.id}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.2rem',
+                          paddingBottom: idx !== notifications.length - 1 ? '0.75rem' : 0,
+                          borderBottom: idx !== notifications.length - 1 ? `1px solid ${theme.border}` : 'none',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
+                            {n.title}
+                          </span>
+                          <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
+                            {n.time}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: 1.4 }}>
+                          {n.desc}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </aside>
             </div>
           )}
         </main>
       </div>
+
+
 
       {/* Upgrade / Subscription Modal */}
       {showUpgradeModal && (
@@ -2499,7 +1901,7 @@ export default function AdminDashboardPage() {
                   margin: 0,
                   letterSpacing: '-0.02em',
                 }}>
-                  What&apos;s New in Nuradesk
+                  Announcements
                 </h2>
               </div>
             </div>

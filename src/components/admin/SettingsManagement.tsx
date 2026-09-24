@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 // Material Rounded Icons
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -287,7 +289,7 @@ export default function SettingsManagement({
           justifyContent: 'space-between',
           gap: '1rem',
           padding: '1.25rem 1.5rem',
-          backgroundColor: theme.bgCard,
+          backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
           borderRadius: '1rem',
           border: `1px solid ${theme.border}`,
         }}
@@ -309,27 +311,45 @@ export default function SettingsManagement({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => showToast('All system settings saved successfully.')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.65rem 1.25rem',
-            borderRadius: '0.65rem',
-            backgroundColor: theme.activeBg,
-            color: theme.activeText,
-            border: 'none',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <SaveRoundedIcon sx={{ fontSize: 18 }} />
-          <span>Save Changes</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <Link
+            href="/signin"
+            className="button-20-secondary"
+            style={{
+              height: '38px',
+              padding: '0 1rem',
+              fontSize: '13px',
+              fontWeight: 700,
+              fontFamily: 'inherit',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              color: '#EF4444',
+              borderColor: (theme as any).sidebarIsDark ? '#7F1D1D' : '#FCA5A5',
+              boxSizing: 'border-box',
+            }}
+          >
+            <LogoutRoundedIcon sx={{ fontSize: 16 }} />
+            <span>Log Out</span>
+          </Link>
+
+          <button
+            type="button"
+            className="button-20"
+            role="button"
+            onClick={() => showToast('All system settings saved successfully.')}
+            style={{
+              height: '38px',
+              fontSize: '13px',
+              fontWeight: 700,
+              fontFamily: 'inherit',
+            }}
+          >
+            <SaveRoundedIcon sx={{ fontSize: 18 }} />
+            <span>Save Changes</span>
+          </button>
+        </div>
       </div>
 
       {/* SUB-TAB 1: STORE PROFILE */}
@@ -339,7 +359,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -450,7 +470,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -630,7 +650,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -678,7 +698,7 @@ export default function SettingsManagement({
                           padding: '0.35rem 0.55rem',
                           borderRadius: '0.45rem',
                           border: `1px solid ${theme.border}`,
-                          backgroundColor: sched.isOpen ? theme.bgCard : theme.hoverBg,
+                          backgroundColor: sched.isOpen ? ((theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF') : theme.hoverBg,
                           color: theme.textPrimary,
                           fontSize: '12.5px',
                         }}
@@ -700,7 +720,7 @@ export default function SettingsManagement({
                           padding: '0.35rem 0.55rem',
                           borderRadius: '0.45rem',
                           border: `1px solid ${theme.border}`,
-                          backgroundColor: sched.isOpen ? theme.bgCard : theme.hoverBg,
+                          backgroundColor: sched.isOpen ? ((theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF') : theme.hoverBg,
                           color: theme.textPrimary,
                           fontSize: '12.5px',
                         }}
@@ -710,20 +730,20 @@ export default function SettingsManagement({
 
                   <button
                     type="button"
+                    className={sched.isOpen ? "button-20" : "button-20-secondary"}
+                    role="button"
                     onClick={() => {
                       const updated = [...operatingHours];
                       updated[idx].isOpen = !updated[idx].isOpen;
                       setOperatingHours(updated);
                     }}
                     style={{
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: sched.isOpen ? theme.badgeBg : theme.hoverBg,
-                      color: sched.isOpen ? theme.badgeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
+                      height: '32px',
+                      padding: '0 0.85rem',
                       fontSize: '12px',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      minWidth: '70px',
                     }}
                   >
                     {sched.isOpen ? 'Open' : 'Closed'}
@@ -741,7 +761,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -895,7 +915,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1023,10 +1043,11 @@ export default function SettingsManagement({
       {activeSubTab === 'set_tax' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* GST & Invoice Format */}
+          {/* GST & Invoice Format */}
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1069,32 +1090,30 @@ export default function SettingsManagement({
                 <div style={{ display: 'flex', gap: '0.5rem', height: '38px' }}>
                   <button
                     type="button"
+                    className={pricingMode === 'inclusive' ? "button-20" : "button-20-secondary"}
+                    role="button"
                     onClick={() => setPricingMode('inclusive')}
                     style={{
                       flex: 1,
-                      borderRadius: '0.45rem',
-                      border: `1px solid ${pricingMode === 'inclusive' ? theme.activeBg : theme.border}`,
-                      backgroundColor: pricingMode === 'inclusive' ? theme.activeBg : theme.bgPage,
-                      color: pricingMode === 'inclusive' ? theme.activeText : theme.textPrimary,
+                      height: '38px',
                       fontSize: '12px',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      fontFamily: 'inherit',
                     }}
                   >
                     Tax Inclusive
                   </button>
                   <button
                     type="button"
+                    className={pricingMode === 'exclusive' ? "button-20" : "button-20-secondary"}
+                    role="button"
                     onClick={() => setPricingMode('exclusive')}
                     style={{
                       flex: 1,
-                      borderRadius: '0.45rem',
-                      border: `1px solid ${pricingMode === 'exclusive' ? theme.activeBg : theme.border}`,
-                      backgroundColor: pricingMode === 'exclusive' ? theme.activeBg : theme.bgPage,
-                      color: pricingMode === 'exclusive' ? theme.activeText : theme.textPrimary,
+                      height: '38px',
                       fontSize: '12px',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      fontFamily: 'inherit',
                     }}
                   >
                     Tax Exclusive
@@ -1200,7 +1219,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1211,19 +1230,15 @@ export default function SettingsManagement({
               </h2>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => showToast('New custom tax slab added.')}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '0.45rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: 'none',
+                  height: '32px',
+                  padding: '0 0.85rem',
                   fontSize: '12px',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 <AddRoundedIcon sx={{ fontSize: 16 }} />
@@ -1259,14 +1274,15 @@ export default function SettingsManagement({
                     </span>
                     <button
                       type="button"
+                      className="button-20-secondary"
+                      role="button"
+                      onClick={() => showToast(`Edit configuration for ${slab.name}`)}
                       style={{
-                        padding: '4px 8px',
-                        borderRadius: '0.35rem',
-                        backgroundColor: 'transparent',
-                        border: `1px solid ${theme.border}`,
-                        color: theme.textSecondary,
+                        height: '26px',
+                        padding: '0 8px',
                         fontSize: '11px',
-                        cursor: 'pointer',
+                        fontWeight: 700,
+                        fontFamily: 'inherit',
                       }}
                     >
                       Edit
@@ -1281,7 +1297,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1349,7 +1365,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1409,7 +1425,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1481,7 +1497,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1543,16 +1559,15 @@ export default function SettingsManagement({
                   />
                   <button
                     type="button"
+                    className="button-20-secondary"
+                    role="button"
                     onClick={() => showToast('Terminal ping response: 18ms (Online)')}
                     style={{
+                      height: '38px',
                       padding: '0 0.85rem',
-                      borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
-                      color: theme.textPrimary,
-                      border: `1px solid ${theme.border}`,
                       fontSize: '12px',
                       fontWeight: 700,
-                      cursor: 'pointer',
+                      fontFamily: 'inherit',
                     }}
                   >
                     Test Ping
@@ -1583,7 +1598,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1598,16 +1613,15 @@ export default function SettingsManagement({
 
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => showToast('Test ticket dispatched to thermal printer.')}
                 style={{
-                  padding: '0.45rem 0.95rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: 'none',
+                  height: '32px',
+                  padding: '0 0.95rem',
                   fontSize: '12px',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Test Print Receipt
@@ -1703,7 +1717,7 @@ export default function SettingsManagement({
             <div
               style={{
                 padding: '1.5rem',
-                backgroundColor: theme.bgCard,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                 borderRadius: '0.85rem',
                 border: `1px solid ${theme.border}`,
               }}
@@ -1742,16 +1756,16 @@ export default function SettingsManagement({
                   </span>
                   <button
                     type="button"
+                    className={scannerBeep ? "button-20" : "button-20-secondary"}
+                    role="button"
                     onClick={() => setScannerBeep(!scannerBeep)}
                     style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      backgroundColor: scannerBeep ? theme.activeBg : theme.hoverBg,
-                      color: scannerBeep ? theme.activeText : theme.textSecondary,
-                      border: `1px solid ${theme.border}`,
+                      height: '28px',
+                      padding: '0 0.75rem',
                       fontSize: '11.5px',
                       fontWeight: 800,
-                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      minWidth: '50px',
                     }}
                   >
                     {scannerBeep ? 'On' : 'Off'}
@@ -1764,7 +1778,7 @@ export default function SettingsManagement({
             <div
               style={{
                 padding: '1.5rem',
-                backgroundColor: theme.bgCard,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                 borderRadius: '0.85rem',
                 border: `1px solid ${theme.border}`,
               }}
@@ -1775,16 +1789,15 @@ export default function SettingsManagement({
                 </h2>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => showToast('RJ11 drawer kick pulse sent.')}
                   style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    backgroundColor: theme.hoverBg,
-                    color: theme.textPrimary,
-                    border: `1px solid ${theme.border}`,
+                    height: '28px',
+                    padding: '0 0.75rem',
                     fontSize: '11.5px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Manual Kick Test
@@ -1814,7 +1827,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1899,7 +1912,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -1913,19 +1926,15 @@ export default function SettingsManagement({
               </div>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => showToast('Test notification sent to owner and manager.')}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '0.45rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: 'none',
+                  height: '32px',
+                  padding: '0 0.85rem',
                   fontSize: '12px',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 <SendRoundedIcon sx={{ fontSize: 14 }} />
@@ -1965,7 +1974,7 @@ export default function SettingsManagement({
                       padding: '0.5rem 0.75rem',
                       borderRadius: '0.45rem',
                       border: `1px solid ${theme.border}`,
-                      backgroundColor: theme.bgCard,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                       color: theme.textPrimary,
                       fontSize: '12.5px',
                     }}
@@ -2004,7 +2013,7 @@ export default function SettingsManagement({
                       padding: '0.5rem 0.75rem',
                       borderRadius: '0.45rem',
                       border: `1px solid ${theme.border}`,
-                      backgroundColor: theme.bgCard,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                       color: theme.textPrimary,
                       fontSize: '12.5px',
                     }}
@@ -2068,7 +2077,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -2084,19 +2093,15 @@ export default function SettingsManagement({
               </div>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => showToast('New role creator launched.')}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
-                  borderRadius: '0.45rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: 'none',
+                  height: '32px',
+                  padding: '0 0.85rem',
                   fontSize: '12px',
                   fontWeight: 700,
-                  cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 <AddRoundedIcon sx={{ fontSize: 16 }} />
@@ -2199,7 +2204,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -2314,7 +2319,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}
@@ -2358,6 +2363,51 @@ export default function SettingsManagement({
               ))}
             </div>
           </div>
+
+          {/* Active Session & Account Sign Out */}
+          <div
+            style={{
+              padding: '1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                  <LogoutRoundedIcon sx={{ fontSize: 18, color: '#EF4444' }} />
+                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    Active Session & Account
+                  </h2>
+                </div>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
+                  Signed in as <strong>Rahul (Administrator)</strong> on this browser terminal.
+                </p>
+              </div>
+
+              <Link
+                href="/signin"
+                className="button-20-secondary"
+                style={{
+                  height: '38px',
+                  padding: '0 1.25rem',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#EF4444',
+                  borderColor: (theme as any).sidebarIsDark ? '#7F1D1D' : '#FCA5A5',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <LogoutRoundedIcon sx={{ fontSize: 16 }} />
+                <span>Log Out</span>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2368,7 +2418,7 @@ export default function SettingsManagement({
           <div
             style={{
               padding: '1.75rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
             }}

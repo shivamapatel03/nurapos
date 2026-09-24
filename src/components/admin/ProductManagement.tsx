@@ -793,22 +793,17 @@ export default function ProductManagement({
           {currentSubTab === 'products' && (
             <button
               type="button"
+              className="button-20"
+              role="button"
               onClick={handleOpenAddProduct}
               style={{
                 height: '38px',
                 padding: '0 1.15rem',
-                borderRadius: '0.65rem',
-                border: `1px solid ${theme.activeBg}`,
-                backgroundColor: theme.activeBg,
-                color: theme.activeText,
                 fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
+                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                transition: 'all 0.15s ease',
               }}
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -819,21 +814,17 @@ export default function ProductManagement({
           {currentSubTab === 'categories' && (
             <button
               type="button"
+              className="button-20"
+              role="button"
               onClick={() => setShowCategoryModal(true)}
               style={{
                 height: '38px',
                 padding: '0 1.15rem',
-                borderRadius: '0.65rem',
-                border: `1px solid ${theme.activeBg}`,
-                backgroundColor: theme.activeBg,
-                color: theme.activeText,
                 fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
+                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                transition: 'all 0.15s ease',
               }}
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -844,21 +835,17 @@ export default function ProductManagement({
           {currentSubTab === 'brands' && (
             <button
               type="button"
+              className="button-20"
+              role="button"
               onClick={() => setShowBrandModal(true)}
               style={{
                 height: '38px',
                 padding: '0 1.15rem',
-                borderRadius: '0.65rem',
-                border: `1px solid ${theme.activeBg}`,
-                backgroundColor: theme.activeBg,
-                color: theme.activeText,
                 fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
+                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                transition: 'all 0.15s ease',
               }}
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -876,31 +863,36 @@ export default function ProductManagement({
           {/* Top 5 Metric KPI Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-            gap: '1rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+            gap: '1.25rem',
             marginBottom: '1.5rem',
           }}>
-            {/* Total Products */}
+            {/* Total Catalog */}
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
               borderRadius: '1rem',
-              padding: '1.15rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Catalog
-                </span>
-                <Inventory2RoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Catalog
               </div>
-              <div style={{ marginTop: '0.65rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {totalCount}
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   items
                 </span>
               </div>
@@ -908,103 +900,123 @@ export default function ProductManagement({
 
             {/* Active on POS */}
             <div style={{
-              backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.borderCard}`,
               borderRadius: '1rem',
-              padding: '1.15rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active on POS
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#16A34A' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Active on POS
               </div>
-              <div style={{ marginTop: '0.65rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {activeCount}
                 </span>
-                <span style={{ fontSize: '12px', color: '#15803D', marginLeft: '0.35rem', fontWeight: 700 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   ready to sell
                 </span>
               </div>
             </div>
 
-            {/* Inactive / Hidden */}
+            {/* Inactive / Draft */}
             <div style={{
-              backgroundColor: inactiveCount > 0 ? '#F3F4F6' : theme.bgCard,
-              border: `1px solid ${inactiveCount > 0 ? '#D1D5DB' : theme.borderCard}`,
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.borderCard}`,
               borderRadius: '1rem',
-              padding: '1.15rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Inactive / Draft
-                </span>
-                <CancelRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Inactive / Draft
               </div>
-              <div style={{ marginTop: '0.65rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {inactiveCount}
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   hidden from cashier
                 </span>
               </div>
             </div>
 
-            {/* With Variants */}
+            {/* Multi-Variant Items */}
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
               borderRadius: '1rem',
-              padding: '1.15rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Multi-Variant Items
-                </span>
-                <LayersRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Multi-Variant Items
               </div>
-              <div style={{ marginTop: '0.65rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {withVariantsCount}
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   sized & colored
                 </span>
               </div>
             </div>
 
-            {/* Avg Profit Margin */}
+            {/* Average Margin */}
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
               borderRadius: '1rem',
-              padding: '1.15rem 1.25rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11.5px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Average Margin
-                </span>
-                <PercentRoundedIcon sx={{ fontSize: 18, color: '#16A34A' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Average Margin
               </div>
-              <div style={{ marginTop: '0.65rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {avgMargin}%
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   gross margin
                 </span>
               </div>
@@ -2681,13 +2693,12 @@ export default function ProductManagement({
               }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowProductModal(false)}
                   style={{
-                    padding: '0.55rem 1.15rem',
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -2698,16 +2709,14 @@ export default function ProductManagement({
 
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.35rem',
-                    borderRadius: '0.65rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.35rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   }}
                 >
                   {editingProduct ? 'Save Changes' : 'Create Product'}
@@ -2756,16 +2765,15 @@ export default function ProductManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
               <button
                 type="button"
+                className="button-20-secondary"
+                role="button"
                 onClick={() => {
                   setShowDeleteModal(false);
                   setProductToDelete(null);
                 }}
                 style={{
-                  padding: '0.55rem 1rem',
-                  borderRadius: '0.55rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: 'transparent',
-                  color: theme.textPrimary,
+                  height: '38px',
+                  padding: '0 1.15rem',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2777,14 +2785,18 @@ export default function ProductManagement({
                 type="button"
                 onClick={handleConfirmDelete}
                 style={{
-                  padding: '0.55rem 1.25rem',
-                  borderRadius: '0.55rem',
-                  border: 'none',
+                  height: '38px',
+                  padding: '0 1.25rem',
+                  borderRadius: '1rem',
+                  border: '1px solid #DC2626',
                   backgroundColor: '#DC2626',
                   color: '#FFFFFF',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 Yes, Delete
@@ -2912,13 +2924,12 @@ export default function ProductManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowCategoryModal(false)}
                   style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -2928,14 +2939,13 @@ export default function ProductManagement({
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
@@ -3065,13 +3075,12 @@ export default function ProductManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowBrandModal(false)}
                   style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -3081,14 +3090,13 @@ export default function ProductManagement({
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >

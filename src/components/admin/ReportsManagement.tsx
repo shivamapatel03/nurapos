@@ -159,7 +159,7 @@ function AnimatedDonutChart({
                 fill={item.slice.color}
                 style={{
                   cursor: 'pointer',
-                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   filter: item.isHovered ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))' : 'none',
                   opacity: hoveredIndex === null || hoveredIndex === index ? 1 : 0.65,
                 }}
@@ -318,7 +318,7 @@ function AnimatedBarChart({
 
           return (
             <div
-              key={item.label}
+              key={index}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -342,7 +342,7 @@ function AnimatedBarChart({
                   padding: '4px 9px',
                   borderRadius: '0.45rem',
                   fontSize: '11px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   whiteSpace: 'nowrap',
                   zIndex: 20,
                   boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
@@ -352,7 +352,7 @@ function AnimatedBarChart({
                 }}>
                   <div>{item.label}: {item.formattedValue || `${valuePrefix}${item.value.toLocaleString('en-IN')}`}</div>
                   {item.secondaryValue !== undefined && (
-                    <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 600 }}>
+                    <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 500 }}>
                       {item.secondaryValue} orders
                     </div>
                   )}
@@ -367,7 +367,7 @@ function AnimatedBarChart({
                   height: `${heightPercent}%`,
                   backgroundColor: isHovered || item.isToday ? activeBarColor : barColor,
                   borderRadius: '0.45rem 0.45rem 2px 2px',
-                  transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease',
+                  transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.15)' : 'none',
                 }}
               />
@@ -385,14 +385,14 @@ function AnimatedBarChart({
       }}>
         {data.map((item, index) => (
           <div
-            key={item.label}
+            key={index}
             style={{
               flex: 1,
               textAlign: 'center',
               fontSize: '11.5px',
-              fontWeight: hoveredIndex === index || item.isToday ? 800 : 600,
+              fontWeight: hoveredIndex === index || item.isToday ? 700 : 500,
               color: hoveredIndex === index || item.isToday ? theme.textPrimary : theme.textSecondary,
-              transition: 'color 0.15s ease',
+              transition: 'color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {item.label}
@@ -603,64 +603,57 @@ export default function ReportsManagement({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {/* Timeframe Segmented Switcher */}
           <div style={{
+            position: 'relative',
             display: 'inline-flex',
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '0.65rem',
             padding: '3px',
-            gap: '2px',
+            boxSizing: 'border-box',
           }}>
-            <button
-              type="button"
-              onClick={() => setTimeframe('daily')}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '0.45rem',
-                border: 'none',
-                backgroundColor: timeframe === 'daily' ? theme.activeBg : 'transparent',
-                color: timeframe === 'daily' ? theme.activeText : theme.textSecondary,
-                fontSize: '12px',
-                fontWeight: timeframe === 'daily' ? 800 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              Daily
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeframe('weekly')}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '0.45rem',
-                border: 'none',
-                backgroundColor: timeframe === 'weekly' ? theme.activeBg : 'transparent',
-                color: timeframe === 'weekly' ? theme.activeText : theme.textSecondary,
-                fontSize: '12px',
-                fontWeight: timeframe === 'weekly' ? 800 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              Weekly
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeframe('monthly')}
-              style={{
-                padding: '4px 12px',
-                borderRadius: '0.45rem',
-                border: 'none',
-                backgroundColor: timeframe === 'monthly' ? theme.activeBg : 'transparent',
-                color: timeframe === 'monthly' ? theme.activeText : theme.textSecondary,
-                fontSize: '12px',
-                fontWeight: timeframe === 'monthly' ? 800 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              Monthly
-            </button>
+            {/* Smooth non-bouncy sliding pill indicator */}
+            <div style={{
+              position: 'absolute',
+              top: '3px',
+              bottom: '3px',
+              left: '3px',
+              width: 'calc((100% - 6px) / 3)',
+              borderRadius: '0.45rem',
+              backgroundColor: theme.activeBg,
+              transform: `translateX(${timeframe === 'daily' ? '0%' : timeframe === 'weekly' ? '100%' : '200%'})`,
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: 'none',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+            }} />
+
+            {(['daily', 'weekly', 'monthly'] as const).map((t) => {
+              const isActive = timeframe === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTimeframe(t)}
+                  style={{
+                    position: 'relative',
+                    zIndex: 1,
+                    width: '74px',
+                    padding: '5px 0',
+                    borderRadius: '0.45rem',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: isActive ? theme.activeText : theme.textSecondary,
+                    fontSize: '12px',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    textAlign: 'center',
+                    transition: 'color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              );
+            })}
           </div>
 
           {/* Export / Print Button */}
@@ -697,105 +690,135 @@ export default function ReportsManagement({
           {/* Top Metric Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
             {/* Gross Revenue */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Gross Revenue
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 7px', borderRadius: '9999px' }}>
-                  +14.8%
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Gross Revenue
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {timeframe === 'daily' ? '₹76,700' : timeframe === 'monthly' ? '₹38,00,000' : '₹3,48,250'}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  vs ₹3,03,350 previous {timeframe}
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  +14.8% vs last {timeframe}
+                </span>
               </div>
             </div>
 
             {/* Total Orders */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Orders
-                </span>
-                <ShoppingBagRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Orders
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {timeframe === 'daily' ? '190' : timeframe === 'monthly' ? '9,650' : '843'}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Avg ~120 orders per day
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  tickets rung
+                </span>
               </div>
             </div>
 
             {/* Average Order Value (AOV) */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Average Order Value
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 7px', borderRadius: '9999px' }}>
-                  +6.2%
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Average Order Value
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹413
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Target: ₹380 / transaction
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  per order (+6.2%)
+                </span>
               </div>
             </div>
 
             {/* Discounts & Refunds */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Discounts & Refunds
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#991B1B', backgroundColor: '#FEE2E2', padding: '2px 7px', borderRadius: '9999px' }}>
-                  4.1%
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Discounts & Refunds
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   -₹21,800
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Discounts: ₹14.2k • Refunds: ₹7.6k
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  4.1% of revenue
+                </span>
               </div>
             </div>
           </div>
@@ -809,9 +832,9 @@ export default function ReportsManagement({
           }}>
             {/* Animated Bar Chart: Revenue & Order Trajectory */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1rem',
               padding: '1.5rem',
               display: 'flex',
               flexDirection: 'column',
@@ -830,14 +853,11 @@ export default function ReportsManagement({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  fontSize: '11.5px',
-                  fontWeight: 800,
-                  color: '#166534',
-                  backgroundColor: '#DCFCE7',
-                  padding: '3px 8px',
-                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#16A34A',
                 }}>
-                  <TrendingUpRoundedIcon sx={{ fontSize: 15 }} />
+                  <TrendingUpRoundedIcon sx={{ fontSize: 16 }} />
                   <span>On Pace</span>
                 </div>
               </div>
@@ -855,9 +875,9 @@ export default function ReportsManagement({
 
             {/* Animated Donut / Pie Chart: Payment Methods Breakdown */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1rem',
               padding: '1.5rem',
               display: 'flex',
               flexDirection: 'column',
@@ -885,61 +905,6 @@ export default function ReportsManagement({
               />
             </div>
           </div>
-
-          {/* Discounts & Refunds Detailed Ledger Table */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            padding: '1.25rem',
-            marginBottom: '1.5rem',
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.85rem 0' }}>
-              Discounts & Returns Audit Summary
-            </h3>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1rem',
-            }}>
-              <div style={{ padding: '0.85rem', borderRadius: '0.75rem', backgroundColor: theme.hoverBg }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase' }}>
-                  Promotion / Promo Codes
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: '4px 0' }}>
-                  ₹7,800
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                  56 redeemed tickets • &quot;HAPPYHOUR15&quot; top coupon
-                </div>
-              </div>
-
-              <div style={{ padding: '0.85rem', borderRadius: '0.75rem', backgroundColor: theme.hoverBg }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase' }}>
-                  Manager Discretion Overrides
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: '4px 0' }}>
-                  ₹6,400
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                  32 authorizations • Service recovery & VIP perks
-                </div>
-              </div>
-
-              <div style={{ padding: '0.85rem', borderRadius: '0.75rem', backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#991B1B', textTransform: 'uppercase' }}>
-                  Refunds & Voided Tickets
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: '#991B1B', margin: '4px 0' }}>
-                  ₹7,600
-                </div>
-                <div style={{ fontSize: '11.5px', color: '#B91C1C' }}>
-                  14 total refund tickets • 8 item returns, 6 kitchen voids
-                </div>
-              </div>
-            </div>
-          </div>
         </>
       )}
 
@@ -951,103 +916,135 @@ export default function ReportsManagement({
           {/* Top Metric Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
             {/* Retail Valuation */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Inventory Retail Value
-                </span>
-                <Inventory2RoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Inventory Retail Value
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹14,85,600
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Based on current shelf retail prices
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  current shelf price
+                </span>
               </div>
             </div>
 
             {/* Cost Valuation */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Inventory Cost Asset
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 7px', borderRadius: '9999px' }}>
-                  53.4% Margin
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Inventory Cost Asset
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹6,92,400
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Procured capital invested in stock
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  53.4% margin
+                </span>
               </div>
             </div>
 
             {/* Stock Health */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Catalog Health Rate
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Catalog Health Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   91.2%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  78 in stock • 4 low stock • 2 critical
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  78 in stock, 4 low
+                </span>
               </div>
             </div>
 
             {/* Inflow vs Outflow */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Today Inflow / Outflow
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#1E40AF', backgroundColor: '#DBEAFE', padding: '2px 7px', borderRadius: '9999px' }}>
-                  +130 Net
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Today Inflow / Outflow
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  +340 <span style={{ fontSize: '18px', color: '#991B1B' }}>/ -210</span>
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Units received vs sold / damaged
-                </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  +340 / -210
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  +130 net units
+                </span>
               </div>
             </div>
           </div>
@@ -1229,101 +1226,135 @@ export default function ReportsManagement({
           {/* Top Metric Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
             {/* Total Customers */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Customer Base
-                </span>
-                <PersonOutlineRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Customer Base
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   3,420
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Registered patron profiles
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  registered patrons
+                </span>
               </div>
             </div>
 
             {/* New Customers */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  New Customers ({timeframe})
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 7px', borderRadius: '9999px' }}>
-                  +18.4%
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                New Customers ({timeframe})
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   +{timeframe === 'daily' ? '18' : timeframe === 'monthly' ? '410' : '84'}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  First-time orders registered
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  +18.4% vs last {timeframe}
+                </span>
               </div>
             </div>
 
             {/* Repeat Customer Rate */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Repeat Customer Rate
-                </span>
-                <StarRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Repeat Customer Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   68.5%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  2,343 return visit patrons
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  loyalty re-orders
+                </span>
               </div>
             </div>
 
             {/* Average Lifetime Value */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Avg Patron LTV
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Avg Patron LTV
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹4,850
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Average total cumulative spend
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  cumulative spend
+                </span>
               </div>
             </div>
           </div>
@@ -1477,99 +1508,135 @@ export default function ReportsManagement({
           {/* Top Metric Cards */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
             {/* Total Team Sales */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Team Sales
-                </span>
-                <BadgeRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Team Sales
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹3,48,250
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Across 5 active staff cashiers
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  across 5 staff
+                </span>
               </div>
             </div>
 
             {/* Total Orders Handled */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Orders Processed
-                </span>
-                <ShoppingBagRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Orders Processed
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   843
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Avg ~168 orders / employee
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  ~168 / employee
+                </span>
               </div>
             </div>
 
             {/* Avg Speed of Service */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Speed of Service
-                </span>
-                <SpeedRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Speed of Service
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   54s
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Average seconds per order checkout
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  avg checkout time
+                </span>
               </div>
             </div>
 
             {/* Shifts Completed */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Shifts Completed
-                </span>
-                <AccessTimeRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Shifts Completed
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   68
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  544 total store operating hours
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  544 total store hours
+                </span>
               </div>
             </div>
           </div>

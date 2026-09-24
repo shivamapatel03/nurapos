@@ -634,24 +634,17 @@ export default function CustomersManagement({
         {/* Global Action: Add Customer */}
         <button
           type="button"
+          className="button-20"
+          role="button"
           onClick={() => setShowAddCustomerModal(true)}
           style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0 1.15rem',
-            height: '40px',
-            borderRadius: '0.65rem',
-            backgroundColor: theme.textPrimary,
-            color: theme.bgPage,
-            border: 'none',
+            height: '38px',
             fontSize: '13px',
-            fontWeight: 800,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
+            fontWeight: 700,
+            fontFamily: 'inherit',
           }}
         >
-          <AddRoundedIcon sx={{ fontSize: 18 }} />
+          <AddRoundedIcon sx={{ fontSize: 17 }} />
           <span>Add Customer</span>
         </button>
       </div>
@@ -669,90 +662,126 @@ export default function CustomersManagement({
             marginBottom: '1.75rem',
           }}>
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Customers
-                </span>
-                <PeopleAltRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Customers
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   3,420
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Registered patron base
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active Loyalty Members
-                </span>
-                <CardGiftcardRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Active Loyalty Members
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   2,343
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   68.5% loyalty participation
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Avg Lifetime Value (LTV)
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Avg Lifetime Value
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹4,850
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Average spend per patron
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  VIP Club Patrons
-                </span>
-                <StarsRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                VIP Club Patrons
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.03em' }}>
                   274
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Generating 28.4% of sales
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -770,7 +799,7 @@ export default function CustomersManagement({
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               border: `1px solid ${theme.border}`,
               borderRadius: '0.65rem',
               padding: '0 0.85rem',
@@ -811,7 +840,7 @@ export default function CustomersManagement({
                 style={{
                   height: '38px',
                   borderRadius: '0.65rem',
-                  backgroundColor: theme.bgCard,
+                  backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                   color: theme.textPrimary,
                   border: `1px solid ${theme.border}`,
                   padding: '0 0.85rem',
@@ -834,7 +863,7 @@ export default function CustomersManagement({
                 style={{
                   height: '38px',
                   borderRadius: '0.65rem',
-                  backgroundColor: theme.bgCard,
+                  backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                   color: theme.textPrimary,
                   border: `1px solid ${theme.border}`,
                   padding: '0 0.85rem',
@@ -855,8 +884,8 @@ export default function CustomersManagement({
 
           {/* Customers Directory Table */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             overflow: 'hidden',
             marginBottom: '1.75rem',
@@ -963,20 +992,16 @@ export default function CustomersManagement({
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                           <button
                             type="button"
+                            className="button-20-secondary"
+                            role="button"
                             onClick={() => setSelectedCustomer(c)}
                             title="View Customer Profile"
                             style={{
-                              padding: '4px 8px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: theme.hoverBg,
-                              color: theme.textPrimary,
+                              padding: '0 8px',
+                              height: '28px',
                               fontSize: '12px',
                               fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
+                              fontFamily: 'inherit',
                             }}
                           >
                             <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
@@ -984,20 +1009,16 @@ export default function CustomersManagement({
                           </button>
                           <button
                             type="button"
+                            className="button-20-secondary"
+                            role="button"
                             onClick={() => setAdjustPointsCustomer(c)}
                             title="Adjust Loyalty Points"
                             style={{
-                              padding: '4px 8px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: 'transparent',
-                              color: theme.textPrimary,
+                              padding: '0 8px',
+                              height: '28px',
                               fontSize: '12px',
                               fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
+                              fontFamily: 'inherit',
                             }}
                           >
                             <LoyaltyRoundedIcon sx={{ fontSize: 14 }} />
@@ -1034,90 +1055,126 @@ export default function CustomersManagement({
             marginBottom: '1.75rem',
           }}>
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Orders Rung
-                </span>
-                <ReceiptLongRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Orders Rung
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   12,840
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Store orders processed
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Aggregate Spend
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Aggregate Spend
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   ₹62.45L
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Cumulative gross spend
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Avg Basket Size
-                </span>
-                <ShoppingBagRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Avg Basket Size
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   2.8 Items
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   ₹486 average ticket
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Repeat Spend Ratio
-                </span>
-                <TrendingUpRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Repeat Spend Ratio
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   72.0%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Revenue from returning guests
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -1135,7 +1192,7 @@ export default function CustomersManagement({
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               border: `1px solid ${theme.border}`,
               borderRadius: '0.65rem',
               padding: '0 0.85rem',
@@ -1166,7 +1223,7 @@ export default function CustomersManagement({
               style={{
                 height: '38px',
                 borderRadius: '0.65rem',
-                backgroundColor: theme.bgCard,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                 color: theme.textPrimary,
                 border: `1px solid ${theme.border}`,
                 padding: '0 0.85rem',
@@ -1185,8 +1242,8 @@ export default function CustomersManagement({
 
           {/* Purchase History Ledger */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             overflow: 'hidden',
             marginBottom: '1.75rem',
@@ -1232,19 +1289,15 @@ export default function CustomersManagement({
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
+                          className="button-20-secondary"
+                          role="button"
                           onClick={() => setViewingReceiptOrder(o)}
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '4px 10px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: theme.hoverBg,
-                            color: theme.textPrimary,
+                            padding: '0 10px',
+                            height: '28px',
                             fontSize: '12px',
                             fontWeight: 700,
-                            cursor: 'pointer',
+                            fontFamily: 'inherit',
                           }}
                         >
                           <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
@@ -1273,90 +1326,126 @@ export default function CustomersManagement({
             marginBottom: '1.75rem',
           }}>
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Points in Circulation
-                </span>
-                <StarsRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Points in Circulation
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   1,84,200
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Active unredeemed customer balance
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Rewards Claimed
-                </span>
-                <CardGiftcardRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Rewards Claimed
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   ₹1,24,500
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Value redeemed by patrons
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Conversion Multiplier
-                </span>
-                <TrendingUpRoundedIcon sx={{ fontSize: 18, color: '#0284C7' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Conversion Multiplier
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   4.8x
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Higher repeat frequency with points
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Redemption Rate
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Redemption Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   34.2%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Patrons active in rewards catalog
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -1368,8 +1457,8 @@ export default function CustomersManagement({
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${theme.border}`,
                 borderRadius: '1rem',
                 padding: '1.25rem',
               }}>
@@ -1387,8 +1476,8 @@ export default function CustomersManagement({
               </div>
 
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${theme.border}`,
                 borderRadius: '1rem',
                 padding: '1.25rem',
               }}>
@@ -1406,8 +1495,8 @@ export default function CustomersManagement({
               </div>
 
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${theme.border}`,
                 borderRadius: '1rem',
                 padding: '1.25rem',
               }}>
@@ -1425,8 +1514,8 @@ export default function CustomersManagement({
               </div>
 
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${theme.border}`,
                 borderRadius: '1rem',
                 padding: '1.25rem',
               }}>
@@ -1447,8 +1536,8 @@ export default function CustomersManagement({
 
           {/* Active Rewards Voucher Catalog */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             padding: '1.5rem',
             marginBottom: '1.75rem',
@@ -1461,7 +1550,7 @@ export default function CustomersManagement({
                 <div
                   key={v.id}
                   style={{
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     borderRadius: '0.85rem',
                     padding: '1.25rem',
@@ -1513,98 +1602,134 @@ export default function CustomersManagement({
             marginBottom: '1.75rem',
           }}>
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#92400E', backgroundColor: '#FEF3C7', padding: '2px 8px', borderRadius: '0.35rem' }}>
-                  VIP ELITE
-                </span>
-                <StarsRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                VIP Elite
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: theme.textPrimary }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   274 Members
-                </div>
-                <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Avg ₹28,450 spend • 4.2 visits/mo
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#1E40AF', backgroundColor: '#DBEAFE', padding: '2px 8px', borderRadius: '0.35rem' }}>
-                  STORE REGULARS
-                </span>
-                <PeopleAltRoundedIcon sx={{ fontSize: 18, color: '#3B82F6' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Store Regulars
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: theme.textPrimary }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   1,436 Members
-                </div>
-                <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Avg ₹6,200 spend • 2.1 visits/mo
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 8px', borderRadius: '0.35rem' }}>
-                  NEW PATRONS
-                </span>
-                <PersonOutlineRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                New Patrons
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: theme.textPrimary }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   1,077 Members
-                </div>
-                <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   First order in last 30 days
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#991B1B', backgroundColor: '#FEE2E2', padding: '2px 8px', borderRadius: '0.35rem' }}>
-                  AT-RISK / LAPSED
-                </span>
-                <WarningAmberRoundedIcon sx={{ fontSize: 18, color: '#EF4444' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                At-Risk / Lapsed
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: theme.textPrimary }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   633 Members
-                </div>
-                <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   No visit in 45+ days
-                </div>
+                </span>
               </div>
             </div>
           </div>
 
           {/* Customer Group Directory */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             overflow: 'hidden',
             marginBottom: '1.75rem',
@@ -1667,16 +1792,15 @@ export default function CustomersManagement({
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
+                          className="button-20-secondary"
+                          role="button"
                           onClick={() => setSelectedCustomer(c)}
                           style={{
-                            padding: '4px 8px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: theme.hoverBg,
-                            color: theme.textPrimary,
+                            padding: '0 8px',
+                            height: '28px',
                             fontSize: '12px',
                             fontWeight: 700,
-                            cursor: 'pointer',
+                            fontFamily: 'inherit',
                           }}
                         >
                           View Profile
@@ -1704,98 +1828,134 @@ export default function CustomersManagement({
             marginBottom: '1.75rem',
           }}>
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Average Rating
-                </span>
-                <StarRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Average Rating
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.03em' }}>
                   4.8 / 5.0
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Across 1,840 verified patron reviews
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Positive Sentiment
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Positive Sentiment
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   92.4%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   4-star and 5-star ratings
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Pending Complaints
-                </span>
-                <WarningAmberRoundedIcon sx={{ fontSize: 18, color: '#EF4444' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Pending Complaints
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.03em' }}>
                   1 Issue
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Requires supervisor resolution
-                </div>
+                </span>
               </div>
             </div>
 
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Avg Resolution Time
-                </span>
-                <CheckRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Avg Resolution Time
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
                   1.4 hrs
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Customer issue recovery speed
-                </div>
+                </span>
               </div>
             </div>
           </div>
 
           {/* Feedback Ledger */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             overflow: 'hidden',
             marginBottom: '1.75rem',
@@ -1867,16 +2027,15 @@ export default function CustomersManagement({
                         {f.status === 'Action Required' && (
                           <button
                             type="button"
+                            className="button-20"
+                            role="button"
                             onClick={() => setResolvingFeedback(f)}
                             style={{
-                              padding: '4px 10px',
-                              borderRadius: '0.45rem',
-                              border: 'none',
-                              backgroundColor: '#DC2626',
-                              color: '#FFFFFF',
+                              padding: '0 12px',
+                              height: '28px',
                               fontSize: '12px',
                               fontWeight: 700,
-                              cursor: 'pointer',
+                              fontFamily: 'inherit',
                             }}
                           >
                             Resolve
@@ -1913,7 +2072,7 @@ export default function CustomersManagement({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             width: '100%',
@@ -1954,7 +2113,7 @@ export default function CustomersManagement({
                     width: '100%',
                     height: '38px',
                     borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0 0.85rem',
@@ -1980,7 +2139,7 @@ export default function CustomersManagement({
                       width: '100%',
                       height: '38px',
                       borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
                       padding: '0 0.85rem',
@@ -2004,7 +2163,7 @@ export default function CustomersManagement({
                       width: '100%',
                       height: '38px',
                       borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
                       padding: '0 0.85rem',
@@ -2028,7 +2187,7 @@ export default function CustomersManagement({
                       width: '100%',
                       height: '38px',
                       borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
                       padding: '0 0.75rem',
@@ -2056,7 +2215,7 @@ export default function CustomersManagement({
                       width: '100%',
                       height: '38px',
                       borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
                       padding: '0 0.75rem',
@@ -2080,7 +2239,7 @@ export default function CustomersManagement({
                   style={{
                     width: '100%',
                     borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0.65rem 0.85rem',
@@ -2095,33 +2254,27 @@ export default function CustomersManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowAddCustomerModal(false)}
                   style={{
-                    padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
                   }}
                 >
                   Register Customer
@@ -2148,7 +2301,7 @@ export default function CustomersManagement({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             width: '100%',
@@ -2209,15 +2362,15 @@ export default function CustomersManagement({
               gap: '0.75rem',
               marginBottom: '1.25rem',
             }}>
-              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: theme.hoverBg, textAlign: 'center' }}>
+              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase' }}>Orders</div>
                 <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, marginTop: '2px' }}>{selectedCustomer.totalOrders}</div>
               </div>
-              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: theme.hoverBg, textAlign: 'center' }}>
+              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase' }}>Lifetime Spend</div>
                 <div style={{ fontSize: '18px', fontWeight: 800, color: '#166534', marginTop: '2px' }}>₹{selectedCustomer.lifetimeSpend.toLocaleString('en-IN')}</div>
               </div>
-              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: theme.hoverBg, textAlign: 'center' }}>
+              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase' }}>Loyalty Points</div>
                 <div style={{ fontSize: '18px', fontWeight: 800, color: '#B45309', marginTop: '2px' }}>{selectedCustomer.pointsBalance}</div>
               </div>
@@ -2228,7 +2381,8 @@ export default function CustomersManagement({
               display: 'flex',
               flexDirection: 'column',
               gap: '0.65rem',
-              backgroundColor: theme.hoverBg,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+              border: `1px solid ${theme.border}`,
               borderRadius: '0.85rem',
               padding: '1rem 1.25rem',
               marginBottom: '1.25rem',
@@ -2270,17 +2424,14 @@ export default function CustomersManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => setSelectedCustomer(null)}
                 style={{
-                  padding: '0 1.25rem',
-                  height: '36px',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.textPrimary,
-                  color: theme.bgPage,
-                  border: 'none',
+                  height: '38px',
                   fontSize: '13px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontFamily: 'inherit',
                 }}
               >
                 Close Profile
@@ -2306,7 +2457,7 @@ export default function CustomersManagement({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             width: '100%',
@@ -2346,7 +2497,7 @@ export default function CustomersManagement({
                     width: '100%',
                     height: '40px',
                     borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0 0.85rem',
@@ -2369,7 +2520,7 @@ export default function CustomersManagement({
                     width: '100%',
                     height: '38px',
                     borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0 0.75rem',
@@ -2388,33 +2539,27 @@ export default function CustomersManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setAdjustPointsCustomer(null)}
                   style={{
-                    padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
                   }}
                 >
                   Confirm Points
@@ -2441,7 +2586,7 @@ export default function CustomersManagement({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             width: '100%',
@@ -2468,7 +2613,8 @@ export default function CustomersManagement({
             </div>
 
             <div style={{
-              backgroundColor: theme.hoverBg,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+              border: `1px solid ${theme.border}`,
               borderRadius: '0.85rem',
               padding: '1rem',
               marginBottom: '1.25rem',
@@ -2500,17 +2646,14 @@ export default function CustomersManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => setViewingReceiptOrder(null)}
                 style={{
-                  padding: '0 1.25rem',
-                  height: '36px',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.textPrimary,
-                  color: theme.bgPage,
-                  border: 'none',
+                  height: '38px',
                   fontSize: '13px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontFamily: 'inherit',
                 }}
               >
                 Close Receipt
@@ -2536,7 +2679,7 @@ export default function CustomersManagement({
           padding: '1rem',
         }}>
           <div style={{
-            backgroundColor: theme.bgCard,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             width: '100%',
@@ -2563,7 +2706,8 @@ export default function CustomersManagement({
             </div>
 
             <div style={{
-              backgroundColor: theme.hoverBg,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+              border: `1px solid ${theme.border}`,
               borderRadius: '0.65rem',
               padding: '0.85rem',
               marginBottom: '1rem',
@@ -2587,7 +2731,7 @@ export default function CustomersManagement({
                   style={{
                     width: '100%',
                     borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0.65rem 0.85rem',
@@ -2602,33 +2746,27 @@ export default function CustomersManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setResolvingFeedback(null)}
                   style={{
-                    padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
                   }}
                 >
                   Mark as Resolved

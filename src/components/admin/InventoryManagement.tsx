@@ -614,29 +614,34 @@ export default function InventoryManagement({
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
-            marginBottom: '1.75rem',
+            marginBottom: '1.5rem',
           }}>
             {/* Card 1: Total SKUs */}
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Tracked SKUs
-                </span>
-                <LayersRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Tracked SKUs
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {stockItems.length}
                 </span>
-                <span style={{ fontSize: '12.5px', color: theme.textSecondary, marginLeft: '0.4rem', fontWeight: 600 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   items ({totalStockUnits} units)
                 </span>
               </div>
@@ -644,25 +649,30 @@ export default function InventoryManagement({
 
             {/* Card 2: Low Stock Warning */}
             <div style={{
-              backgroundColor: lowStockCount > 0 ? '#FEF3C7' : theme.bgCard,
-              border: `1px solid ${lowStockCount > 0 ? '#F59E0B' : theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.borderCard}`,
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: lowStockCount > 0 ? '#92400E' : theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Low Stock Alert
-                </span>
-                <WarningAmberRoundedIcon sx={{ fontSize: 18, color: lowStockCount > 0 ? '#D97706' : theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Low Stock Alert
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: lowStockCount > 0 ? '#92400E' : theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {lowStockCount}
                 </span>
-                <span style={{ fontSize: '12px', color: lowStockCount > 0 ? '#B45309' : theme.textSecondary, marginLeft: '0.4rem', fontWeight: 700 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   items need restock
                 </span>
               </div>
@@ -670,25 +680,30 @@ export default function InventoryManagement({
 
             {/* Card 3: Out of Stock */}
             <div style={{
-              backgroundColor: outOfStockCount > 0 ? '#FEE2E2' : theme.bgCard,
-              border: `1px solid ${outOfStockCount > 0 ? '#EF4444' : theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.borderCard}`,
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: outOfStockCount > 0 ? '#991B1B' : theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Out of Stock
-                </span>
-                <ErrorOutlineRoundedIcon sx={{ fontSize: 18, color: outOfStockCount > 0 ? '#DC2626' : theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Out of Stock
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: outOfStockCount > 0 ? '#991B1B' : theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {outOfStockCount}
                 </span>
-                <span style={{ fontSize: '12px', color: outOfStockCount > 0 ? '#B91C1C' : theme.textSecondary, marginLeft: '0.4rem', fontWeight: 700 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   zero inventory
                 </span>
               </div>
@@ -698,23 +713,29 @@ export default function InventoryManagement({
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Asset Valuation
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: theme.textPrimary, backgroundColor: theme.hoverBg, padding: '2px 7px', borderRadius: '9999px' }}>
-                  Cost basis
-                </span>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Asset Valuation
               </div>
-              <div style={{ marginTop: '0.85rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹{totalValuation.toLocaleString('en-IN')}
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  cost basis
                 </span>
               </div>
             </div>
@@ -821,22 +842,19 @@ export default function InventoryManagement({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => setShowAddItemModal(true)}
                 style={{
                   height: '38px',
                   padding: '0 1rem',
-                  borderRadius: '0.65rem',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
-                  border: `1px solid ${theme.activeBg}`,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
-                  transition: 'all 0.15s ease',
                 }}
               >
                 <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -1122,6 +1140,8 @@ export default function InventoryManagement({
 
             <button
               type="button"
+              className="button-20"
+              role="button"
               onClick={() => {
                 setSelectedStockItem(stockItems[0]);
                 setAdjustQty(1);
@@ -1133,15 +1153,11 @@ export default function InventoryManagement({
               style={{
                 height: '38px',
                 padding: '0 1rem',
-                borderRadius: '0.65rem',
-                backgroundColor: theme.activeBg,
-                color: theme.activeText,
-                border: `1px solid ${theme.activeBg}`,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -1285,61 +1301,125 @@ export default function InventoryManagement({
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.25rem',
-            marginBottom: '1.75rem',
+            marginBottom: '1.5rem',
           }}>
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
                 Active Purchase Orders
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, marginTop: '0.75rem' }}>
-                {purchaseOrders.length}
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  {purchaseOrders.length}
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  orders
+                </span>
               </div>
             </div>
 
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
                 In Transit Shipments
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 800, color: '#2563EB', marginTop: '0.75rem' }}>
-                {purchaseOrders.filter((p) => p.status === 'In Transit').length}
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  {purchaseOrders.filter((p) => p.status === 'In Transit').length}
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  en route
+                </span>
               </div>
             </div>
 
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
                 Pending Approval
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 800, color: '#D97706', marginTop: '0.75rem' }}>
-                {purchaseOrders.filter((p) => p.status === 'Pending Approval').length}
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  {purchaseOrders.filter((p) => p.status === 'Pending Approval').length}
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  awaiting review
+                </span>
               </div>
             </div>
 
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.15rem',
-              padding: '1.25rem 1.4rem',
+              borderRadius: '1rem',
+              padding: '1.25rem 1.35rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.textSecondary,
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
                 Total PO Spend
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, marginTop: '0.75rem' }}>
-                ₹{purchaseOrders.reduce((acc, p) => acc + p.totalAmount, 0).toLocaleString('en-IN')}
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  ₹{purchaseOrders.reduce((acc, p) => acc + p.totalAmount, 0).toLocaleString('en-IN')}
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  committed
+                </span>
               </div>
             </div>
           </div>
@@ -1381,19 +1461,17 @@ export default function InventoryManagement({
 
             <button
               type="button"
+              className="button-20"
+              role="button"
               onClick={() => setShowPoModal(true)}
               style={{
                 height: '38px',
                 padding: '0 1rem',
-                borderRadius: '0.65rem',
-                backgroundColor: theme.activeBg,
-                color: theme.activeText,
-                border: `1px solid ${theme.activeBg}`,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.45rem',
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
               }}
@@ -1804,13 +1882,12 @@ export default function InventoryManagement({
               }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowAdjustModal(false)}
                   style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1822,14 +1899,13 @@ export default function InventoryManagement({
 
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                   }}
@@ -2099,13 +2175,12 @@ export default function InventoryManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowAddItemModal(false)}
                   style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -2115,14 +2190,13 @@ export default function InventoryManagement({
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
@@ -2239,11 +2313,13 @@ export default function InventoryManagement({
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.4rem' }}>
                   Item to Procure
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 90px', gap: '0.5rem', width: '100%', boxSizing: 'border-box' }}>
                   <select
                     value={newPoItems[0]?.itemId}
                     onChange={(e) => setNewPoItems([{ itemId: e.target.value, quantity: newPoItems[0]?.quantity || 10 }])}
                     style={{
+                      width: '100%',
+                      minWidth: 0,
                       height: '36px',
                       padding: '0 0.75rem',
                       borderRadius: '0.55rem',
@@ -2251,8 +2327,10 @@ export default function InventoryManagement({
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
                       fontSize: '12.5px',
+                      boxSizing: 'border-box',
                       outline: 'none',
                       fontFamily: 'inherit',
+                      cursor: 'pointer',
                     }}
                   >
                     {stockItems.map((s) => (
@@ -2267,6 +2345,8 @@ export default function InventoryManagement({
                     onChange={(e) => setNewPoItems([{ itemId: newPoItems[0]?.itemId || stockItems[0].id, quantity: parseInt(e.target.value) || 1 }])}
                     placeholder="Qty"
                     style={{
+                      width: '100%',
+                      minWidth: 0,
                       height: '36px',
                       padding: '0 0.75rem',
                       borderRadius: '0.55rem',
@@ -2275,6 +2355,7 @@ export default function InventoryManagement({
                       color: theme.textPrimary,
                       fontSize: '13px',
                       fontWeight: 800,
+                      boxSizing: 'border-box',
                       outline: 'none',
                       fontFamily: 'inherit',
                     }}
@@ -2310,13 +2391,12 @@ export default function InventoryManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowPoModal(false)}
                   style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
+                    height: '38px',
+                    padding: '0 1.15rem',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -2326,14 +2406,13 @@ export default function InventoryManagement({
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
@@ -2491,13 +2570,12 @@ export default function InventoryManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
               <button
                 type="button"
+                className="button-20-secondary"
+                role="button"
                 onClick={() => setViewingPo(null)}
                 style={{
-                  padding: '0.55rem 1rem',
-                  borderRadius: '0.55rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: 'transparent',
-                  color: theme.textPrimary,
+                  height: '38px',
+                  padding: '0 1.15rem',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2509,15 +2587,14 @@ export default function InventoryManagement({
               {viewingPo.status !== 'Received' && (
                 <button
                   type="button"
+                  className="button-20"
+                  role="button"
                   onClick={() => handleReceivePO(viewingPo)}
                   style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: '#166534',
-                    color: '#FFFFFF',
+                    height: '38px',
+                    padding: '0 1.25rem',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -2590,16 +2667,15 @@ export default function InventoryManagement({
             }}>
               <button
                 type="button"
+                className="button-20-secondary"
+                role="button"
                 onClick={() => {
                   setShowDeleteModal(false);
                   setItemToDelete(null);
                 }}
                 style={{
-                  padding: '0.55rem 1rem',
-                  borderRadius: '0.55rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: 'transparent',
-                  color: theme.textPrimary,
+                  height: '38px',
+                  padding: '0 1.15rem',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2613,13 +2689,14 @@ export default function InventoryManagement({
                 type="button"
                 onClick={confirmDeleteItem}
                 style={{
-                  padding: '0.55rem 1.25rem',
-                  borderRadius: '0.55rem',
-                  border: 'none',
+                  height: '38px',
+                  padding: '0 1.25rem',
+                  borderRadius: '1rem',
+                  border: '1px solid #DC2626',
                   backgroundColor: '#DC2626',
                   color: '#FFFFFF',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
                   display: 'inline-flex',

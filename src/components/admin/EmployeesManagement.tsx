@@ -895,21 +895,19 @@ export default function EmployeesManagement({
         {/* Global Action: Add Employee */}
         <button
           type="button"
+          className="button-20"
+          role="button"
           onClick={() => setShowAddEmployeeModal(true)}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
             padding: '0 1.15rem',
-            height: '40px',
-            borderRadius: '0.65rem',
-            backgroundColor: theme.textPrimary,
-            color: theme.bgPage,
-            border: 'none',
+            height: '38px',
             fontSize: '13px',
-            fontWeight: 800,
+            fontWeight: 700,
             cursor: 'pointer',
-            transition: 'all 0.15s ease',
+            fontFamily: 'inherit',
           }}
         >
           <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -929,91 +927,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Total Employees */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Employees
-                </span>
-                <PeopleAltRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Employees
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {employees.length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Across 4 store departments
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Active on Floor */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active on Floor
-                </span>
-                <BadgeRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Active on Floor
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {employees.filter((e) => e.status === 'Active').length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Ready to serve patrons
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* On Scheduled Leave */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  On Scheduled Leave
-                </span>
-                <ScheduleRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                On Scheduled Leave
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {employees.filter((e) => e.status === 'On Leave').length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Approved medical & personal time
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Open Positions */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Open Positions
-                </span>
-                <AddRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Open Positions
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   2
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Hiring Barista & Line Cook
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -1262,91 +1300,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Registered Cashiers */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Registered Cashiers
-                </span>
-                <PointOfSaleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Registered Cashiers
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {cashiers.length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Assigned POS accounts
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Active Registers */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active Registers
-                </span>
-                <StoreRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Active Registers
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   3 Terminals
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Terminal 01, 02, 03 online
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* PIN Security Status */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  PIN Security Status
-                </span>
-                <VpnKeyRoundedIcon sx={{ fontSize: 18, color: '#0284C7' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                PIN Security Status
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   100% Set
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  All 5 cashiers have encrypted PINs
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  All 5 cashiers encrypted
+                </span>
               </div>
             </div>
 
+            {/* Avg Service Speed */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Avg Service Speed
-                </span>
-                <SpeedRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Avg Service Speed
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   52s / Order
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Checkout velocity benchmark
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -1447,19 +1525,19 @@ export default function EmployeesManagement({
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
+                          className="button-20-secondary"
+                          role="button"
                           onClick={() => setResetPinCashier(c)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
                             padding: '4px 10px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: theme.hoverBg,
-                            color: theme.textPrimary,
+                            height: '28px',
                             fontSize: '12px',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: 'pointer',
+                            fontFamily: 'inherit',
                           }}
                         >
                           <LockResetRoundedIcon sx={{ fontSize: 15 }} />
@@ -1487,91 +1565,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Store Managers */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Store Managers
-                </span>
-                <AdminPanelSettingsRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Store Managers
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {managers.filter((m) => m.title === 'Store Manager').length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Full store administration
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Shift Supervisors */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Shift Supervisors
-                </span>
-                <SecurityRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Shift Supervisors
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   {managers.filter((m) => m.title === 'Shift Supervisor').length}
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Floor override & refund authority
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  Floor override authority
+                </span>
               </div>
             </div>
 
+            {/* Assigned Store */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Assigned Store
-                </span>
-                <StoreRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Assigned Store
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.02em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.02em' }}>
                   Ahmedabad Flagship
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Main Retail Terminal Zone
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  Terminal Zone
+                </span>
               </div>
             </div>
 
+            {/* Security 2FA Status */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Security 2FA Status
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Security 2FA Status
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   Enabled
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  2FA required for refund overrides
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  Required for refund overrides
+                </span>
               </div>
             </div>
           </div>
@@ -1649,19 +1767,19 @@ export default function EmployeesManagement({
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
+                          className="button-20-secondary"
+                          role="button"
                           onClick={() => setEditingManager(m)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '0.35rem',
                             padding: '4px 10px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: theme.hoverBg,
-                            color: theme.textPrimary,
+                            height: '28px',
                             fontSize: '12px',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: 'pointer',
+                            fontFamily: 'inherit',
                           }}
                         >
                           <EditRoundedIcon sx={{ fontSize: 14 }} />
@@ -1684,8 +1802,8 @@ export default function EmployeesManagement({
         <>
           {/* Role Selector Header */}
           <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+            border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             padding: '1.5rem',
             marginBottom: '1.5rem',
@@ -1709,6 +1827,8 @@ export default function EmployeesManagement({
                 )}
                 <button
                   type="button"
+                  className="button-20"
+                  role="button"
                   onClick={handleSaveRolePermissions}
                   style={{
                     display: 'inline-flex',
@@ -1716,13 +1836,10 @@ export default function EmployeesManagement({
                     gap: '0.45rem',
                     padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.65rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   <AssignmentTurnedInRoundedIcon sx={{ fontSize: 18 }} />
@@ -1743,8 +1860,8 @@ export default function EmployeesManagement({
                     style={{
                       padding: '8px 16px',
                       borderRadius: '0.65rem',
-                      border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                      backgroundColor: isSelected ? theme.activeBg : theme.hoverBg,
+                      border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
+                      backgroundColor: isSelected ? theme.activeBg : ((theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB'),
                       color: isSelected ? theme.activeText : theme.textPrimary,
                       fontSize: '13px',
                       fontWeight: isSelected ? 800 : 600,
@@ -1769,8 +1886,8 @@ export default function EmployeesManagement({
                 <div
                   key={category}
                   style={{
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.borderCard}`,
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#F9FAFB',
+                    border: `1px solid ${(theme as any).sidebarIsDark ? theme.borderCard : theme.border}`,
                     borderRadius: '1.25rem',
                     padding: '1.25rem 1.5rem',
                   }}
@@ -1801,10 +1918,11 @@ export default function EmployeesManagement({
                             justifyContent: 'space-between',
                             padding: '0.85rem 1rem',
                             borderRadius: '0.75rem',
-                            border: `1px solid ${isEnabled ? theme.borderHover : theme.border}`,
-                            backgroundColor: isEnabled ? theme.hoverBg : 'transparent',
+                            border: `1px solid ${(theme as any).sidebarIsDark ? (isEnabled ? theme.borderHover : theme.border) : '#E5E7EB'}`,
+                            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease',
+                            boxShadow: (theme as any).sidebarIsDark ? 'none' : '0 1px 2px rgba(0, 0, 0, 0.03)',
                           }}
                         >
                           <div style={{ paddingRight: '0.75rem' }}>
@@ -1818,24 +1936,25 @@ export default function EmployeesManagement({
 
                           {/* Switch Indicator */}
                           <div style={{
-                            width: '42px',
-                            height: '24px',
+                            width: '40px',
+                            height: '22px',
                             borderRadius: '9999px',
-                            backgroundColor: isEnabled ? '#10B981' : '#4B5563',
+                            backgroundColor: isEnabled ? '#10B981' : ((theme as any).sidebarIsDark ? '#4B5563' : '#E5E7EB'),
                             position: 'relative',
                             transition: 'background-color 0.2s ease',
                             flexShrink: 0,
                             marginTop: '2px',
                           }}>
                             <div style={{
-                              width: '18px',
-                              height: '18px',
+                              width: '16px',
+                              height: '16px',
                               borderRadius: '50%',
                               backgroundColor: '#FFFFFF',
                               position: 'absolute',
                               top: '3px',
                               left: isEnabled ? '21px' : '3px',
                               transition: 'left 0.2s ease',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.15)',
                             }} />
                           </div>
                         </div>
@@ -1861,91 +1980,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Completed Shifts */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Completed Shifts
-                </span>
-                <ScheduleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Completed Shifts
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   68
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  544 total store operating hours
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  544 total store hours
+                </span>
               </div>
             </div>
 
+            {/* Open Active Shifts */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Open Active Shifts
-                </span>
-                <AccessTimeRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Open Active Shifts
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   1 On Floor
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Register 03 live
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Net Cash Variance */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Net Cash Variance
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Net Cash Variance
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   -₹50.00
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   99.9% drawer precision
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Reconciliation Rate */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Reconciliation Rate
-                </span>
-                <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Reconciliation Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   98.5%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Sign-off by manager
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -2063,19 +2222,19 @@ export default function EmployeesManagement({
                         <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                           <button
                             type="button"
+                            className="button-20-secondary"
+                            role="button"
                             onClick={() => setViewingShift(s)}
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '0.35rem',
                               padding: '4px 10px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: theme.hoverBg,
-                              color: theme.textPrimary,
+                              height: '28px',
                               fontSize: '12px',
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: 'pointer',
+                              fontFamily: 'inherit',
                             }}
                           >
                             <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
@@ -2103,91 +2262,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Today Attendance */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Today Attendance
-                </span>
-                <EventAvailableRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Today Attendance
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   94%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  5 of 6 scheduled on duty
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  5 of 6 on duty
+                </span>
               </div>
             </div>
 
+            {/* Punctuality Rate */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Punctuality Rate
-                </span>
-                <AccessTimeRoundedIcon sx={{ fontSize: 18, color: '#0284C7' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Punctuality Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   88% On-Time
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   1 late clock-in logged
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Weekly Overtime */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Weekly Overtime
-                </span>
-                <TrendingUpRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Weekly Overtime
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   14.5 hrs
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Approved supervisor hours
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Active Leaves */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Active Leaves
-                </span>
-                <ScheduleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Active Leaves
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   1 Staff
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Deepak P. (Sick Leave)
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -2266,6 +2465,8 @@ export default function EmployeesManagement({
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
+                          className="button-20-secondary"
+                          role="button"
                           onClick={() => {
                             setAdjustingAttendance(att);
                             setAdjustedClockIn(att.clockInTime !== '—' ? att.clockInTime : '08:00');
@@ -2276,13 +2477,11 @@ export default function EmployeesManagement({
                             alignItems: 'center',
                             gap: '0.35rem',
                             padding: '4px 10px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: theme.hoverBg,
-                            color: theme.textPrimary,
+                            height: '28px',
                             fontSize: '12px',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: 'pointer',
+                            fontFamily: 'inherit',
                           }}
                         >
                           <EditRoundedIcon sx={{ fontSize: 14 }} />
@@ -2310,91 +2509,131 @@ export default function EmployeesManagement({
             gap: '1.25rem',
             marginBottom: '1.75rem',
           }}>
+            {/* Total Team Sales */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Team Sales
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Team Sales
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹3,48,250
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Across 5 active store cashiers
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  Across 5 cashiers
+                </span>
               </div>
             </div>
 
+            {/* Orders Processed */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Orders Processed
-                </span>
-                <ShoppingBagRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Orders Processed
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   843
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Avg ~168 orders / cashier
-                </div>
+                </span>
               </div>
             </div>
 
+            {/* Speed of Service */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Speed of Service
-                </span>
-                <SpeedRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Speed of Service
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   54s
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Average checkout duration
-                </div>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  Avg checkout duration
+                </span>
               </div>
             </div>
 
+            {/* Refund Discrepancy Rate */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Refund Discrepancy Rate
-                </span>
-                <WarningAmberRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Refund Discrepancy Rate
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+                flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   0.8%
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
+                </span>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   High cashier integrity score
-                </div>
+                </span>
               </div>
             </div>
           </div>
@@ -2754,33 +2993,31 @@ export default function EmployeesManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setShowAddEmployeeModal(false)}
                   style={{
                     padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Save Employee
@@ -2901,17 +3138,16 @@ export default function EmployeesManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => setSelectedEmployee(null)}
                 style={{
                   padding: '0 1.25rem',
-                  height: '36px',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.textPrimary,
-                  color: theme.bgPage,
-                  border: 'none',
+                  height: '38px',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Close Profile
@@ -3000,35 +3236,33 @@ export default function EmployeesManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setResetPinCashier(null)}
                   style={{
                     padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   disabled={newPinValue.length !== 4}
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: newPinValue.length === 4 ? 'pointer' : 'not-allowed',
                     opacity: newPinValue.length === 4 ? 1 : 0.5,
+                    fontFamily: 'inherit',
                   }}
                 >
                   Update PIN
@@ -3138,34 +3372,32 @@ export default function EmployeesManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setEditingManager(null)}
                   style={{
                     padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  className="button-20"
+                  role="button"
                   onClick={() => setEditingManager(null)}
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Save Privileges
@@ -3267,17 +3499,16 @@ export default function EmployeesManagement({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <button
                 type="button"
+                className="button-20"
+                role="button"
                 onClick={() => setViewingShift(null)}
                 style={{
                   padding: '0 1.25rem',
-                  height: '36px',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.textPrimary,
-                  color: theme.bgPage,
-                  border: 'none',
+                  height: '38px',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Close Audit
@@ -3381,33 +3612,31 @@ export default function EmployeesManagement({
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
+                  className="button-20-secondary"
+                  role="button"
                   onClick={() => setAdjustingAttendance(null)}
                   style={{
                     padding: '0 1rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: 'transparent',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  className="button-20"
+                  role="button"
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.textPrimary,
-                    color: theme.bgPage,
-                    border: 'none',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Save Timecard

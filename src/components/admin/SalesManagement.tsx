@@ -824,6 +824,9 @@ export default function SalesManagement({
                   <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                     Total
                   </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                    Payment Method
+                  </th>
                   <th style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'right' }}>
                     Status
                   </th>
@@ -832,7 +835,7 @@ export default function SalesManagement({
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ padding: '3rem 1rem', textAlign: 'center', color: theme.textSecondary }}>
+                    <td colSpan={5} style={{ padding: '3rem 1rem', textAlign: 'center', color: theme.textSecondary }}>
                       No orders match your filter criteria.
                     </td>
                   </tr>
@@ -881,6 +884,26 @@ export default function SalesManagement({
                         )}
                       </td>
 
+                      {/* Payment Method */}
+                      <td style={{ padding: '0.85rem 1rem' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          backgroundColor: theme.hoverBg,
+                          padding: '3px 8px',
+                          borderRadius: '0.4rem',
+                          border: `1px solid ${theme.border}`,
+                        }}>
+                          {ord.paymentMethod === 'UPI' && <QrCodeRoundedIcon sx={{ fontSize: 13 }} />}
+                          {ord.paymentMethod === 'Card' && <CreditCardRoundedIcon sx={{ fontSize: 13 }} />}
+                          {ord.paymentMethod === 'Cash' && <AttachMoneyRoundedIcon sx={{ fontSize: 13 }} />}
+                          <span>{ord.paymentMethod}</span>
+                        </span>
+                      </td>
+
                       {/* Status (in last) */}
                       <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right' }}>
                         <span style={{
@@ -926,137 +949,42 @@ export default function SalesManagement({
       {/* ==================================================================== */}
       {currentTab === 'returns' && (
         <>
-          {/* Top KPI Cards */}
+          {/* Top KPI Card: Total Return Items */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))',
             gap: '1.25rem',
             marginBottom: '1.5rem',
           }}>
-            {/* Returns Count */}
+            {/* Total Return Items */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Returns Rung
-                </span>
-                <AssignmentReturnRoundedIcon sx={{ fontSize: 18, color: '#DC2626' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Return Items
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
-                  {returns.length}
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
+                  {returns.reduce((acc, r) => acc + r.returnedItems.reduce((sum, item) => sum + item.quantity, 0), 0)}
                 </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  return tickets
-                </span>
-              </div>
-            </div>
-
-            {/* Total Refund Value */}
-            <div style={{
-              backgroundColor: '#FEF2F2',
-              border: '1px solid #FECACA',
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#991B1B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Refund Capital
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: '#DC2626' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.04em' }}>
-                  ₹{totalRefundAmount.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: '#B91C1C', marginLeft: '0.35rem', fontWeight: 700 }}>
-                  disbursed back
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
+                  items returned ({returns.length} tickets)
                 </span>
               </div>
-            </div>
-
-            {/* Return Rate % */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Store Return Rate
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 7px', borderRadius: '9999px' }}>
-                  Healthy &lt; 2%
-                </span>
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
-                  1.4%
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  of gross transactions
-                </span>
-              </div>
-            </div>
-
-            {/* Primary Reason */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Top Return Reason
-                </span>
-                <WarningAmberRoundedIcon sx={{ fontSize: 18, color: '#D97706' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary }}>
-                  Wrong Item Given
-                </div>
-                <div style={{ fontSize: '11.5px', color: theme.textSecondary, marginTop: '2px' }}>
-                  48% of refund instances
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Return Reasons Breakdown Progress Cards */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            padding: '1.25rem',
-            marginBottom: '1.5rem',
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.85rem 0' }}>
-              Return Reason Categorization & Frequency
-            </h3>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-              {[
-                { reason: 'Wrong Item Given', count: 4, percent: 45, color: '#EF4444' },
-                { reason: 'Quality / Taste Issue', count: 2, percent: 25, color: '#F59E0B' },
-                { reason: 'Customer Changed Mind', count: 2, percent: 20, color: '#3B82F6' },
-                { reason: 'Kitchen Cancellation', count: 1, percent: 10, color: '#10B981' },
-              ].map((r) => (
-                <div key={r.reason} style={{ padding: '0.75rem 0.9rem', backgroundColor: theme.hoverBg, borderRadius: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 800, marginBottom: '4px' }}>
-                    <span style={{ color: theme.textPrimary }}>{r.reason}</span>
-                    <span style={{ color: theme.textSecondary }}>{r.count} tickets ({r.percent}%)</span>
-                  </div>
-                  <div style={{ width: '100%', height: '5px', backgroundColor: theme.border, borderRadius: '9999px', overflow: 'hidden' }}>
-                    <div style={{ width: `${r.percent}%`, height: '100%', backgroundColor: r.color, borderRadius: '9999px' }} />
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -1164,124 +1092,40 @@ export default function SalesManagement({
       {/* ==================================================================== */}
       {currentTab === 'payments' && (
         <>
-          {/* Top KPI Cards */}
+          {/* Top KPI Card: Total Collected */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))',
             gap: '1.25rem',
             marginBottom: '1.5rem',
           }}>
             {/* Total Collected */}
             <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
+              backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
               borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
+              padding: '1.35rem 1.4rem',
+              boxSizing: 'border-box',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Total Collected
-                </span>
-                <PaymentsRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 500,
+                color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+                letterSpacing: '-0.01em',
+                marginBottom: '0.65rem',
+              }}>
+                Total Collected
               </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '28px', fontWeight: 800, color: '#166534', letterSpacing: '-0.04em' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '0.45rem',
+              }}>
+                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
                   ₹{totalCollected.toLocaleString('en-IN')}
                 </span>
-                <span style={{ fontSize: '12px', color: '#15803D', marginLeft: '0.35rem', fontWeight: 700 }}>
+                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   reconciled
-                </span>
-              </div>
-            </div>
-
-            {/* UPI Payments */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  UPI / QR Payments
-                </span>
-                <QrCodeRoundedIcon sx={{ fontSize: 18, color: '#3B82F6' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹{upiCollected.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  instant settling
-                </span>
-              </div>
-            </div>
-
-            {/* Card Payments */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Card Payments
-                </span>
-                <CreditCardRoundedIcon sx={{ fontSize: 18, color: '#6366F1' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹{cardCollected.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  POS terminal
-                </span>
-              </div>
-            </div>
-
-            {/* Cash Payments */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Cash Tendered
-                </span>
-                <AttachMoneyRoundedIcon sx={{ fontSize: 18, color: '#F59E0B' }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹{cashCollected.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  in register till
-                </span>
-              </div>
-            </div>
-
-            {/* Failed / Refunded */}
-            <div style={{
-              backgroundColor: failedOrRefunded > 0 ? '#FEF2F2' : theme.bgCard,
-              border: `1px solid ${failedOrRefunded > 0 ? '#FECACA' : theme.borderCard}`,
-              borderRadius: '1rem',
-              padding: '1.25rem 1.4rem',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: failedOrRefunded > 0 ? '#991B1B' : theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Failed / Refunded
-                </span>
-                <CancelRoundedIcon sx={{ fontSize: 18, color: failedOrRefunded > 0 ? '#DC2626' : theme.textSecondary }} />
-              </div>
-              <div style={{ marginTop: '0.75rem' }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: failedOrRefunded > 0 ? '#991B1B' : theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹{failedOrRefunded.toLocaleString('en-IN')}
-                </span>
-                <span style={{ fontSize: '12px', color: theme.textSecondary, marginLeft: '0.35rem', fontWeight: 600 }}>
-                  voided / returned
                 </span>
               </div>
             </div>
