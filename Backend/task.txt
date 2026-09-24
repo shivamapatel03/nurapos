@@ -1,0 +1,20 @@
+STEP 1   Authentication / JWT
+STEP 2   Franchise Management
+STEP 3   User Management
+STEP 4   Category Management
+STEP 5   Product Management
+STEP 6   Franchise Inventory
+STEP 7   Sales
+STEP 8   Expenses
+STEP 9   Suppliers
+STEP 10  Purchases
+STEP 11  Payments
+STEP 12  Dashboard
+STEP 13  Reports
+STEP 14  Daily Summary
+STEP 15  React Integration
+STEP 16  Authorization / Roles
+STEP 17  Validation / Error Handling
+STEP 18  File / Receipt Upload
+STEP 19  Testing
+STEP 20  Docker + Render Deployment

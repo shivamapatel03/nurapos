@@ -1,0 +1,124 @@
+Nurapos/
+│
+├── Controllers/
+│   ├── AuthController.cs
+│   ├── FranchiseController.cs
+│   ├── UserController.cs
+│   ├── CategoryController.cs
+│   ├── ProductController.cs
+│   ├── InventoryController.cs
+│   ├── SaleController.cs
+│   ├── ExpenseController.cs
+│   ├── ExpenseCategoryController.cs
+│   ├── SupplierController.cs
+│   ├── PurchaseController.cs
+│   ├── PaymentController.cs
+│   ├── DashboardController.cs
+│   └── ReportController.cs
+│
+├── Repositories/
+│   ├── Interfaces/
+│   │   ├── IAuthRepository.cs
+│   │   ├── IFranchiseRepository.cs
+│   │   ├── IUserRepository.cs
+│   │   ├── ICategoryRepository.cs
+│   │   ├── IProductRepository.cs
+│   │   ├── IInventoryRepository.cs
+│   │   ├── ISaleRepository.cs
+│   │   ├── IExpenseRepository.cs
+│   │   ├── IExpenseCategoryRepository.cs
+│   │   ├── ISupplierRepository.cs
+│   │   ├── IPurchaseRepository.cs
+│   │   ├── IPaymentRepository.cs
+│   │   ├── IDashboardRepository.cs
+│   │   └── IReportRepository.cs
+│   │
+│   ├── AuthRepository.cs
+│   ├── FranchiseRepository.cs
+│   ├── UserRepository.cs
+│   ├── CategoryRepository.cs
+│   ├── ProductRepository.cs
+│   ├── InventoryRepository.cs
+│   ├── SaleRepository.cs
+│   ├── ExpenseRepository.cs
+│   ├── ExpenseCategoryRepository.cs
+│   ├── SupplierRepository.cs
+│   ├── PurchaseRepository.cs
+│   ├── PaymentRepository.cs
+│   ├── DashboardRepository.cs
+│   └── ReportRepository.cs
+│
+├── Services/
+│   ├── Interfaces/
+│   │   ├── IAuthService.cs
+│   │   ├── IFranchiseService.cs
+│   │   ├── IUserService.cs
+│   │   ├── ICategoryService.cs
+│   │   ├── IProductService.cs
+│   │   ├── IInventoryService.cs
+│   │   ├── ISaleService.cs
+│   │   ├── IExpenseService.cs
+│   │   ├── IExpenseCategoryService.cs
+│   │   ├── ISupplierService.cs
+│   │   ├── IPurchaseService.cs
+│   │   ├── IPaymentService.cs
+│   │   ├── IDashboardService.cs
+│   │   └── IReportService.cs
+│   │
+│   ├── AuthService.cs
+│   ├── FranchiseService.cs
+│   ├── UserService.cs
+│   ├── CategoryService.cs
+│   ├── ProductService.cs
+│   ├── InventoryService.cs
+│   ├── SaleService.cs
+│   ├── ExpenseService.cs
+│   ├── ExpenseCategoryService.cs
+│   ├── SupplierService.cs
+│   ├── PurchaseService.cs
+│   ├── PaymentService.cs
+│   ├── DashboardService.cs
+│   └── ReportService.cs
+│
+├── Models/
+│   ├── Franchise.cs
+│   ├── User.cs
+│   ├── Category.cs
+│   ├── Product.cs
+│   ├── FranchiseProduct.cs
+│   ├── ExpenseCategory.cs
+│   ├── Supplier.cs
+│   ├── Sale.cs
+│   ├── SaleDetail.cs
+│   ├── Purchase.cs
+│   ├── PurchaseDetail.cs
+│   ├── Expense.cs
+│   ├── Payment.cs
+│   └── DailySummary.cs
+│
+├── DTOs/
+│   ├── Auth/
+│   ├── Franchise/
+│   ├── User/
+│   ├── Category/
+│   ├── Product/
+│   ├── Inventory/
+│   ├── Sale/
+│   ├── Expense/
+│   ├── Supplier/
+│   ├── Purchase/
+│   ├── Payment/
+│   └── Dashboard/
+│
+├── Data/
+│
+├── Helpers/
+│   ├── JwtHelper.cs
+│   └── ClaimsHelper.cs
+│
+├── Middleware/
+│   └── ExceptionMiddleware.cs
+│
+├── Program.cs
+├── appsettings.json
+└── appsettings.Development.json
