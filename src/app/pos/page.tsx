@@ -1192,6 +1192,7 @@ export default function PosMainScreen() {
                         src={p.image}
                         alt={p.name}
                         fill
+                        unoptimized
                         sizes="(max-width: 768px) 100vw, 240px"
                         style={{ objectFit: 'cover' }}
                       />
@@ -2551,6 +2552,7 @@ export default function PosMainScreen() {
                     src={editingItem.product.image}
                     alt={editingItem.product.name}
                     fill
+                    unoptimized
                     style={{ objectFit: 'cover' }}
                   />
                 </div>

@@ -76,6 +76,7 @@ function AnimatedDonutChart({
   totalValue,
   size = 220,
   innerRadiusRatio = 0.65,
+  isRepresentation = false,
   theme,
 }: {
   slices: DonutSlice[];
@@ -83,6 +84,7 @@ function AnimatedDonutChart({
   totalValue: string;
   size?: number;
   innerRadiusRatio?: number;
+  isRepresentation?: boolean;
   theme: any;
 }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -186,10 +188,12 @@ function AnimatedDonutChart({
                 {activeSlice.label}
               </div>
               <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em', marginTop: '1px' }}>
-                {activeSlice.formattedValue || activeSlice.value}
+                {isRepresentation
+                  ? (total > 0 ? `${((activeSlice.value / total) * 100).toFixed(1)}%` : '0%')
+                  : (activeSlice.formattedValue || activeSlice.value)}
               </div>
               <div style={{ fontSize: '11px', fontWeight: 800, color: activeSlice.color }}>
-                {total > 0 ? `${((activeSlice.value / total) * 100).toFixed(1)}%` : '0%'}
+                {isRepresentation ? 'Share' : (total > 0 ? `${((activeSlice.value / total) * 100).toFixed(1)}%` : '0%')}
               </div>
             </>
           ) : (
@@ -284,6 +288,7 @@ function AnimatedBarChart({
   barColor = '#111827',
   activeBarColor = '#3B82F6',
   valuePrefix = '₹',
+  isRepresentation = false,
   theme,
 }: {
   data: BarDatum[];
@@ -291,6 +296,7 @@ function AnimatedBarChart({
   barColor?: string;
   activeBarColor?: string;
   valuePrefix?: string;
+  isRepresentation?: boolean;
   theme: any;
 }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -314,7 +320,7 @@ function AnimatedBarChart({
       }}>
         {data.map((item, index) => {
           const isHovered = hoveredIndex === index;
-          const heightPercent = Math.max(8, (item.value / maxValue) * 100);
+          const heightPercent = Math.max(10, (item.value / maxValue) * 100);
 
           return (
             <div
@@ -350,11 +356,17 @@ function AnimatedBarChart({
                   animation: 'fadeIn 0.15s ease',
                   border: '1px solid #374151',
                 }}>
-                  <div>{item.label}: {item.formattedValue || `${valuePrefix}${item.value.toLocaleString('en-IN')}`}</div>
-                  {item.secondaryValue !== undefined && (
-                    <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 500 }}>
-                      {item.secondaryValue} orders
-                    </div>
+                  {isRepresentation ? (
+                    <div>{item.label} • Representative Volume</div>
+                  ) : (
+                    <>
+                      <div>{item.label}: {item.formattedValue || `${valuePrefix}${item.value.toLocaleString('en-IN')}`}</div>
+                      {item.secondaryValue !== undefined && (
+                        <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 500 }}>
+                          {item.secondaryValue} orders
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -429,31 +441,82 @@ export default function ReportsManagement({
   };
 
   // ==========================================================================
-  // DATASETS: 1. SALES REPORT
+  // DATASETS: 1. SALES REPORT (Visual Representation)
   // ==========================================================================
-  const salesBarDataDaily: BarDatum[] = [];
-  const salesBarDataWeekly: BarDatum[] = [];
-  const salesBarDataMonthly: BarDatum[] = [];
+  const salesBarDataDaily: BarDatum[] = [
+    { label: '08:00', value: 25 },
+    { label: '10:00', value: 45 },
+    { label: '12:00', value: 80 },
+    { label: '14:00', value: 65 },
+    { label: '16:00', value: 40 },
+    { label: '18:00', value: 92 },
+    { label: '20:00', value: 105 },
+    { label: '22:00', value: 50, isToday: true },
+  ];
+
+  const salesBarDataWeekly: BarDatum[] = [
+    { label: 'Mon', value: 45 },
+    { label: 'Tue', value: 62 },
+    { label: 'Wed', value: 78 },
+    { label: 'Thu', value: 54 },
+    { label: 'Fri', value: 95 },
+    { label: 'Sat', value: 110 },
+    { label: 'Sun', value: 85, isToday: true },
+  ];
+
+  const salesBarDataMonthly: BarDatum[] = [
+    { label: 'Week 1', value: 60 },
+    { label: 'Week 2', value: 78 },
+    { label: 'Week 3', value: 92 },
+    { label: 'Week 4', value: 110, isToday: true },
+  ];
 
   const currentSalesBarData =
     timeframe === 'daily' ? salesBarDataDaily :
     timeframe === 'monthly' ? salesBarDataMonthly : salesBarDataWeekly;
 
-  const paymentMethodSlices: DonutSlice[] = [];
+  const paymentMethodSlices: DonutSlice[] = [
+    { label: 'UPI / QR', value: 48, color: '#2563EB' },
+    { label: 'Cash', value: 28, color: '#10B981' },
+    { label: 'Card (EDC)', value: 18, color: '#F59E0B' },
+    { label: 'Store Khata', value: 6, color: '#8B5CF6' },
+  ];
 
   // ==========================================================================
   // DATASETS: 2. INVENTORY REPORT
   // ==========================================================================
-  const inventoryCategorySlices: DonutSlice[] = [];
-  const inventoryStockMovementData: BarDatum[] = [];
+  const inventoryCategorySlices: DonutSlice[] = [
+    { label: 'Beverages & Coffee', value: 42, color: '#2563EB' },
+    { label: 'Bakery & Pastries', value: 28, color: '#10B981' },
+    { label: 'Gourmet Bistro', value: 20, color: '#F59E0B' },
+    { label: 'Retail & Beans', value: 10, color: '#8B5CF6' },
+  ];
+  const inventoryStockMovementData: BarDatum[] = [
+    { label: 'Mon', value: 40 },
+    { label: 'Tue', value: 60 },
+    { label: 'Wed', value: 75 },
+    { label: 'Thu', value: 50 },
+    { label: 'Fri', value: 85 },
+    { label: 'Sat', value: 95 },
+    { label: 'Sun', value: 65, isToday: true },
+  ];
   const criticalLowStockList: { name: string; sku: string; currentStock: number; minStock: number; deficit: number; supplier: string }[] = [];
   const stockAdjustmentReasons: { reason: string; amount: number; percentage: number; color: string }[] = [];
 
   // ==========================================================================
   // DATASETS: 3. CUSTOMERS REPORT
   // ==========================================================================
-  const customerAcquisitionSlices: DonutSlice[] = [];
-  const customerFrequencyData: BarDatum[] = [];
+  const customerAcquisitionSlices: DonutSlice[] = [
+    { label: 'Repeat Patrons', value: 65, color: '#2563EB' },
+    { label: 'New Walk-ins', value: 35, color: '#10B981' },
+  ];
+  const customerFrequencyData: BarDatum[] = [
+    { label: '1 order', value: 85 },
+    { label: '2-3 orders', value: 50 },
+    { label: '4-6 orders', value: 30 },
+    { label: '7-10 orders', value: 18 },
+    { label: '10+ VIP', value: 12, isToday: true },
+  ];
   const topCustomersList: { rank: number; name: string; phone: string; orders: number; totalSpend: number; aov: number; favorite: string; lastVisit: string }[] = [];
   const recentTransactions: { orderId: string; customer: string; items: string; amount: number; payment: string; time: string }[] = [];
 
@@ -462,8 +525,18 @@ export default function ReportsManagement({
   // ==========================================================================
   const employeeSalesData: { name: string; role: string; sales: number; orders: number; aov: number; shifts: number; speedSec: number; rating: number; discountsGiven: number }[] = [];
 
-  const employeeDonutSlices: DonutSlice[] = [];
-  const employeeBarChartData: BarDatum[] = [];
+  const employeeDonutSlices: DonutSlice[] = [
+    { label: 'Priya S.', value: 36, color: '#2563EB' },
+    { label: 'Rahul V.', value: 28, color: '#10B981' },
+    { label: 'Amit K.', value: 22, color: '#F59E0B' },
+    { label: 'Sneha M.', value: 14, color: '#8B5CF6' },
+  ];
+  const employeeBarChartData: BarDatum[] = [
+    { label: 'Priya S.', value: 92, isToday: true },
+    { label: 'Rahul V.', value: 78 },
+    { label: 'Amit K.', value: 85 },
+    { label: 'Sneha M.', value: 64 },
+  ];
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative' }}>
@@ -769,9 +842,9 @@ export default function ReportsManagement({
               <AnimatedBarChart
                 data={currentSalesBarData}
                 height={190}
-                barColor={theme.activeBg === '#000000' || theme.activeBg === '#111827' ? '#1E293B' : '#334155'}
+                barColor={(theme as any).sidebarIsDark ? '#27272A' : '#E2E8F0'}
                 activeBarColor="#2563EB"
-                valuePrefix="₹"
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -801,9 +874,10 @@ export default function ReportsManagement({
               {/* Donut Chart */}
               <AnimatedDonutChart
                 slices={paymentMethodSlices}
-                totalLabel="Total Tender"
-                totalValue="₹0"
+                totalLabel="Tender Mix"
+                totalValue="100%"
                 size={200}
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -983,9 +1057,10 @@ export default function ReportsManagement({
 
               <AnimatedDonutChart
                 slices={inventoryCategorySlices}
-                totalLabel="Valuation"
-                totalValue="₹0"
+                totalLabel="Category Mix"
+                totalValue="100%"
                 size={200}
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -1017,7 +1092,7 @@ export default function ReportsManagement({
                 height={190}
                 barColor="#0D9488"
                 activeBarColor="#059669"
-                valuePrefix=""
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -1304,9 +1379,10 @@ export default function ReportsManagement({
 
               <AnimatedDonutChart
                 slices={customerAcquisitionSlices}
-                totalLabel="Total Patrons"
-                totalValue="0"
+                totalLabel="Patron Mix"
+                totalValue="100%"
                 size={200}
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -1338,7 +1414,7 @@ export default function ReportsManagement({
                 height={190}
                 barColor="#4F46E5"
                 activeBarColor="#4338CA"
-                valuePrefix=""
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -1593,9 +1669,10 @@ export default function ReportsManagement({
 
               <AnimatedDonutChart
                 slices={employeeDonutSlices}
-                totalLabel="Team Sales"
-                totalValue="₹0"
+                totalLabel="Staff Share"
+                totalValue="100%"
                 size={200}
+                isRepresentation={true}
                 theme={theme}
               />
             </div>
@@ -1627,7 +1704,7 @@ export default function ReportsManagement({
                 height={190}
                 barColor="#0284C7"
                 activeBarColor="#0369A1"
-                valuePrefix="₹"
+                isRepresentation={true}
                 theme={theme}
               />
             </div>

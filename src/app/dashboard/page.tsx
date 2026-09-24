@@ -144,6 +144,7 @@ export default function AdminDashboardPage() {
   const isCatalogActive =
     activeTabId === 'catalog' ||
     activeTabId === 'products' ||
+    activeTabId === 'add_product' ||
     activeTabId === 'categories' ||
     activeTabId === 'brands';
 
@@ -231,6 +232,7 @@ export default function AdminDashboardPage() {
       icon: <CategoryRoundedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'products', label: 'Products', icon: <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'add_product', label: 'Add Product', icon: <AddRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'categories', label: 'Categories', icon: <GridViewRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'brands', label: 'Brands', icon: <BrandingWatermarkRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
@@ -841,7 +843,7 @@ export default function AdminDashboardPage() {
           flex: 1,
           height: '100%',
           overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'auto' : 'hidden',
-          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
+          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
@@ -1028,6 +1030,7 @@ export default function AdminDashboardPage() {
           ) : isCatalogActive ? (
             <ProductManagement
               activeSubTab={
+                activeTabId === 'add_product' ? 'add_product' :
                 activeTabId === 'categories' ? 'categories' :
                 activeTabId === 'brands' ? 'brands' : 'products'
               }
@@ -1195,7 +1198,7 @@ export default function AdminDashboardPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveTabId('products');
+                              setActiveTabId('add_product');
                               openSingleMenu('catalog');
                             }}
                             className="button-20"

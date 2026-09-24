@@ -2429,204 +2429,48 @@ export default function SettingsManagement({
 
       {/* SUB-TAB 10: APPEARANCE */}
       {activeSubTab === 'set_appearance' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Main Themes Container */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '640px' }}>
           <div
             style={{
-              padding: '1.75rem',
+              padding: '1.25rem 1.5rem',
               backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
               borderRadius: '0.85rem',
               border: `1px solid ${theme.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '0.65rem',
-                  backgroundColor: theme.hoverBg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <PaletteRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
-                    Theme & Appearance
-                  </h2>
-                  <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '2px 0 0' }}>
-                    Select a color palette theme for the Admin Dashboard and Live POS. Themes persist automatically across your browser session.
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: theme.activeBg,
-                  backgroundColor: theme.hoverBg,
-                  border: `1px solid ${theme.border}`,
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                }}>
-                  <CheckCircleRoundedIcon sx={{ fontSize: 15 }} />
-                  <span>Active: {APP_THEMES[currentThemeId]?.name || (currentThemeId === 'dark' ? 'Dark Mode' : 'Light Mode')}</span>
-                </div>
-                {renderToggle(
-                  currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos',
-                  () => {
-                    const isDark = currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos';
-                    const target = isDark ? 'light' : 'dark';
-                    onSelectTheme?.(target);
-                    showToast(`Switched to ${target === 'dark' ? 'Dark Mode' : 'Light Mode'}.`);
-                  }
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '0.65rem',
+                backgroundColor: theme.hoverBg,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {(currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos') ? (
+                  <DarkModeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
+                ) : (
+                  <LightModeRoundedIcon sx={{ fontSize: 20, color: '#EAB308' }} />
                 )}
               </div>
+              <h2 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
+                Dark Mode
+              </h2>
             </div>
 
-            {/* Light / Dark Mode Cards */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '1.25rem',
-              marginTop: '1.25rem',
-            }}>
-              {(['light', 'dark'] as const).map((mode) => {
-                const th = APP_THEMES[mode];
-                const isCurrent = (currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos')
-                  ? mode === 'dark'
-                  : mode === 'light';
-
-                return (
-                  <div
-                    key={mode}
-                    onClick={() => {
-                      onSelectTheme?.(mode);
-                      showToast(`Switched theme to ${th.name}.`);
-                    }}
-                    style={{
-                      padding: '1.1rem',
-                      borderRadius: '0.85rem',
-                      backgroundColor: isCurrent ? theme.hoverBg : theme.bgPage,
-                      border: isCurrent ? `2px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.85rem',
-                      boxShadow: isCurrent ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                    }}
-                  >
-                    {/* Visual UI Preview Thumbnail */}
-                    <div style={{
-                      width: '100%',
-                      height: '70px',
-                      borderRadius: '0.55rem',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      border: `1px solid ${th.border}`,
-                      backgroundColor: th.swatch.page,
-                    }}>
-                      {/* Mini Sidebar */}
-                      <div style={{
-                        width: '30%',
-                        backgroundColor: th.swatch.sidebar,
-                        borderRight: `1px solid ${th.border}`,
-                        padding: '7px 6px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                      }}>
-                        <div style={{
-                          width: '65%',
-                          height: '5px',
-                          borderRadius: '2px',
-                          backgroundColor: th.sidebarActiveBg || th.swatch.primary,
-                        }} />
-                        <div style={{ width: '85%', height: '3px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.35 }} />
-                        <div style={{ width: '70%', height: '3px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.35 }} />
-                      </div>
-
-                      {/* Mini Page Content */}
-                      <div style={{
-                        flex: 1,
-                        padding: '7px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '5px',
-                        backgroundColor: th.swatch.page,
-                      }}>
-                        <div style={{
-                          height: '24px',
-                          borderRadius: '4px',
-                          backgroundColor: th.swatch.card,
-                          border: `1px solid ${th.border}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: '0 6px',
-                          justifyContent: 'space-between',
-                        }}>
-                          <div style={{ width: '45%', height: '4px', borderRadius: '2px', backgroundColor: th.textSecondary, opacity: 0.4 }} />
-                          <div style={{ width: '22px', height: '12px', borderRadius: '3px', backgroundColor: th.posBtnBg }} />
-                        </div>
-                        <div style={{
-                          height: '16px',
-                          borderRadius: '4px',
-                          backgroundColor: th.swatch.card,
-                          border: `1px solid ${th.border}`,
-                        }} />
-                      </div>
-                    </div>
-
-                    {/* Label & Active Radio Indicator */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: isCurrent ? `5px solid ${theme.activeBg}` : `2px solid ${theme.border}`,
-                          backgroundColor: isCurrent ? theme.bgCard : 'transparent',
-                          transition: 'all 0.15s ease',
-                          boxSizing: 'border-box',
-                          flexShrink: 0,
-                        }} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                          {mode === 'light' ? (
-                            <LightModeRoundedIcon sx={{ fontSize: 17, color: '#EAB308' }} />
-                          ) : (
-                            <DarkModeRoundedIcon sx={{ fontSize: 17, color: theme.textPrimary }} />
-                          )}
-                          <span style={{ fontSize: '14px', fontWeight: isCurrent ? 800 : 600, color: theme.textPrimary }}>
-                            {th.name}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: theme.textSecondary,
-                        backgroundColor: theme.hoverBg,
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                      }}>
-                        {mode === 'light' ? '#fcfcfc / #fafafa' : 'Dark'}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
-                      {th.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+            {renderToggle(
+              currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos',
+              () => {
+                const isDark = currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos';
+                const target = isDark ? 'light' : 'dark';
+                onSelectTheme?.(target);
+                showToast(`Switched to ${target === 'dark' ? 'Dark Mode' : 'Light Mode'}.`);
+              }
+            )}
           </div>
         </div>
       )}
