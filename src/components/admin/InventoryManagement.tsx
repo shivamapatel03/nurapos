@@ -100,220 +100,11 @@ interface InventoryManagementProps {
   };
 }
 
-const INITIAL_STOCK: StockItem[] = [
-  {
-    id: 'stk-1',
-    sku: 'SKU-BRG-001',
-    name: 'Classic Burger Patty (Beef)',
-    category: 'Burgers',
-    location: 'Freezer Room A',
-    inStock: 85,
-    minThreshold: 30,
-    unitCost: 110,
-    retailPrice: 240,
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Metro Wholesale Depot',
-  },
-  {
-    id: 'stk-2',
-    sku: 'SKU-BRG-002',
-    name: 'Brioche Burger Buns (Pack 12)',
-    category: 'Bakery',
-    location: 'Dry Storage Shelf 1',
-    inStock: 42,
-    minThreshold: 20,
-    unitCost: 65,
-    retailPrice: 150,
-    image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Fresh Bakes Gujarat',
-  },
-  {
-    id: 'stk-3',
-    sku: 'SKU-DRK-001',
-    name: 'Espresso Roast Beans 1kg',
-    category: 'Beverages',
-    location: 'Coffee Bar Pantry',
-    inStock: 4,
-    minThreshold: 10,
-    unitCost: 650,
-    retailPrice: 1250,
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Coorg Estate Coffee Co.',
-  },
-  {
-    id: 'stk-4',
-    sku: 'SKU-DAI-001',
-    name: 'Amul Cheddar Cheese Slices (1kg)',
-    category: 'Dairy',
-    location: 'Walk-in Chiller 2',
-    inStock: 18,
-    minThreshold: 12,
-    unitCost: 380,
-    retailPrice: 520,
-    image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Amul Dairy Cooperative',
-  },
-  {
-    id: 'stk-5',
-    sku: 'SKU-DRK-002',
-    name: 'Whole Milk Pouches 1L',
-    category: 'Dairy',
-    location: 'Walk-in Chiller 1',
-    inStock: 0,
-    minThreshold: 25,
-    unitCost: 58,
-    retailPrice: 70,
-    image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Amul Dairy Cooperative',
-  },
-  {
-    id: 'stk-6',
-    sku: 'SKU-APP-001',
-    name: 'Nuradesk Staff T-Shirt (M/Black)',
-    category: 'Apparel',
-    location: 'Backstore Box C',
-    inStock: 22,
-    minThreshold: 10,
-    unitCost: 320,
-    retailPrice: 799,
-    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Textile Hub Tirupur',
-  },
-  {
-    id: 'stk-7',
-    sku: 'SKU-PKG-001',
-    name: 'Eco Paper Takeaway Bags (Pack 100)',
-    category: 'Packaging',
-    location: 'Warehouse Shelf 4',
-    inStock: 15,
-    minThreshold: 8,
-    unitCost: 450,
-    retailPrice: 650,
-    image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=400&auto=format&fit=crop&q=80',
-    supplier: 'GreenPack Solutions',
-  },
-  {
-    id: 'stk-8',
-    sku: 'SKU-SAU-001',
-    name: 'Smokey BBQ Dip Sauce 500ml',
-    category: 'Sauces',
-    location: 'Dry Storage Shelf 3',
-    inStock: 3,
-    minThreshold: 10,
-    unitCost: 140,
-    retailPrice: 220,
-    image: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400&auto=format&fit=crop&q=80',
-    supplier: 'Culinary Flavors Ltd',
-  },
-];
+const INITIAL_STOCK: StockItem[] = [];
 
-const INITIAL_ADJUSTMENTS: StockAdjustment[] = [
-  {
-    id: 'ADJ-2026-018',
-    itemId: 'stk-3',
-    itemName: 'Espresso Roast Beans 1kg',
-    sku: 'SKU-DRK-001',
-    date: 'Today, 01:25 PM',
-    type: 'decrease',
-    quantity: 2,
-    reason: 'Internal Use',
-    adjustedBy: 'Amit Patel (Manager)',
-    notes: 'Used for coffee tasting & barista staff training session',
-  },
-  {
-    id: 'ADJ-2026-017',
-    itemId: 'stk-5',
-    itemName: 'Whole Milk Pouches 1L',
-    sku: 'SKU-DRK-002',
-    date: 'Today, 10:10 AM',
-    type: 'decrease',
-    quantity: 5,
-    reason: 'Expired',
-    adjustedBy: 'Rahul Sharma (Admin)',
-    notes: 'Morning QC check: packaging seal compromise',
-  },
-  {
-    id: 'ADJ-2026-016',
-    itemId: 'stk-1',
-    itemName: 'Classic Burger Patty (Beef)',
-    sku: 'SKU-BRG-001',
-    date: 'Yesterday, 06:40 PM',
-    type: 'increase',
-    quantity: 15,
-    reason: 'Audit Count',
-    adjustedBy: 'Rahul Sharma (Admin)',
-    notes: 'Physical freezer count found 15 extra unpacked units',
-  },
-  {
-    id: 'ADJ-2026-015',
-    itemId: 'stk-2',
-    itemName: 'Brioche Burger Buns (Pack 12)',
-    sku: 'SKU-BRG-002',
-    date: 'Sep 18, 2026',
-    type: 'decrease',
-    quantity: 3,
-    reason: 'Damage',
-    adjustedBy: 'Amit Patel (Manager)',
-    notes: 'Delivery crate was damaged during unloading',
-  },
-];
+const INITIAL_ADJUSTMENTS: StockAdjustment[] = [];
 
-const INITIAL_POS: PurchaseOrder[] = [
-  {
-    id: 'po-101',
-    poNumber: 'PO-2026-088',
-    supplier: 'Amul Dairy Cooperative',
-    orderDate: 'Sep 19, 2026',
-    expectedDate: 'Today, Sep 20',
-    items: [
-      { id: 'item-1', name: 'Whole Milk Pouches 1L', sku: 'SKU-DRK-002', quantity: 60, unitCost: 58 },
-      { id: 'item-2', name: 'Amul Cheddar Cheese Slices (1kg)', sku: 'SKU-DAI-001', quantity: 20, unitCost: 380 },
-    ],
-    totalAmount: 11080,
-    status: 'In Transit',
-    notes: 'Urgent restocking for weekend peak footfall.',
-  },
-  {
-    id: 'po-102',
-    poNumber: 'PO-2026-087',
-    supplier: 'Coorg Estate Coffee Co.',
-    orderDate: 'Sep 18, 2026',
-    expectedDate: 'Sep 22, 2026',
-    items: [
-      { id: 'item-3', name: 'Espresso Roast Beans 1kg', sku: 'SKU-DRK-001', quantity: 25, unitCost: 650 },
-    ],
-    totalAmount: 16250,
-    status: 'Pending Approval',
-    notes: 'Quarterly coffee bean procurement.',
-  },
-  {
-    id: 'po-103',
-    poNumber: 'PO-2026-086',
-    supplier: 'Metro Wholesale Depot',
-    orderDate: 'Sep 15, 2026',
-    expectedDate: 'Sep 17, 2026',
-    items: [
-      { id: 'item-4', name: 'Classic Burger Patty (Beef)', sku: 'SKU-BRG-001', quantity: 100, unitCost: 110 },
-      { id: 'item-5', name: 'Smokey BBQ Dip Sauce 500ml', sku: 'SKU-SAU-001', quantity: 40, unitCost: 140 },
-    ],
-    totalAmount: 16600,
-    status: 'Received',
-    notes: 'Delivered and verified by warehouse lead.',
-  },
-  {
-    id: 'po-104',
-    poNumber: 'PO-2026-085',
-    supplier: 'GreenPack Solutions',
-    orderDate: 'Sep 14, 2026',
-    expectedDate: 'Sep 25, 2026',
-    items: [
-      { id: 'item-6', name: 'Eco Paper Takeaway Bags (Pack 100)', sku: 'SKU-PKG-001', quantity: 30, unitCost: 450 },
-    ],
-    totalAmount: 13500,
-    status: 'Draft',
-    notes: 'Q4 packaging order draft.',
-  },
-];
+const INITIAL_POS: PurchaseOrder[] = [];
 
 export default function InventoryManagement({
   activeSubTab,
@@ -353,24 +144,22 @@ export default function InventoryManagement({
   // PO Modals
   const [showPoModal, setShowPoModal] = useState(false);
   const [viewingPo, setViewingPo] = useState<PurchaseOrder | null>(null);
-  const [newPoSupplier, setNewPoSupplier] = useState('Amul Dairy Cooperative');
-  const [newPoExpectedDate, setNewPoExpectedDate] = useState('2026-09-24');
-  const [newPoItems, setNewPoItems] = useState<{ itemId: string; quantity: number }[]>([
-    { itemId: 'stk-1', quantity: 50 },
-  ]);
+  const [newPoSupplier, setNewPoSupplier] = useState('');
+  const [newPoExpectedDate, setNewPoExpectedDate] = useState('');
+  const [newPoItems, setNewPoItems] = useState<{ itemId: string; quantity: number }[]>([]);
   const [newPoNotes, setNewPoNotes] = useState('');
 
   // Add Item Modal
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemSku, setNewItemSku] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState('Burgers');
-  const [newItemLocation, setNewItemLocation] = useState('Storage Room A');
-  const [newItemInStock, setNewItemInStock] = useState(20);
-  const [newItemMinThreshold, setNewItemMinThreshold] = useState(10);
-  const [newItemUnitCost, setNewItemUnitCost] = useState(100);
-  const [newItemRetailPrice, setNewItemRetailPrice] = useState(199);
-  const [newItemSupplier, setNewItemSupplier] = useState('Metro Wholesale Depot');
+  const [newItemCategory, setNewItemCategory] = useState('General');
+  const [newItemLocation, setNewItemLocation] = useState('Main Storage');
+  const [newItemInStock, setNewItemInStock] = useState(0);
+  const [newItemMinThreshold, setNewItemMinThreshold] = useState(5);
+  const [newItemUnitCost, setNewItemUnitCost] = useState(0);
+  const [newItemRetailPrice, setNewItemRetailPrice] = useState(0);
+  const [newItemSupplier, setNewItemSupplier] = useState('');
 
   // Categories extraction
   const categories = useMemo(() => {
@@ -427,7 +216,7 @@ export default function InventoryManagement({
 
     // 2. Add adjustment record
     const newAdj: StockAdjustment = {
-      id: `ADJ-2026-${String(adjustments.length + 19).padStart(3, '0')}`,
+      id: `ADJ-2026-${String(adjustments.length + 1).padStart(3, '0')}`,
       itemId: selectedStockItem.id,
       itemName: selectedStockItem.name,
       sku: selectedStockItem.sku,
@@ -435,7 +224,7 @@ export default function InventoryManagement({
       type: adjustType,
       quantity: adjustQty,
       reason: adjustReason,
-      adjustedBy: 'Rahul Sharma (Admin)',
+      adjustedBy: 'Administrator',
       notes: adjustNotes || undefined,
     };
     setAdjustments([newAdj, ...adjustments]);
@@ -498,7 +287,7 @@ export default function InventoryManagement({
         type: 'increase',
         quantity: line.quantity,
         reason: 'Supplier Restock',
-        adjustedBy: 'Rahul Sharma (Admin)',
+        adjustedBy: 'Administrator',
         notes: `PO Received: ${po.poNumber} from ${po.supplier}`,
       };
       setAdjustments((prev) => [record, ...prev]);
@@ -512,24 +301,27 @@ export default function InventoryManagement({
   // Create PO handler
   const handleCreatePO = (e: React.FormEvent) => {
     e.preventDefault();
-    const poItemsMapped: POLineItem[] = newPoItems.map((entry) => {
-      const match = stockItems.find((s) => s.id === entry.itemId) || stockItems[0];
-      return {
-        id: match.id,
-        name: match.name,
-        sku: match.sku,
-        quantity: entry.quantity,
-        unitCost: match.unitCost,
-      };
-    });
+    const poItemsMapped: POLineItem[] = newPoItems
+      .map((entry) => {
+        const match = stockItems.find((s) => s.id === entry.itemId) || stockItems[0];
+        if (!match) return null;
+        return {
+          id: match.id,
+          name: match.name,
+          sku: match.sku,
+          quantity: entry.quantity,
+          unitCost: match.unitCost,
+        };
+      })
+      .filter(Boolean) as POLineItem[];
 
     const total = poItemsMapped.reduce((acc, curr) => acc + curr.quantity * curr.unitCost, 0);
 
     const newPO: PurchaseOrder = {
       id: `po-${Date.now()}`,
-      poNumber: `PO-2026-0${purchaseOrders.length + 89}`,
+      poNumber: `PO-2026-${String(purchaseOrders.length + 1).padStart(3, '0')}`,
       supplier: newPoSupplier,
-      orderDate: 'Today, Sep 20',
+      orderDate: 'Today',
       expectedDate: newPoExpectedDate,
       items: poItemsMapped,
       totalAmount: total,
@@ -1143,6 +935,7 @@ export default function InventoryManagement({
               className="button-20"
               role="button"
               onClick={() => {
+                if (stockItems.length === 0) return;
                 setSelectedStockItem(stockItems[0]);
                 setAdjustQty(1);
                 setAdjustType('decrease');
@@ -1208,7 +1001,14 @@ export default function InventoryManagement({
                 </tr>
               </thead>
               <tbody>
-                {adjustments.map((adj, index) => (
+                {adjustments.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '2.5rem', textAlign: 'center', color: theme.textSecondary }}>
+                      No stock adjustments recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  adjustments.map((adj, index) => (
                   <tr
                     key={adj.id}
                     style={{
@@ -1284,7 +1084,8 @@ export default function InventoryManagement({
                       {adj.notes || '—'}
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
               </tbody>
             </table>
           </div>
@@ -1525,9 +1326,16 @@ export default function InventoryManagement({
                 </tr>
               </thead>
               <tbody>
-                {purchaseOrders
-                  .filter((po) => poStatusFilter === 'All' || po.status === poStatusFilter)
-                  .map((po, index) => {
+                {purchaseOrders.filter((po) => poStatusFilter === 'All' || po.status === poStatusFilter).length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '2.5rem', textAlign: 'center', color: theme.textSecondary }}>
+                      No purchase orders found.
+                    </td>
+                  </tr>
+                ) : (
+                  purchaseOrders
+                    .filter((po) => poStatusFilter === 'All' || po.status === poStatusFilter)
+                    .map((po, index) => {
                     const totalUnits = po.items.reduce((acc, i) => acc + i.quantity, 0);
 
                     return (
@@ -1651,7 +1459,8 @@ export default function InventoryManagement({
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+              )}
               </tbody>
             </table>
           </div>
@@ -2333,16 +2142,20 @@ export default function InventoryManagement({
                       cursor: 'pointer',
                     }}
                   >
-                    {stockItems.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} ({s.sku})</option>
-                    ))}
+                    {stockItems.length === 0 ? (
+                      <option value="">No inventory items available</option>
+                    ) : (
+                      stockItems.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.sku})</option>
+                      ))
+                    )}
                   </select>
 
                   <input
                     type="number"
                     min={1}
-                    value={newPoItems[0]?.quantity}
-                    onChange={(e) => setNewPoItems([{ itemId: newPoItems[0]?.itemId || stockItems[0].id, quantity: parseInt(e.target.value) || 1 }])}
+                    value={newPoItems[0]?.quantity || 1}
+                    onChange={(e) => setNewPoItems([{ itemId: newPoItems[0]?.itemId || (stockItems[0]?.id || ''), quantity: parseInt(e.target.value) || 1 }])}
                     placeholder="Qty"
                     style={{
                       width: '100%',

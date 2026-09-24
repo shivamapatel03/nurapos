@@ -118,222 +118,11 @@ const IMAGE_PRESETS = [
   { name: 'Cheesecake', url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80' },
 ];
 
-const INITIAL_CATEGORIES: CategoryItem[] = [
-  { id: 'cat-1', name: 'Burgers', description: 'Gourmet smashed beef, chicken and veggie burgers', color: '#EF4444' },
-  { id: 'cat-2', name: 'Beverages', description: 'Specialty espresso, cold brews, teas and shakes', color: '#3B82F6' },
-  { id: 'cat-3', name: 'Bakery', description: 'Freshly baked artisanal breads, buns & pastries', color: '#F59E0B' },
-  { id: 'cat-4', name: 'Pizza', description: 'Stone-baked thin crust Italian pizzas', color: '#10B981' },
-  { id: 'cat-5', name: 'Sides', description: 'Golden fries, dips, onion rings and nuggets', color: '#8B5CF6' },
-  { id: 'cat-6', name: 'Desserts', description: 'Cakes, brownies, gelato and sundaes', color: '#EC4899' },
-];
+const INITIAL_CATEGORIES: CategoryItem[] = [];
 
-const INITIAL_BRANDS: BrandItem[] = [
-  { id: 'br-1', name: 'Nura Kitchen', description: 'In-house signature recipes and kitchen specials', origin: 'Ahmedabad, India' },
-  { id: 'br-2', name: 'Illy Coffee Roasters', description: 'Italian premium blend arabica beans', origin: 'Trieste, Italy' },
-  { id: 'br-3', name: 'Fresh Bakes Gujarat', description: 'Daily artisanal brioche and sourdough bakery', origin: 'Gujarat, India' },
-  { id: 'br-4', name: 'Himalayan Organics', description: 'Natural mineral and pure spring water supplies', origin: 'Uttarakhand, India' },
-];
+const INITIAL_BRANDS: BrandItem[] = [];
 
-const INITIAL_PRODUCTS: ProductItem[] = [
-  {
-    id: 'prod-1',
-    name: 'Artisan Beef Smash Burger',
-    description: 'Fresh ground prime Angus beef smashed on hot griddle with melted cheddar, grilled onions and secret house sauce.',
-    category: 'Burgers',
-    brand: 'Nura Kitchen',
-    sku: 'SKU-BRG-101',
-    barcode: '8901020304011',
-    costPrice: 110,
-    sellingPrice: 240,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-    hasVariants: true,
-    variants: [
-      { id: 'var-1-1', name: 'Single Patty', sku: 'SKU-BRG-101-SGL', costPrice: 110, sellingPrice: 240, barcode: '8901020304012', inStock: 65, isActive: true },
-      { id: 'var-1-2', name: 'Double Patty', sku: 'SKU-BRG-101-DBL', costPrice: 165, sellingPrice: 320, barcode: '8901020304013', inStock: 38, isActive: true },
-      { id: 'var-1-3', name: 'Triple Patty King', sku: 'SKU-BRG-101-TRP', costPrice: 220, sellingPrice: 420, barcode: '8901020304014', inStock: 15, isActive: true },
-    ],
-    isActive: true,
-    createdAt: '2026-08-10',
-  },
-  {
-    id: 'prod-2',
-    name: 'Classic Brioche Cheeseburger',
-    description: 'Tender seasoned beef patty with American cheddar, pickles, and dijonnaise served inside toasted brioche bun.',
-    category: 'Burgers',
-    brand: 'Nura Kitchen',
-    sku: 'SKU-BRG-102',
-    barcode: '8901020304028',
-    costPrice: 95,
-    sellingPrice: 220,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80',
-    hasVariants: false,
-    variants: [],
-    isActive: true,
-    createdAt: '2026-08-12',
-  },
-  {
-    id: 'prod-3',
-    name: 'Cappuccino Italiano',
-    description: 'Double shot of rich espresso topped with equal parts steamed whole milk and velvety microfoam.',
-    category: 'Beverages',
-    brand: 'Illy Coffee Roasters',
-    sku: 'SKU-DRK-201',
-    barcode: '8901020304035',
-    costPrice: 45,
-    sellingPrice: 180,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80',
-    hasVariants: true,
-    variants: [
-      { id: 'var-3-1', name: 'Regular (8 oz)', sku: 'SKU-DRK-201-REG', costPrice: 45, sellingPrice: 180, barcode: '8901020304036', inStock: 120, isActive: true },
-      { id: 'var-3-2', name: 'Grande (12 oz)', sku: 'SKU-DRK-201-GRD', costPrice: 60, sellingPrice: 230, barcode: '8901020304037', inStock: 90, isActive: true },
-      { id: 'var-3-3', name: 'Venti (16 oz)', sku: 'SKU-DRK-201-VNT', costPrice: 75, sellingPrice: 270, barcode: '8901020304038', inStock: 50, isActive: true },
-    ],
-    isActive: true,
-    createdAt: '2026-08-14',
-  },
-  {
-    id: 'prod-4',
-    name: 'Caramel Macchiato Blended',
-    description: 'Chilled espresso poured over creamy vanilla milk, crushed ice, and topped with thick butter caramel drizzle.',
-    category: 'Beverages',
-    brand: 'Illy Coffee Roasters',
-    sku: 'SKU-DRK-202',
-    barcode: '8901020304042',
-    costPrice: 65,
-    sellingPrice: 240,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=500&auto=format&fit=crop&q=80',
-    hasVariants: false,
-    variants: [],
-    isActive: true,
-    createdAt: '2026-08-15',
-  },
-  {
-    id: 'prod-5',
-    name: 'Artisan Butter Croissant',
-    description: 'Traditional French laminated flaky pastry made with 100% Normandy cultured butter. Golden and crisp.',
-    category: 'Bakery',
-    brand: 'Fresh Bakes Gujarat',
-    sku: 'SKU-BAK-301',
-    barcode: '8901020304059',
-    costPrice: 40,
-    sellingPrice: 120,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80',
-    hasVariants: false,
-    variants: [],
-    isActive: true,
-    createdAt: '2026-08-16',
-  },
-  {
-    id: 'prod-6',
-    name: 'Dark Chocolate Fudge Brownie',
-    description: 'Dense Belgian 70% dark chocolate brownie with crispy crinkle top and gooey molten center.',
-    category: 'Bakery',
-    brand: 'Fresh Bakes Gujarat',
-    sku: 'SKU-BAK-302',
-    barcode: '8901020304066',
-    costPrice: 50,
-    sellingPrice: 140,
-    taxRate: 18,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&auto=format&fit=crop&q=80',
-    hasVariants: true,
-    variants: [
-      { id: 'var-6-1', name: 'Single Slice', sku: 'SKU-BAK-302-SGL', costPrice: 50, sellingPrice: 140, inStock: 45, isActive: true },
-      { id: 'var-6-2', name: 'Gift Box of 4', sku: 'SKU-BAK-302-BX4', costPrice: 180, sellingPrice: 480, inStock: 20, isActive: true },
-    ],
-    isActive: true,
-    createdAt: '2026-08-18',
-  },
-  {
-    id: 'prod-7',
-    name: 'Classic Margherita Pizza',
-    description: 'San Marzano tomato base, fresh buffalo mozzarella, virgin olive oil, and fragrant organic sweet basil.',
-    category: 'Pizza',
-    brand: 'Nura Kitchen',
-    sku: 'SKU-PIZ-401',
-    barcode: '8901020304073',
-    costPrice: 120,
-    sellingPrice: 320,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&auto=format&fit=crop&q=80',
-    hasVariants: true,
-    variants: [
-      { id: 'var-7-1', name: '8" Personal', sku: 'SKU-PIZ-401-8IN', costPrice: 120, sellingPrice: 320, inStock: 30, isActive: true },
-      { id: 'var-7-2', name: '12" Medium', sku: 'SKU-PIZ-401-12IN', costPrice: 175, sellingPrice: 480, inStock: 25, isActive: true },
-      { id: 'var-7-3', name: '14" Large', sku: 'SKU-PIZ-401-14IN', costPrice: 220, sellingPrice: 620, inStock: 18, isActive: true },
-    ],
-    isActive: true,
-    createdAt: '2026-08-20',
-  },
-  {
-    id: 'prod-8',
-    name: 'Truffle Parmesan French Fries',
-    description: 'Crispy hand-cut skin-on russet potato fries tossed in Italian white truffle oil and freshly grated parmesan.',
-    category: 'Sides',
-    brand: 'Nura Kitchen',
-    sku: 'SKU-SDS-501',
-    barcode: '8901020304080',
-    costPrice: 45,
-    sellingPrice: 150,
-    taxRate: 5,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500&auto=format&fit=crop&q=80',
-    hasVariants: true,
-    variants: [
-      { id: 'var-8-1', name: 'Regular Portion', sku: 'SKU-SDS-501-REG', costPrice: 45, sellingPrice: 150, inStock: 80, isActive: true },
-      { id: 'var-8-2', name: 'Large Sharing Portion', sku: 'SKU-SDS-501-LRG', costPrice: 70, sellingPrice: 220, inStock: 55, isActive: true },
-    ],
-    isActive: true,
-    createdAt: '2026-08-22',
-  },
-  {
-    id: 'prod-9',
-    name: 'Sparkling Natural Spring Water 750ml',
-    description: 'Naturally carbonated pristine glacial spring water from the high Himalayas. Bottled in recycled glass.',
-    category: 'Beverages',
-    brand: 'Himalayan Organics',
-    sku: 'SKU-DRK-205',
-    barcode: '8901020304097',
-    costPrice: 40,
-    sellingPrice: 95,
-    taxRate: 18,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&auto=format&fit=crop&q=80',
-    hasVariants: false,
-    variants: [],
-    isActive: true,
-    createdAt: '2026-08-25',
-  },
-  {
-    id: 'prod-10',
-    name: 'Alphonso Mango Baked Cheesecake',
-    description: 'Creamy New York style baked cheesecake infused with pure Ratnagiri Alphonso mango puree and graham crust.',
-    category: 'Desserts',
-    brand: 'Fresh Bakes Gujarat',
-    sku: 'SKU-DST-601',
-    barcode: '8901020304103',
-    costPrice: 90,
-    sellingPrice: 260,
-    taxRate: 18,
-    taxType: 'inclusive',
-    image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80',
-    hasVariants: false,
-    variants: [],
-    isActive: false, // Inactive seasonal item to showcase inactive state!
-    createdAt: '2026-08-28',
-  },
-];
+const INITIAL_PRODUCTS: ProductItem[] = [];
 
 export default function ProductManagement({
   activeSubTab = 'products',
@@ -401,8 +190,8 @@ export default function ProductManagement({
   // Form State for Add / Edit Product
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
-  const [formCategory, setFormCategory] = useState('Burgers');
-  const [formBrand, setFormBrand] = useState('Nura Kitchen');
+  const [formCategory, setFormCategory] = useState(categories[0]?.name || 'General');
+  const [formBrand, setFormBrand] = useState(brands[0]?.name || '');
   const [formSku, setFormSku] = useState('');
   const [formBarcode, setFormBarcode] = useState('');
   const [formCostPrice, setFormCostPrice] = useState<number | ''>(100);
@@ -427,8 +216,8 @@ export default function ProductManagement({
     setEditingProduct(null);
     setFormName('');
     setFormDescription('');
-    setFormCategory(categories[0]?.name || 'Burgers');
-    setFormBrand(brands[0]?.name || 'Nura Kitchen');
+    setFormCategory(categories[0]?.name || 'General');
+    setFormBrand(brands[0]?.name || '');
     setFormSku(randomSku);
     setFormBarcode(randomBarcode);
     setFormCostPrice(100);
@@ -1574,6 +1363,21 @@ export default function ProductManagement({
             </div>
           ) : (
             /* View 2: GRID CARDS VIEW */
+            filteredProducts.length === 0 ? (
+              <div style={{
+                backgroundColor: theme.bgCard,
+                border: `1px solid ${theme.borderCard}`,
+                borderRadius: '1rem',
+                padding: '3.5rem 1rem',
+                textAlign: 'center',
+              }}>
+                <Inventory2RoundedIcon sx={{ fontSize: 42, color: theme.textSecondary, opacity: 0.4, marginBottom: '0.5rem' }} />
+                <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary }}>No products found</div>
+                <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem' }}>
+                  Try adjusting your search filters or click &quot;Add Product&quot; to create a new item.
+                </div>
+              </div>
+            ) : (
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -1754,6 +1558,7 @@ export default function ProductManagement({
                 );
               })}
             </div>
+            )
           )}
         </>
       )}
@@ -1762,162 +1567,194 @@ export default function ProductManagement({
       {/* SUBTAB 2: CATEGORIES                                         */}
       {/* ============================================================ */}
       {currentSubTab === 'categories' && (
-        <div>
+        categories.length === 0 ? (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '1.25rem',
+            backgroundColor: theme.bgCard,
+            border: `1px solid ${theme.borderCard}`,
+            borderRadius: '1rem',
+            padding: '3.5rem 1rem',
+            textAlign: 'center',
           }}>
-            {categories.map((cat) => {
-              const productCount = products.filter((p) => p.category === cat.name).length;
+            <CategoryRoundedIcon sx={{ fontSize: 42, color: theme.textSecondary, opacity: 0.4, marginBottom: '0.5rem' }} />
+            <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary }}>No categories defined</div>
+            <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem' }}>
+              Click &quot;Add Category&quot; to create your first category.
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1.25rem',
+            }}>
+              {categories.map((cat) => {
+                const productCount = products.filter((p) => p.category === cat.name).length;
 
-              return (
-                <div
-                  key={cat.id}
-                  style={{
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.borderCard}`,
-                    borderRadius: '1rem',
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        fontSize: '11.5px',
-                        fontWeight: 800,
-                        color: '#FFFFFF',
-                        backgroundColor: cat.color,
-                        padding: '3px 8px',
-                        borderRadius: '0.4rem',
-                      }}>
-                        <GridViewRoundedIcon sx={{ fontSize: 13 }} />
-                        <span>Category</span>
-                      </span>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary }}>
-                        {productCount} items
-                      </span>
+                return (
+                  <div
+                    key={cat.id}
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.borderCard}`,
+                      borderRadius: '1rem',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          fontSize: '11.5px',
+                          fontWeight: 800,
+                          color: '#FFFFFF',
+                          backgroundColor: cat.color,
+                          padding: '3px 8px',
+                          borderRadius: '0.4rem',
+                        }}>
+                          <GridViewRoundedIcon sx={{ fontSize: 13 }} />
+                          <span>Category</span>
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary }}>
+                          {productCount} items
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.35rem 0' }}>
+                        {cat.name}
+                      </h3>
+                      <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                        {cat.description}
+                      </p>
                     </div>
 
-                    <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.35rem 0' }}>
-                      {cat.name}
-                    </h3>
-                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
-                      {cat.description}
-                    </p>
+                    <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(cat.name);
+                          handleTabChange('products');
+                        }}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '0.5rem',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: theme.hoverBg,
+                          color: theme.textPrimary,
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        View Products ({productCount})
+                      </button>
+                    </div>
                   </div>
-
-                  <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(cat.name);
-                        handleTabChange('products');
-                      }}
-                      style={{
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: '0.5rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.hoverBg,
-                        color: theme.textPrimary,
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      View Products ({productCount})
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* ============================================================ */}
       {/* SUBTAB 3: BRANDS                                             */}
       {/* ============================================================ */}
       {currentSubTab === 'brands' && (
-        <div>
+        brands.length === 0 ? (
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '1.25rem',
+            backgroundColor: theme.bgCard,
+            border: `1px solid ${theme.borderCard}`,
+            borderRadius: '1rem',
+            padding: '3.5rem 1rem',
+            textAlign: 'center',
           }}>
-            {brands.map((brand) => {
-              const productCount = products.filter((p) => p.brand === brand.name).length;
+            <BrandingWatermarkRoundedIcon sx={{ fontSize: 42, color: theme.textSecondary, opacity: 0.4, marginBottom: '0.5rem' }} />
+            <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary }}>No brands defined</div>
+            <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem' }}>
+              Click &quot;Add Brand&quot; to create your first brand.
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1.25rem',
+            }}>
+              {brands.map((brand) => {
+                const productCount = products.filter((p) => p.brand === brand.name).length;
 
-              return (
-                <div
-                  key={brand.id}
-                  style={{
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.borderCard}`,
-                    borderRadius: '1rem',
-                    padding: '1.25rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        color: theme.textSecondary,
-                        backgroundColor: theme.hoverBg,
-                        padding: '2px 8px',
-                        borderRadius: '0.35rem',
-                      }}>
-                        Origin: {brand.origin}
-                      </span>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary }}>
-                        {productCount} items
-                      </span>
+                return (
+                  <div
+                    key={brand.id}
+                    style={{
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.borderCard}`,
+                      borderRadius: '1rem',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: theme.textSecondary,
+                          backgroundColor: theme.hoverBg,
+                          padding: '2px 8px',
+                          borderRadius: '0.35rem',
+                        }}>
+                          Origin: {brand.origin}
+                        </span>
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary }}>
+                          {productCount} items
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.35rem 0' }}>
+                        {brand.name}
+                      </h3>
+                      <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                        {brand.description}
+                      </p>
                     </div>
 
-                    <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.35rem 0' }}>
-                      {brand.name}
-                    </h3>
-                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
-                      {brand.description}
-                    </p>
+                    <div style={{ marginTop: '1.25rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery(brand.name);
+                          handleTabChange('products');
+                        }}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '0.5rem',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: theme.hoverBg,
+                          color: theme.textPrimary,
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Filter by Brand
+                      </button>
+                    </div>
                   </div>
-
-                  <div style={{ marginTop: '1.25rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery(brand.name);
-                        handleTabChange('products');
-                      }}
-                      style={{
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: '0.5rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.hoverBg,
-                        color: theme.textPrimary,
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Filter by Brand
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* ============================================================ */}
@@ -2045,9 +1882,13 @@ export default function ProductManagement({
                           cursor: 'pointer',
                         }}
                       >
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.name}>{c.name}</option>
-                        ))}
+                        {categories.length === 0 ? (
+                          <option value="General">General</option>
+                        ) : (
+                          categories.map((c) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))
+                        )}
                       </select>
                     </div>
 
@@ -2074,6 +1915,7 @@ export default function ProductManagement({
                           cursor: 'pointer',
                         }}
                       >
+                        <option value="">None / Unbranded</option>
                         {brands.map((b) => (
                           <option key={b.id} value={b.name}>{b.name}</option>
                         ))}

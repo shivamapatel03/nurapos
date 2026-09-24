@@ -16,7 +16,6 @@ import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -65,6 +64,7 @@ interface SettingsManagementProps {
   theme: any;
   currentThemeId?: ThemeId;
   onSelectTheme?: (themeId: ThemeId) => void;
+  onOpenPaymentSetup?: () => void;
 }
 
 export default function SettingsManagement({
@@ -73,6 +73,7 @@ export default function SettingsManagement({
   theme,
   currentThemeId = 'bw_light',
   onSelectTheme,
+  onOpenPaymentSetup,
 }: SettingsManagementProps) {
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -122,6 +123,46 @@ export default function SettingsManagement({
         }}
       />
     </button>
+  );
+
+  // Dedicated Save Button Footer for each settings component card
+  const renderCardFooter = (sectionName: string, onSaveCustom?: () => void) => (
+    <div
+      style={{
+        marginTop: '1.25rem',
+        paddingTop: '1rem',
+        borderTop: `1px solid ${theme.border}`,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+      }}
+    >
+      <button
+        type="button"
+        className="button-20"
+        role="button"
+        onClick={() => {
+          if (onSaveCustom) {
+            onSaveCustom();
+          } else {
+            showToast(`${sectionName} saved successfully!`);
+          }
+        }}
+        style={{
+          height: '34px',
+          padding: '0 1rem',
+          fontSize: '12.5px',
+          fontWeight: 700,
+          fontFamily: 'inherit',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+        }}
+      >
+        <CheckRoundedIcon sx={{ fontSize: 16 }} />
+        <span>Save Changes</span>
+      </button>
+    </div>
   );
 
   // 1. STORE PROFILE STATE
@@ -280,77 +321,6 @@ export default function SettingsManagement({
         </div>
       )}
 
-      {/* Header Banner */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1rem',
-          padding: '1.25rem 1.5rem',
-          backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-          borderRadius: '1rem',
-          border: `1px solid ${theme.border}`,
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: '22px',
-              fontWeight: 800,
-              color: theme.textPrimary,
-              margin: '0 0 0.25rem 0',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Settings & System Configuration
-          </h1>
-          <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
-            Configure store metadata, billing parameters, connected peripherals, security policies, and interface customization.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <Link
-            href="/signin"
-            className="button-20-secondary"
-            style={{
-              height: '38px',
-              padding: '0 1rem',
-              fontSize: '13px',
-              fontWeight: 700,
-              fontFamily: 'inherit',
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              color: '#EF4444',
-              borderColor: (theme as any).sidebarIsDark ? '#7F1D1D' : '#FCA5A5',
-              boxSizing: 'border-box',
-            }}
-          >
-            <LogoutRoundedIcon sx={{ fontSize: 16 }} />
-            <span>Log Out</span>
-          </Link>
-
-          <button
-            type="button"
-            className="button-20"
-            role="button"
-            onClick={() => showToast('All system settings saved successfully.')}
-            style={{
-              height: '38px',
-              fontSize: '13px',
-              fontWeight: 700,
-              fontFamily: 'inherit',
-            }}
-          >
-            <SaveRoundedIcon sx={{ fontSize: 18 }} />
-            <span>Save Changes</span>
-          </button>
-        </div>
-      </div>
 
       {/* SUB-TAB 1: STORE PROFILE */}
       {activeSubTab === 'set_store' && (
@@ -464,6 +434,8 @@ export default function SettingsManagement({
                 />
               </div>
             </div>
+
+            {renderCardFooter('Store Identity & Branding')}
           </div>
 
           {/* Card: Address & Contact Details */}
@@ -644,6 +616,8 @@ export default function SettingsManagement({
                 />
               </div>
             </div>
+
+            {renderCardFooter('Location & Contact Information')}
           </div>
 
           {/* Card: Operating Hours */}
@@ -751,6 +725,8 @@ export default function SettingsManagement({
                 </div>
               ))}
             </div>
+
+            {renderCardFooter('Weekly Operating Hours')}
           </div>
         </div>
       )}
@@ -909,6 +885,8 @@ export default function SettingsManagement({
                 </select>
               </div>
             </div>
+
+            {renderCardFooter('Regional & Financial Parameters')}
           </div>
 
           {/* Multi-Outlet Management Card */}
@@ -1035,6 +1013,8 @@ export default function SettingsManagement({
                 </div>
               </div>
             )}
+
+            {renderCardFooter('Multi-Store Branch Settings')}
           </div>
         </div>
       )}
@@ -1213,6 +1193,8 @@ export default function SettingsManagement({
                 />
               </div>
             </div>
+
+            {renderCardFooter('GST & Invoice Settings')}
           </div>
 
           {/* Standard Tax Slabs Table */}
@@ -1291,6 +1273,8 @@ export default function SettingsManagement({
                 </div>
               ))}
             </div>
+
+            {renderCardFooter('GST Tax Slabs')}
           </div>
 
           {/* Receipt Custom Header & Footer */}
@@ -1354,6 +1338,8 @@ export default function SettingsManagement({
                 />
               </div>
             </div>
+
+            {renderCardFooter('Receipt Header & Footer')}
           </div>
         </div>
       )}
@@ -1361,6 +1347,69 @@ export default function SettingsManagement({
       {/* SUB-TAB 4: PAYMENTS */}
       {activeSubTab === 'set_payments' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Quick Connect & Account Banner */}
+          <div
+            style={{
+              padding: '1.25rem 1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>
+                  Store Payment Provider Connection
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    backgroundColor: theme.badgeBg,
+                    color: theme.badgeText,
+                    border: `1px solid ${theme.badgeBorder}`,
+                  }}
+                >
+                  Modern Onboarding
+                </span>
+              </div>
+              <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.45 }}>
+                Connect Razorpay or Cashfree to accept UPI, Dynamic QR, and Card payments directly without managing raw API keys.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              {onOpenPaymentSetup && (
+                <button
+                  type="button"
+                  onClick={onOpenPaymentSetup}
+                  style={{
+                    padding: '0.55rem 1.15rem',
+                    borderRadius: '0.55rem',
+                    backgroundColor: theme.activeBg,
+                    color: theme.activeText,
+                    border: 'none',
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <span>Launch Payment Setup Wizard</span>
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Active Tender Methods */}
           <div
             style={{
@@ -1419,6 +1468,8 @@ export default function SettingsManagement({
                 );
               })}
             </div>
+
+            {renderCardFooter('Tender Types')}
           </div>
 
           {/* Dynamic UPI & Merchant VPA */}
@@ -1491,6 +1542,8 @@ export default function SettingsManagement({
               </span>
               {renderToggle(autoDynamicUpiQr, () => setAutoDynamicUpiQr(!autoDynamicUpiQr))}
             </div>
+
+            {renderCardFooter('UPI Configuration')}
           </div>
 
           {/* Card POS & Auto Round-off */}
@@ -1587,6 +1640,8 @@ export default function SettingsManagement({
               </div>
               {renderToggle(autoRoundOff, () => setAutoRoundOff(!autoRoundOff))}
             </div>
+
+            {renderCardFooter('Card Terminal & Rules')}
           </div>
         </div>
       )}
@@ -1709,6 +1764,8 @@ export default function SettingsManagement({
                 {renderToggle(autoCutter, () => setAutoCutter(!autoCutter))}
               </div>
             </div>
+
+            {renderCardFooter('Thermal Printer Settings')}
           </div>
 
           {/* Barcode Scanner & Cash Drawer */}
@@ -1720,58 +1777,65 @@ export default function SettingsManagement({
                 backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                 borderRadius: '0.85rem',
                 border: `1px solid ${theme.border}`,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
               }}
             >
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 1rem 0' }}>
-                Barcode Scanner
-              </h2>
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 1rem 0' }}>
+                  Barcode Scanner
+                </h2>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                    Scanner Protocol
-                  </label>
-                  <select
-                    value={scannerInterface}
-                    onChange={(e) => setScannerInterface(e.target.value as any)}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '0.55rem',
-                      border: `1px solid ${theme.border}`,
-                      backgroundColor: theme.bgPage,
-                      color: theme.textPrimary,
-                      fontSize: '13px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <option value="USB HID">USB HID Keyboard Emulation</option>
-                    <option value="Bluetooth Wedge">Bluetooth Wireless Scanner</option>
-                  </select>
-                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Scanner Protocol
+                    </label>
+                    <select
+                      value={scannerInterface}
+                      onChange={(e) => setScannerInterface(e.target.value as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <option value="USB HID">USB HID Keyboard Emulation</option>
+                      <option value="Bluetooth Wedge">Bluetooth Wireless Scanner</option>
+                    </select>
+                  </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
-                    Audio Beep Confirmation on Scan
-                  </span>
-                  <button
-                    type="button"
-                    className={scannerBeep ? "button-20" : "button-20-secondary"}
-                    role="button"
-                    onClick={() => setScannerBeep(!scannerBeep)}
-                    style={{
-                      height: '28px',
-                      padding: '0 0.75rem',
-                      fontSize: '11.5px',
-                      fontWeight: 800,
-                      fontFamily: 'inherit',
-                      minWidth: '50px',
-                    }}
-                  >
-                    {scannerBeep ? 'On' : 'Off'}
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
+                      Audio Beep Confirmation on Scan
+                    </span>
+                    <button
+                      type="button"
+                      className={scannerBeep ? "button-20" : "button-20-secondary"}
+                      role="button"
+                      onClick={() => setScannerBeep(!scannerBeep)}
+                      style={{
+                        height: '28px',
+                        padding: '0 0.75rem',
+                        fontSize: '11.5px',
+                        fontWeight: 800,
+                        fontFamily: 'inherit',
+                        minWidth: '50px',
+                      }}
+                    >
+                      {scannerBeep ? 'On' : 'Off'}
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {renderCardFooter('Barcode Scanner')}
             </div>
 
             {/* Cash Drawer */}
@@ -1781,41 +1845,48 @@ export default function SettingsManagement({
                 backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
                 borderRadius: '0.85rem',
                 border: `1px solid ${theme.border}`,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Electronic Cash Drawer
-                </h2>
-                <button
-                  type="button"
-                  className="button-20-secondary"
-                  role="button"
-                  onClick={() => showToast('RJ11 drawer kick pulse sent.')}
-                  style={{
-                    height: '28px',
-                    padding: '0 0.75rem',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Manual Kick Test
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ fontSize: '12.5px', color: theme.textSecondary }}>
-                  Connected via standard RJ11/RJ12 drawer port on thermal printer.
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    Electronic Cash Drawer
+                  </h2>
+                  <button
+                    type="button"
+                    className="button-20-secondary"
+                    role="button"
+                    onClick={() => showToast('RJ11 drawer kick pulse sent.')}
+                    style={{
+                      height: '28px',
+                      padding: '0 0.75rem',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Manual Kick Test
+                  </button>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
-                    Kick drawer automatically on cash sale
-                  </span>
-                  {renderToggle(cashDrawerPulseOnCash, () => setCashDrawerPulseOnCash(!cashDrawerPulseOnCash))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ fontSize: '12.5px', color: theme.textSecondary }}>
+                    Connected via standard RJ11/RJ12 drawer port on thermal printer.
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
+                      Kick drawer automatically on cash sale
+                    </span>
+                    {renderToggle(cashDrawerPulseOnCash, () => setCashDrawerPulseOnCash(!cashDrawerPulseOnCash))}
+                  </div>
                 </div>
               </div>
+
+              {renderCardFooter('Cash Drawer Settings')}
             </div>
           </div>
         </div>
@@ -1902,6 +1973,8 @@ export default function SettingsManagement({
                 </div>
               ))}
             </div>
+
+            {renderCardFooter('POS Terminal Rules')}
           </div>
         </div>
       )}
@@ -2067,6 +2140,8 @@ export default function SettingsManagement({
                 {renderToggle(notifyOrderVoidRefund, () => setNotifyOrderVoidRefund(!notifyOrderVoidRefund))}
               </div>
             </div>
+
+            {renderCardFooter('Notification Preferences')}
           </div>
         </div>
       )}
@@ -2193,6 +2268,8 @@ export default function SettingsManagement({
                 </tbody>
               </table>
             </div>
+
+            {renderCardFooter('User Permissions Matrix')}
           </div>
         </div>
       )}
@@ -2313,6 +2390,8 @@ export default function SettingsManagement({
                 {renderToggle(twoFactorAuth, () => setTwoFactorAuth(!twoFactorAuth))}
               </div>
             </div>
+
+            {renderCardFooter('Terminal Security & Lock Policies')}
           </div>
 
           {/* Security Audit Trail Log */}
@@ -2382,7 +2461,7 @@ export default function SettingsManagement({
                   </h2>
                 </div>
                 <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
-                  Signed in as <strong>Rahul (Administrator)</strong> on this browser terminal.
+                  Signed in as <strong>Administrator</strong> on this browser terminal.
                 </p>
               </div>
 
@@ -2614,6 +2693,7 @@ export default function SettingsManagement({
           </div>
         </div>
       )}
+
     </div>
   );
 }

@@ -124,227 +124,9 @@ export interface CustomersManagementProps {
 // ============================================================================
 // INITIAL SAMPLE DATA
 // ============================================================================
-const INITIAL_CUSTOMERS: Customer[] = [
-  {
-    id: 'CUST-101',
-    name: 'Vikramaditya Shah',
-    phone: '+91 98250 11234',
-    email: 'vikram.shah@enterprise.in',
-    group: 'VIP Elite',
-    loyaltyTier: 'Platinum VIP',
-    totalOrders: 42,
-    lifetimeSpend: 28450,
-    pointsBalance: 1420,
-    lastVisit: 'Yesterday, 19:30',
-    joinedDate: '2023-03-10',
-    favoriteItem: 'Artisan Beef Smash Burger',
-    notes: 'Prefers window corner booth. Orders extra truffle dip.',
-    birthday: '1988-11-14',
-    avatarColor: '#1E293B',
-  },
-  {
-    id: 'CUST-102',
-    name: 'Ananya Deshmukh',
-    phone: '+91 97241 88920',
-    email: 'ananya.d@studioarch.com',
-    group: 'VIP Elite',
-    loyaltyTier: 'Platinum VIP',
-    totalOrders: 36,
-    lifetimeSpend: 23600,
-    pointsBalance: 1180,
-    lastVisit: 'Today, 14:20',
-    joinedDate: '2023-05-18',
-    favoriteItem: 'Cappuccino Italiano',
-    notes: 'Prefers oat milk substitution. Daily afternoon patron.',
-    birthday: '1992-06-25',
-    avatarColor: '#0F766E',
-  },
-  {
-    id: 'CUST-103',
-    name: 'Dr. Siddharth Mehta',
-    phone: '+91 98980 44512',
-    email: 'siddharth.mehta@careclinic.org',
-    group: 'Store Regulars',
-    loyaltyTier: 'Gold',
-    totalOrders: 31,
-    lifetimeSpend: 21400,
-    pointsBalance: 780,
-    lastVisit: '3 days ago',
-    joinedDate: '2023-09-01',
-    favoriteItem: 'Classic Margherita Pizza',
-    notes: 'Often orders for clinic staff lunch meetings.',
-    birthday: '1980-04-12',
-    avatarColor: '#1D4ED8',
-  },
-  {
-    id: 'CUST-104',
-    name: 'Meera Patel',
-    phone: '+91 99099 33211',
-    email: 'meera.patel@designworks.io',
-    group: 'Store Regulars',
-    loyaltyTier: 'Gold',
-    totalOrders: 28,
-    lifetimeSpend: 18900,
-    pointsBalance: 640,
-    lastVisit: 'Today, 12:45',
-    joinedDate: '2024-01-15',
-    favoriteItem: 'Truffle Parmesan Fries',
-    notes: 'Regular lunch attendee with marketing colleagues.',
-    birthday: '1995-08-30',
-    avatarColor: '#B45309',
-  },
-  {
-    id: 'CUST-105',
-    name: 'Karanvir Singhania',
-    phone: '+91 98240 77651',
-    email: 'karan.singh@legaladvocates.in',
-    group: 'Store Regulars',
-    loyaltyTier: 'Silver',
-    totalOrders: 25,
-    lifetimeSpend: 17250,
-    pointsBalance: 420,
-    lastVisit: '5 days ago',
-    joinedDate: '2024-02-20',
-    favoriteItem: 'Dark Chocolate Brownie',
-    notes: 'Evening dessert and espresso regular.',
-    birthday: '1986-12-05',
-    avatarColor: '#7C3AED',
-  },
-  {
-    id: 'CUST-106',
-    name: 'Pooja Bhatt',
-    phone: '+91 98123 45678',
-    email: 'pooja.bhatt@techstart.co',
-    group: 'Store Regulars',
-    loyaltyTier: 'Silver',
-    totalOrders: 18,
-    lifetimeSpend: 11400,
-    pointsBalance: 320,
-    lastVisit: 'Yesterday, 10:15',
-    joinedDate: '2024-04-02',
-    favoriteItem: 'Cold Brew Nitro Blend',
-    notes: 'Freelancer, works with laptop on high tables.',
-    birthday: '1997-03-21',
-    avatarColor: '#BE185D',
-  },
-  {
-    id: 'CUST-107',
-    name: 'Rajesh Vora',
-    phone: '+91 98450 67890',
-    email: 'rajesh.vora@voratraders.com',
-    group: 'New Patrons',
-    loyaltyTier: 'Bronze',
-    totalOrders: 2,
-    lifetimeSpend: 1440,
-    pointsBalance: 40,
-    lastVisit: 'Today, 11:30',
-    joinedDate: '2026-09-18',
-    favoriteItem: 'Margherita Pizza 12"',
-    notes: 'Discovered cafe through corporate lunch flyer.',
-    birthday: '1975-09-08',
-    avatarColor: '#4338CA',
-  },
-  {
-    id: 'CUST-108',
-    name: 'Nitin Kothari',
-    phone: '+91 99111 88223',
-    email: 'nitin.kothari@realtygroup.in',
-    group: 'At-Risk',
-    loyaltyTier: 'Silver',
-    totalOrders: 12,
-    lifetimeSpend: 8200,
-    pointsBalance: 190,
-    lastVisit: '48 days ago',
-    joinedDate: '2023-11-10',
-    favoriteItem: 'BBQ Pulled Chicken Sliders',
-    notes: 'Lapsed patron. Trigger win-back SMS discount voucher.',
-    birthday: '1984-01-19',
-    avatarColor: '#047857',
-  },
-];
+const INITIAL_CUSTOMERS: Customer[] = [];
 
-const INITIAL_ORDERS: CustomerOrderRecord[] = [
-  {
-    id: 'ORD-9842',
-    date: '2026-09-20',
-    time: '14:20',
-    customerId: 'CUST-102',
-    customerName: 'Ananya Deshmukh',
-    customerPhone: '+91 97241 88920',
-    items: [
-      { name: 'Artisan Beef Smash Burger', quantity: 2, unitPrice: 320, totalPrice: 640 },
-      { name: 'Truffle Parmesan French Fries', quantity: 1, unitPrice: 150, totalPrice: 150 },
-      { name: 'Cappuccino Italiano', quantity: 2, unitPrice: 180, totalPrice: 360 },
-    ],
-    totalAmount: 1150,
-    paymentMethod: 'UPI',
-    loyaltyPointsEarned: 23,
-    status: 'Completed',
-  },
-  {
-    id: 'ORD-9841',
-    date: '2026-09-20',
-    time: '12:45',
-    customerId: 'CUST-104',
-    customerName: 'Meera Patel',
-    customerPhone: '+91 99099 33211',
-    items: [
-      { name: 'Truffle Parmesan French Fries', quantity: 1, unitPrice: 150, totalPrice: 150 },
-      { name: 'Artisan Beef Smash Burger', quantity: 1, unitPrice: 320, totalPrice: 320 },
-    ],
-    totalAmount: 470,
-    paymentMethod: 'Card',
-    loyaltyPointsEarned: 10,
-    status: 'Completed',
-  },
-  {
-    id: 'ORD-9840',
-    date: '2026-09-20',
-    time: '11:30',
-    customerId: 'CUST-107',
-    customerName: 'Rajesh Vora',
-    customerPhone: '+91 98450 67890',
-    items: [
-      { name: 'Classic Margherita Pizza 12"', quantity: 3, unitPrice: 480, totalPrice: 1440 },
-    ],
-    totalAmount: 1440,
-    paymentMethod: 'Cash',
-    loyaltyPointsEarned: 14,
-    status: 'Completed',
-  },
-  {
-    id: 'ORD-9839',
-    date: '2026-09-19',
-    time: '19:30',
-    customerId: 'CUST-101',
-    customerName: 'Vikramaditya Shah',
-    customerPhone: '+91 98250 11234',
-    items: [
-      { name: 'Artisan Beef Smash Burger', quantity: 2, unitPrice: 320, totalPrice: 640 },
-      { name: 'Belgian Truffle Mousse Cake', quantity: 2, unitPrice: 220, totalPrice: 440 },
-    ],
-    totalAmount: 1080,
-    paymentMethod: 'Card',
-    loyaltyPointsEarned: 22,
-    status: 'Completed',
-  },
-  {
-    id: 'ORD-9838',
-    date: '2026-09-19',
-    time: '10:15',
-    customerId: 'CUST-106',
-    customerName: 'Pooja Bhatt',
-    customerPhone: '+91 98123 45678',
-    items: [
-      { name: 'Cold Brew Nitro Blend', quantity: 1, unitPrice: 210, totalPrice: 210 },
-      { name: 'Dark Chocolate Brownie', quantity: 1, unitPrice: 180, totalPrice: 180 },
-    ],
-    totalAmount: 390,
-    paymentMethod: 'UPI',
-    loyaltyPointsEarned: 8,
-    status: 'Completed',
-  },
-];
+const INITIAL_ORDERS: CustomerOrderRecord[] = [];
 
 const REWARD_VOUCHERS: LoyaltyRewardVoucher[] = [
   {
@@ -380,56 +162,7 @@ const REWARD_VOUCHERS: LoyaltyRewardVoucher[] = [
   },
 ];
 
-const INITIAL_FEEDBACK: CustomerFeedbackRecord[] = [
-  {
-    id: 'REV-501',
-    customerId: 'CUST-101',
-    customerName: 'Vikramaditya Shah',
-    customerPhone: '+91 98250 11234',
-    rating: 5,
-    date: '2026-09-19',
-    orderId: 'ORD-9839',
-    category: 'Food Quality',
-    comment: 'The smash burger patties were remarkably juicy and properly seared. Outstanding consistent taste!',
-    status: 'Published',
-  },
-  {
-    id: 'REV-502',
-    customerId: 'CUST-102',
-    customerName: 'Ananya Deshmukh',
-    customerPhone: '+91 97241 88920',
-    rating: 5,
-    date: '2026-09-20',
-    orderId: 'ORD-9842',
-    category: 'Service Speed',
-    comment: 'Prepared exactly to my preference with oat milk under 4 minutes. Love the rapid digital checkout!',
-    status: 'Published',
-  },
-  {
-    id: 'REV-503',
-    customerId: 'CUST-107',
-    customerName: 'Rajesh Vora',
-    customerPhone: '+91 98450 67890',
-    rating: 4,
-    date: '2026-09-20',
-    orderId: 'ORD-9840',
-    category: 'Ambiance',
-    comment: 'Delicious pizzas for the office team. Only feedback is music volume was slightly high during lunch.',
-    status: 'Published',
-  },
-  {
-    id: 'REV-504',
-    customerId: 'CUST-108',
-    customerName: 'Nitin Kothari',
-    customerPhone: '+91 99111 88223',
-    rating: 2,
-    date: '2026-08-04',
-    orderId: 'ORD-9610',
-    category: 'Order Accuracy',
-    comment: 'Requested BBQ chicken slider without pickles, but pickles were added. Staff replaced it after a 10 min delay.',
-    status: 'Action Required',
-  },
-];
+const INITIAL_FEEDBACK: CustomerFeedbackRecord[] = [];
 
 export default function CustomersManagement({
   activeSubTab = 'cust_all',
@@ -684,7 +417,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  3,420
+                  {customers.length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Registered patron base
@@ -715,10 +448,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  2,343
+                  {customers.filter(c => c.loyaltyTier !== 'Bronze').length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  68.5% loyalty participation
+                  {customers.length > 0 ? `${((customers.filter(c => c.loyaltyTier !== 'Bronze').length / customers.length) * 100).toFixed(1)}% loyalty participation` : '0% loyalty participation'}
                 </span>
               </div>
             </div>
@@ -746,7 +479,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹4,850
+                  {customers.length > 0 ? `₹${Math.round(customers.reduce((acc, c) => acc + c.lifetimeSpend, 0) / customers.length).toLocaleString('en-IN')}` : '₹0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Average spend per patron
@@ -777,10 +510,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.03em' }}>
-                  274
+                  {customers.filter(c => c.group.includes('VIP')).length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Generating 28.4% of sales
+                  Generating 0% of sales
                 </span>
               </div>
             </div>
@@ -1077,7 +810,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  12,840
+                  {orders.length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Store orders processed
@@ -1108,7 +841,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  ₹62.45L
+                  ₹{orders.reduce((acc, o) => acc + o.totalAmount, 0).toLocaleString('en-IN')}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Cumulative gross spend
@@ -1139,10 +872,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  2.8 Items
+                  {orders.length > 0 ? `${(orders.reduce((acc, o) => acc + o.items.reduce((ia, i) => ia + i.quantity, 0), 0) / orders.length).toFixed(1)} Items` : '0 Items'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  ₹486 average ticket
+                  {orders.length > 0 ? `₹${Math.round(orders.reduce((acc, o) => acc + o.totalAmount, 0) / orders.length).toLocaleString('en-IN')} average ticket` : '₹0 average ticket'}
                 </span>
               </div>
             </div>
@@ -1170,7 +903,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  72.0%
+                  0.0%
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Revenue from returning guests
@@ -1306,6 +1039,13 @@ export default function CustomersManagement({
                       </td>
                     </tr>
                   ))}
+                  {filteredOrders.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No purchase orders recorded yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1348,7 +1088,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  1,84,200
+                  {customers.reduce((acc, c) => acc + c.pointsBalance, 0).toLocaleString('en-IN')}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Active unredeemed customer balance
@@ -1379,7 +1119,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  ₹1,24,500
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Value redeemed by patrons
@@ -1410,7 +1150,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  4.8x
+                  0.0x
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Higher repeat frequency with points
@@ -1441,7 +1181,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  34.2%
+                  0.0%
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Patrons active in rewards catalog
@@ -1624,10 +1364,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  274 Members
+                  {customers.filter(c => c.group === 'VIP Elite').length} Members
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Avg ₹28,450 spend • 4.2 visits/mo
+                  {customers.filter(c => c.group === 'VIP Elite').length > 0 ? `Avg ₹${Math.round(customers.filter(c => c.group === 'VIP Elite').reduce((a, c) => a + c.lifetimeSpend, 0) / customers.filter(c => c.group === 'VIP Elite').length).toLocaleString('en-IN')} spend` : 'High-tier patrons'}
                 </span>
               </div>
             </div>
@@ -1655,10 +1395,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  1,436 Members
+                  {customers.filter(c => c.group === 'Store Regulars').length} Members
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Avg ₹6,200 spend • 2.1 visits/mo
+                  {customers.filter(c => c.group === 'Store Regulars').length > 0 ? `Avg ₹${Math.round(customers.filter(c => c.group === 'Store Regulars').reduce((a, c) => a + c.lifetimeSpend, 0) / customers.filter(c => c.group === 'Store Regulars').length).toLocaleString('en-IN')} spend` : 'Frequent store patrons'}
                 </span>
               </div>
             </div>
@@ -1686,7 +1426,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  1,077 Members
+                  {customers.filter(c => c.group === 'New Patrons').length} Members
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   First order in last 30 days
@@ -1717,7 +1457,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  633 Members
+                  {customers.filter(c => c.group === 'At-Risk').length} Members
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   No visit in 45+ days
@@ -1808,6 +1548,13 @@ export default function CustomersManagement({
                       </td>
                     </tr>
                   ))}
+                  {customers.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No segmented patrons found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1850,10 +1597,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.03em' }}>
-                  4.8 / 5.0
+                  {feedbacks.length > 0 ? `${(feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1)} / 5.0` : '— / 5.0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Across 1,840 verified patron reviews
+                  Across {feedbacks.length} verified patron reviews
                 </span>
               </div>
             </div>
@@ -1881,7 +1628,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  92.4%
+                  {feedbacks.length > 0 ? `${((feedbacks.filter(f => f.rating >= 4).length / feedbacks.length) * 100).toFixed(1)}%` : '0.0%'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   4-star and 5-star ratings
@@ -1912,7 +1659,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.03em' }}>
-                  1 Issue
+                  {feedbacks.filter(f => f.status === 'Action Required').length} {feedbacks.filter(f => f.status === 'Action Required').length === 1 ? 'Issue' : 'Issues'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Requires supervisor resolution
@@ -1943,7 +1690,7 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  1.4 hrs
+                  0.0 hrs
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Customer issue recovery speed
@@ -2049,6 +1796,13 @@ export default function CustomersManagement({
                       </td>
                     </tr>
                   ))}
+                  {feedbacks.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No customer feedback recorded yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

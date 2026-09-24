@@ -431,136 +431,39 @@ export default function ReportsManagement({
   // ==========================================================================
   // DATASETS: 1. SALES REPORT
   // ==========================================================================
-  const salesBarDataDaily: BarDatum[] = [
-    { label: '09:00', value: 4200, secondaryValue: 12 },
-    { label: '11:00', value: 8900, secondaryValue: 24 },
-    { label: '13:00', value: 14500, secondaryValue: 38 },
-    { label: '15:00', value: 7200, secondaryValue: 19 },
-    { label: '17:00', value: 11800, secondaryValue: 31 },
-    { label: '19:00', value: 18400, secondaryValue: 48, isToday: true },
-    { label: '21:00', value: 16200, secondaryValue: 42 },
-  ];
-
-  const salesBarDataWeekly: BarDatum[] = [
-    { label: 'Mon', value: 38400, secondaryValue: 104 },
-    { label: 'Tue', value: 42100, secondaryValue: 112 },
-    { label: 'Wed', value: 35800, secondaryValue: 98 },
-    { label: 'Thu', value: 48250, secondaryValue: 128, isToday: true },
-    { label: 'Fri', value: 52400, secondaryValue: 142 },
-    { label: 'Sat', value: 68900, secondaryValue: 186 },
-    { label: 'Sun', value: 62400, secondaryValue: 165 },
-  ];
-
-  const salesBarDataMonthly: BarDatum[] = [
-    { label: 'Jan', value: 420000, secondaryValue: 1120 },
-    { label: 'Feb', value: 480000, secondaryValue: 1240 },
-    { label: 'Mar', value: 510000, secondaryValue: 1350 },
-    { label: 'Apr', value: 460000, secondaryValue: 1210 },
-    { label: 'May', value: 540000, secondaryValue: 1460 },
-    { label: 'Jun', value: 590000, secondaryValue: 1580 },
-    { label: 'Jul', value: 620000, secondaryValue: 1690, isToday: true },
-  ];
+  const salesBarDataDaily: BarDatum[] = [];
+  const salesBarDataWeekly: BarDatum[] = [];
+  const salesBarDataMonthly: BarDatum[] = [];
 
   const currentSalesBarData =
     timeframe === 'daily' ? salesBarDataDaily :
     timeframe === 'monthly' ? salesBarDataMonthly : salesBarDataWeekly;
 
-  const paymentMethodSlices: DonutSlice[] = [
-    { label: 'UPI / QR Code', value: 167160, formattedValue: '₹1,67,160', color: '#10B981' },
-    { label: 'Credit / Debit Cards', value: 111440, formattedValue: '₹1,11,440', color: '#3B82F6' },
-    { label: 'Cash on Counter', value: 55720, formattedValue: '₹55,720', color: '#F59E0B' },
-    { label: 'Digital Wallets / NetBanking', value: 13930, formattedValue: '₹13,930', color: '#8B5CF6' },
-  ];
+  const paymentMethodSlices: DonutSlice[] = [];
 
   // ==========================================================================
   // DATASETS: 2. INVENTORY REPORT
   // ==========================================================================
-  const inventoryCategorySlices: DonutSlice[] = [
-    { label: 'Burgers', value: 475392, formattedValue: '₹4,75,392', color: '#EF4444' },
-    { label: 'Beverages', value: 415968, formattedValue: '₹4,15,968', color: '#3B82F6' },
-    { label: 'Bakery', value: 267408, formattedValue: '₹2,67,408', color: '#F59E0B' },
-    { label: 'Pizza', value: 178272, formattedValue: '₹1,78,272', color: '#10B981' },
-    { label: 'Sides & Desserts', value: 148560, formattedValue: '₹1,48,560', color: '#8B5CF6' },
-  ];
-
-  const inventoryStockMovementData: BarDatum[] = [
-    { label: 'Mon', value: 180, secondaryValue: 120, formattedValue: '+180 In / -120 Out' },
-    { label: 'Tue', value: 220, secondaryValue: 140, formattedValue: '+220 In / -140 Out' },
-    { label: 'Wed', value: 95, secondaryValue: 110, formattedValue: '+95 In / -110 Out' },
-    { label: 'Thu', value: 340, secondaryValue: 210, formattedValue: '+340 In / -210 Out', isToday: true },
-    { label: 'Fri', value: 280, secondaryValue: 195, formattedValue: '+280 In / -195 Out' },
-    { label: 'Sat', value: 150, secondaryValue: 260, formattedValue: '+150 In / -260 Out' },
-    { label: 'Sun', value: 80, secondaryValue: 230, formattedValue: '+80 In / -230 Out' },
-  ];
-
-  const criticalLowStockList = [
-    { name: 'Brioche Burger Buns', sku: 'SKU-BAK-301', currentStock: 8, minStock: 25, deficit: 17, supplier: 'Fresh Bakes Gujarat' },
-    { name: 'Espresso Roast Beans 1kg', sku: 'SKU-DRK-201', currentStock: 4, minStock: 12, deficit: 8, supplier: 'Illy Coffee Roasters' },
-    { name: 'Buffalo Mozzarella 500g', sku: 'SKU-PIZ-401', currentStock: 6, minStock: 20, deficit: 14, supplier: 'Metro Dairy Foods' },
-    { name: 'Belgian Cocoa 1kg', sku: 'SKU-BAK-302', currentStock: 2, minStock: 8, deficit: 6, supplier: 'Puratos India' },
-  ];
-
-  const stockAdjustmentReasons = [
-    { reason: 'Kitchen Damage & Spoilage', amount: 5800, percentage: 46.5, color: '#EF4444' },
-    { reason: 'Audit Cycle Count Adjustment', amount: 3400, percentage: 27.3, color: '#F59E0B' },
-    { reason: 'Supplier Defective Returns', amount: 2100, percentage: 16.9, color: '#3B82F6' },
-    { reason: 'Staff Internal Tasting & QC', amount: 1150, percentage: 9.3, color: '#10B981' },
-  ];
+  const inventoryCategorySlices: DonutSlice[] = [];
+  const inventoryStockMovementData: BarDatum[] = [];
+  const criticalLowStockList: { name: string; sku: string; currentStock: number; minStock: number; deficit: number; supplier: string }[] = [];
+  const stockAdjustmentReasons: { reason: string; amount: number; percentage: number; color: string }[] = [];
 
   // ==========================================================================
   // DATASETS: 3. CUSTOMERS REPORT
   // ==========================================================================
-  const customerAcquisitionSlices: DonutSlice[] = [
-    { label: 'Repeat Loyal Customers', value: 2343, formattedValue: '2,343 patrons', color: '#10B981' },
-    { label: 'First-time New Customers', value: 1077, formattedValue: '1,077 patrons', color: '#3B82F6' },
-  ];
-
-  const customerFrequencyData: BarDatum[] = [
-    { label: '1 Order', value: 1077, formattedValue: '1,077 patrons (31.5%)' },
-    { label: '2-5 Orders', value: 1436, formattedValue: '1,436 patrons (42.0%)', isToday: true },
-    { label: '6-10 Orders', value: 633, formattedValue: '633 patrons (18.5%)' },
-    { label: '10+ VIP Club', value: 274, formattedValue: '274 patrons (8.0%)' },
-  ];
-
-  const topCustomersList = [
-    { rank: 1, name: 'Vikramaditya Shah', phone: '+91 98250 11234', orders: 42, totalSpend: 28450, aov: 677, favorite: 'Artisan Beef Smash Burger', lastVisit: 'Yesterday' },
-    { rank: 2, name: 'Ananya Deshmukh', phone: '+91 97241 88920', orders: 36, totalSpend: 23600, aov: 655, favorite: 'Cappuccino Italiano', lastVisit: 'Today, 14:20' },
-    { rank: 3, name: 'Dr. Siddharth Mehta', phone: '+91 98980 44512', orders: 31, totalSpend: 21400, aov: 690, favorite: 'Classic Margherita Pizza', lastVisit: '3 days ago' },
-    { rank: 4, name: 'Meera Patel', phone: '+91 99099 33211', orders: 28, totalSpend: 18900, aov: 675, favorite: 'Truffle Parmesan Fries', lastVisit: 'Today, 12:45' },
-    { rank: 5, name: 'Karanvir Singhania', phone: '+91 98240 77651', orders: 25, totalSpend: 17250, aov: 690, favorite: 'Dark Chocolate Brownie', lastVisit: '5 days ago' },
-  ];
-
-  const recentTransactions = [
-    { orderId: 'ORD-9842', customer: 'Ananya Deshmukh', items: '2x Cappuccino, 1x Croissant', amount: 480, payment: 'UPI', time: '14:20' },
-    { orderId: 'ORD-9841', customer: 'Meera Patel', items: '1x Truffle Fries, 1x Burger', amount: 390, payment: 'Card', time: '12:45' },
-    { orderId: 'ORD-9840', customer: 'Rajesh Vora', items: '3x Margherita Pizza 12"', amount: 1440, payment: 'Cash', time: '11:30' },
-    { orderId: 'ORD-9839', customer: 'Pooja Bhatt', items: '1x Cold Brew, 1x Brownie', amount: 320, payment: 'UPI', time: '10:15' },
-  ];
+  const customerAcquisitionSlices: DonutSlice[] = [];
+  const customerFrequencyData: BarDatum[] = [];
+  const topCustomersList: { rank: number; name: string; phone: string; orders: number; totalSpend: number; aov: number; favorite: string; lastVisit: string }[] = [];
+  const recentTransactions: { orderId: string; customer: string; items: string; amount: number; payment: string; time: string }[] = [];
 
   // ==========================================================================
   // DATASETS: 4. EMPLOYEE PERFORMANCE REPORT
   // ==========================================================================
-  const employeeSalesData = [
-    { name: 'Priya Sharma', role: 'Shift Supervisor', sales: 98400, orders: 238, aov: 413, shifts: 14, speedSec: 48, rating: 4.9, discountsGiven: 4200 },
-    { name: 'Aarav Mehta', role: 'Senior Barista & Cashier', sales: 84250, orders: 204, aov: 413, shifts: 14, speedSec: 52, rating: 4.8, discountsGiven: 3800 },
-    { name: 'Rohan Patel', role: 'POS Cashier', sales: 68900, orders: 172, aov: 400, shifts: 13, speedSec: 61, rating: 4.7, discountsGiven: 2900 },
-    { name: 'Ananya Iyer', role: 'Drive-Thru / Express', sales: 54600, orders: 135, aov: 404, shifts: 14, speedSec: 42, rating: 4.9, discountsGiven: 2100 },
-    { name: 'Vikram Singh', role: 'Night Shift Cashier', sales: 42100, orders: 94, aov: 447, shifts: 13, speedSec: 68, rating: 4.6, discountsGiven: 1200 },
-  ];
+  const employeeSalesData: { name: string; role: string; sales: number; orders: number; aov: number; shifts: number; speedSec: number; rating: number; discountsGiven: number }[] = [];
 
-  const employeeDonutSlices: DonutSlice[] = employeeSalesData.map((emp, i) => ({
-    label: emp.name,
-    value: emp.sales,
-    formattedValue: `₹${emp.sales.toLocaleString('en-IN')}`,
-    color: ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'][i],
-  }));
-
-  const employeeBarChartData: BarDatum[] = employeeSalesData.map((emp) => ({
-    label: emp.name.split(' ')[0],
-    value: emp.sales,
-    formattedValue: `₹${emp.sales.toLocaleString('en-IN')}`,
-    secondaryValue: emp.orders,
-  }));
+  const employeeDonutSlices: DonutSlice[] = [];
+  const employeeBarChartData: BarDatum[] = [];
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative' }}>
@@ -718,10 +621,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {timeframe === 'daily' ? '₹76,700' : timeframe === 'monthly' ? '₹38,00,000' : '₹3,48,250'}
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  +14.8% vs last {timeframe}
+                  No data yet
                 </span>
               </div>
             </div>
@@ -750,7 +653,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {timeframe === 'daily' ? '190' : timeframe === 'monthly' ? '9,650' : '843'}
+                  0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   tickets rung
@@ -782,10 +685,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹413
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  per order (+6.2%)
+                  per order
                 </span>
               </div>
             </div>
@@ -814,10 +717,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  -₹21,800
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  4.1% of revenue
+                  no discounts / refunds
                 </span>
               </div>
             </div>
@@ -899,7 +802,7 @@ export default function ReportsManagement({
               <AnimatedDonutChart
                 slices={paymentMethodSlices}
                 totalLabel="Total Tender"
-                totalValue="₹3.48L"
+                totalValue="₹0"
                 size={200}
                 theme={theme}
               />
@@ -944,7 +847,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹14,85,600
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   current shelf price
@@ -976,10 +879,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹6,92,400
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  53.4% margin
+                  cost asset
                 </span>
               </div>
             </div>
@@ -1008,10 +911,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  91.2%
+                  0%
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  78 in stock, 4 low
+                  no items tracked yet
                 </span>
               </div>
             </div>
@@ -1040,10 +943,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  +340 / -210
+                  +0 / -0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  +130 net units
+                  no movement yet
                 </span>
               </div>
             </div>
@@ -1081,7 +984,7 @@ export default function ReportsManagement({
               <AnimatedDonutChart
                 slices={inventoryCategorySlices}
                 totalLabel="Valuation"
-                totalValue="₹14.85L"
+                totalValue="₹0"
                 size={200}
                 theme={theme}
               />
@@ -1156,6 +1059,13 @@ export default function ReportsManagement({
                   </tr>
                 </thead>
                 <tbody>
+                  {criticalLowStockList.length === 0 && (
+                    <tr>
+                      <td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No low-stock alerts.
+                      </td>
+                    </tr>
+                  )}
                   {criticalLowStockList.map((item) => (
                     <tr key={item.sku} style={{ borderBottom: `1px solid ${theme.border}` }}>
                       <td style={{ padding: '0.6rem 0.5rem' }}>
@@ -1201,7 +1111,11 @@ export default function ReportsManagement({
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {stockAdjustmentReasons.map((adj) => (
+                {stockAdjustmentReasons.length === 0 ? (
+                  <p style={{ fontSize: '13px', color: theme.textSecondary, textAlign: 'center', margin: '1rem 0' }}>
+                    No stock adjustments recorded.
+                  </p>
+                ) : stockAdjustmentReasons.map((adj) => (
                   <div key={adj.reason}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '3px' }}>
                       <span style={{ fontWeight: 700, color: theme.textPrimary }}>{adj.reason}</span>
@@ -1254,7 +1168,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  3,420
+                  0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   registered patrons
@@ -1286,10 +1200,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  +{timeframe === 'daily' ? '18' : timeframe === 'monthly' ? '410' : '84'}
+                  +0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  +18.4% vs last {timeframe}
+                  no new patrons yet
                 </span>
               </div>
             </div>
@@ -1318,7 +1232,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  68.5%
+                  0.0%
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   loyalty re-orders
@@ -1350,7 +1264,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹4,850
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   cumulative spend
@@ -1391,7 +1305,7 @@ export default function ReportsManagement({
               <AnimatedDonutChart
                 slices={customerAcquisitionSlices}
                 totalLabel="Total Patrons"
-                totalValue="3,420"
+                totalValue="0"
                 size={200}
                 theme={theme}
               />
@@ -1455,6 +1369,13 @@ export default function ReportsManagement({
                 </tr>
               </thead>
               <tbody>
+                {topCustomersList.length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                      No customer data yet.
+                    </td>
+                  </tr>
+                )}
                 {topCustomersList.map((c) => (
                   <tr key={c.phone} style={{ borderBottom: `1px solid ${theme.border}` }}>
                     <td style={{ padding: '0.75rem 0.85rem' }}>
@@ -1536,10 +1457,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹3,48,250
+                  ₹0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  across 5 staff
+                  across {employeeSalesData.length} staff
                 </span>
               </div>
             </div>
@@ -1568,10 +1489,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  843
+                  0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  ~168 / employee
+                  orders processed
                 </span>
               </div>
             </div>
@@ -1600,7 +1521,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  54s
+                  0s
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   avg checkout time
@@ -1632,10 +1553,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  68
+                  0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  544 total store hours
+                  shifts completed
                 </span>
               </div>
             </div>
@@ -1673,7 +1594,7 @@ export default function ReportsManagement({
               <AnimatedDonutChart
                 slices={employeeDonutSlices}
                 totalLabel="Team Sales"
-                totalValue="₹3.48L"
+                totalValue="₹0"
                 size={200}
                 theme={theme}
               />
@@ -1738,6 +1659,13 @@ export default function ReportsManagement({
                 </tr>
               </thead>
               <tbody>
+                {employeeSalesData.length === 0 && (
+                  <tr>
+                    <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                      No staff performance data yet.
+                    </td>
+                  </tr>
+                )}
                 {employeeSalesData.map((emp) => (
                   <tr key={emp.name} style={{ borderBottom: `1px solid ${theme.border}` }}>
                     <td style={{ padding: '0.75rem 0.85rem' }}>

@@ -124,270 +124,32 @@ export interface SalesManagementProps {
   };
 }
 
-// Initial Sample Orders
-const INITIAL_ORDERS: SalesOrder[] = [
-  {
-    id: 'ORD-9842',
-    timestamp: '14:20',
-    date: '2026-09-20',
-    customerName: 'Ananya Deshmukh',
-    customerPhone: '+91 97241 88920',
-    cashierName: 'Priya Sharma',
-    terminalId: 'POS-Ahmedabad-01',
-    items: [
-      { id: 'i1', name: 'Artisan Beef Smash Burger', variant: 'Double Patty', quantity: 2, unitPrice: 320, totalPrice: 640 },
-      { id: 'i2', name: 'Truffle Parmesan French Fries', variant: 'Regular', quantity: 1, unitPrice: 150, totalPrice: 150 },
-      { id: 'i3', name: 'Cappuccino Italiano', variant: 'Regular (8 oz)', quantity: 2, unitPrice: 180, totalPrice: 360 },
-    ],
-    subtotal: 1150,
-    discount: 100,
-    discountReason: 'Loyalty Club Promo',
-    tax: 52.5,
-    totalAmount: 1102.5,
-    paymentMethod: 'UPI',
-    paymentStatus: 'Success',
-    orderStatus: 'Completed',
-    saleNote: 'Patron requested extra napkins & sides.',
-    paymentNote: 'UPI Ref UTR 429188201942',
-  },
-  {
-    id: 'ORD-9841',
-    timestamp: '13:45',
-    date: '2026-09-20',
-    customerName: 'Vikramaditya Shah',
-    customerPhone: '+91 98250 11234',
-    cashierName: 'Aarav Mehta',
-    terminalId: 'POS-Ahmedabad-02',
-    items: [
-      { id: 'i4', name: 'Classic Margherita Pizza', variant: '12" Medium', quantity: 1, unitPrice: 480, totalPrice: 480 },
-      { id: 'i5', name: 'Sparkling Natural Spring Water 750ml', quantity: 2, unitPrice: 95, totalPrice: 190 },
-    ],
-    subtotal: 670,
-    discount: 0,
-    tax: 33.5,
-    totalAmount: 703.5,
-    paymentMethod: 'Card',
-    paymentStatus: 'Success',
-    orderStatus: 'Completed',
-    paymentNote: 'HDFC Card ending in 4219',
-  },
-  {
-    id: 'ORD-9840',
-    timestamp: '12:30',
-    date: '2026-09-20',
-    customerName: 'Rajesh Vora',
-    customerPhone: '+91 98982 33410',
-    cashierName: 'Rohan Patel',
-    terminalId: 'POS-Ahmedabad-01',
-    items: [
-      { id: 'i6', name: 'Artisan Butter Croissant', quantity: 3, unitPrice: 120, totalPrice: 360 },
-      { id: 'i7', name: 'Dark Chocolate Fudge Brownie', variant: 'Gift Box of 4', quantity: 1, unitPrice: 480, totalPrice: 480 },
-    ],
-    subtotal: 840,
-    discount: 40,
-    tax: 40.0,
-    totalAmount: 840.0,
-    paymentMethod: 'Cash',
-    paymentStatus: 'Success',
-    orderStatus: 'Completed',
-    paymentNote: 'Cash tendered ₹1,000, change ₹160',
-  },
-  {
-    id: 'ORD-9839',
-    timestamp: '11:15',
-    date: '2026-09-20',
-    customerName: 'Meera Patel',
-    customerPhone: '+91 99099 33211',
-    cashierName: 'Priya Sharma',
-    terminalId: 'POS-Ahmedabad-01',
-    items: [
-      { id: 'i8', name: 'Crispy Chicken Zinger Burger', quantity: 1, unitPrice: 240, totalPrice: 240 },
-    ],
-    subtotal: 240,
-    discount: 0,
-    tax: 12.0,
-    totalAmount: 252.0,
-    paymentMethod: 'UPI',
-    paymentStatus: 'Refunded',
-    orderStatus: 'Refunded',
-    saleNote: 'Incorrect spice level delivered. Full refund given.',
-  },
-  {
-    id: 'ORD-9838',
-    timestamp: '10:45',
-    date: '2026-09-20',
-    customerName: 'Rohit Sharma',
-    customerPhone: '+91 98240 77123',
-    cashierName: 'Aarav Mehta',
-    terminalId: 'POS-Ahmedabad-02',
-    items: [
-      { id: 'i9', name: 'Caramel Macchiato Blended', quantity: 2, unitPrice: 240, totalPrice: 480 },
-    ],
-    subtotal: 480,
-    discount: 0,
-    tax: 24.0,
-    totalAmount: 504.0,
-    paymentMethod: 'Card',
-    paymentStatus: 'Failed',
-    orderStatus: 'Cancelled',
-    paymentNote: 'Card declined by issuing bank (insufficient funds)',
-  },
-  {
-    id: 'ORD-9837',
-    timestamp: '10:10',
-    date: '2026-09-20',
-    customerName: 'Pooja Bhatt',
-    customerPhone: '+91 97129 44321',
-    cashierName: 'Rohan Patel',
-    terminalId: 'POS-Ahmedabad-01',
-    items: [
-      { id: 'i10', name: 'Classic Brioche Cheeseburger', quantity: 1, unitPrice: 220, totalPrice: 220 },
-      { id: 'i11', name: 'Truffle Parmesan French Fries', variant: 'Regular', quantity: 1, unitPrice: 150, totalPrice: 150 },
-    ],
-    subtotal: 370,
-    discount: 0,
-    tax: 18.5,
-    totalAmount: 388.5,
-    paymentMethod: 'UPI',
-    paymentStatus: 'Success',
-    orderStatus: 'In Progress',
-    saleNote: 'Kitchen ticket queued on station 2.',
-  },
-];
+// Date helpers for realistic live demo data
+const getTodayDateStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-// Initial Sample Returns
-const INITIAL_RETURNS: ReturnRecord[] = [
-  {
-    id: 'RET-104',
-    orderId: 'ORD-9839',
-    timestamp: '11:22',
-    date: '2026-09-20',
-    customerName: 'Meera Patel',
-    returnedItems: [
-      { name: 'Crispy Chicken Zinger Burger', quantity: 1, unitPrice: 240, refundTotal: 252 },
-    ],
-    refundAmount: 252,
-    refundMethod: 'Original Payment',
-    reason: 'Wrong Item Given',
-    approvedBy: 'Priya Sharma (Shift Supervisor)',
-    status: 'Refunded',
-    notes: 'Cashier accidentally punched Extra Spicy instead of Mild.',
-  },
-  {
-    id: 'RET-103',
-    orderId: 'ORD-9812',
-    timestamp: '17:40',
-    date: '2026-09-19',
-    customerName: 'Sunita Roy',
-    returnedItems: [
-      { name: 'Artisan Butter Croissant', quantity: 2, unitPrice: 120, refundTotal: 240 },
-    ],
-    refundAmount: 240,
-    refundMethod: 'Cash',
-    reason: 'Quality / Taste Issue',
-    approvedBy: 'Rahul Patel (Store Manager)',
-    status: 'Refunded',
-    notes: 'Pastry was slightly over-toasted in salamander.',
-  },
-  {
-    id: 'RET-102',
-    orderId: 'ORD-9788',
-    timestamp: '14:15',
-    date: '2026-09-18',
-    customerName: 'Karanvir Singhania',
-    returnedItems: [
-      { name: 'Sparkling Natural Spring Water 750ml', quantity: 1, unitPrice: 95, refundTotal: 95 },
-    ],
-    refundAmount: 95,
-    refundMethod: 'Store Credit',
-    reason: 'Customer Changed Mind',
-    approvedBy: 'Rahul Patel (Store Manager)',
-    status: 'Refunded',
-    notes: 'Exchanged for Iced Cold Brew.',
-  },
-];
+const getYesterdayDateStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
-// Initial Sample Payments
-const INITIAL_PAYMENTS: PaymentTransaction[] = [
-  {
-    id: 'TXN-89210',
-    orderId: 'ORD-9842',
-    timestamp: '14:21',
-    date: '2026-09-20',
-    customerName: 'Ananya Deshmukh',
-    method: 'UPI',
-    amount: 1102.5,
-    status: 'Success',
-    gatewayRef: 'UPI-RAZOR-42918820',
-    terminalId: 'POS-Ahmedabad-01',
-    upiHandle: 'ananya@oksbi',
-  },
-  {
-    id: 'TXN-89209',
-    orderId: 'ORD-9841',
-    timestamp: '13:46',
-    date: '2026-09-20',
-    customerName: 'Vikramaditya Shah',
-    method: 'Card',
-    amount: 703.5,
-    status: 'Success',
-    gatewayRef: 'PINELABS-CARD-90124',
-    terminalId: 'POS-Ahmedabad-02',
-    cardLast4: '4219',
-  },
-  {
-    id: 'TXN-89208',
-    orderId: 'ORD-9840',
-    timestamp: '12:31',
-    date: '2026-09-20',
-    customerName: 'Rajesh Vora',
-    method: 'Cash',
-    amount: 840.0,
-    tenderedAmount: 1000.0,
-    changeGiven: 160.0,
-    status: 'Success',
-    terminalId: 'POS-Ahmedabad-01',
-  },
-  {
-    id: 'TXN-89207',
-    orderId: 'ORD-9839',
-    timestamp: '11:16',
-    date: '2026-09-20',
-    customerName: 'Meera Patel',
-    method: 'UPI',
-    amount: 252.0,
-    status: 'Refunded',
-    gatewayRef: 'UPI-REF-992014',
-    terminalId: 'POS-Ahmedabad-01',
-    upiHandle: 'meera@okaxis',
-  },
-  {
-    id: 'TXN-89206',
-    orderId: 'ORD-9838',
-    timestamp: '10:46',
-    date: '2026-09-20',
-    customerName: 'Rohit Sharma',
-    method: 'Card',
-    amount: 504.0,
-    status: 'Failed',
-    gatewayRef: 'PAYTM-FAIL-33109',
-    terminalId: 'POS-Ahmedabad-02',
-    cardLast4: '8814',
-  },
-  {
-    id: 'TXN-89205',
-    orderId: 'ORD-9837',
-    timestamp: '10:11',
-    date: '2026-09-20',
-    customerName: 'Pooja Bhatt',
-    method: 'UPI',
-    amount: 388.5,
-    status: 'Success',
-    gatewayRef: 'UPI-BHIM-110482',
-    terminalId: 'POS-Ahmedabad-01',
-    upiHandle: 'pooja@paytm',
-  },
-];
+// Initial Orders (default empty, loaded from live store or localStorage)
+const INITIAL_ORDERS: SalesOrder[] = [];
+
+// Initial Returns (default empty)
+const INITIAL_RETURNS: ReturnRecord[] = [];
+
+// Initial Payments (default empty)
+const INITIAL_PAYMENTS: PaymentTransaction[] = [];
 
 export default function SalesManagement({
   activeSubTab = 'orders',
@@ -413,6 +175,8 @@ export default function SalesManagement({
   const [orderStatusFilter, setOrderStatusFilter] = useState<'all' | 'Completed' | 'In Progress' | 'Refunded' | 'Cancelled'>('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
+
+  const todayDateStr = useMemo(() => getTodayDateStr(), []);
 
   // Modals state
   const [viewingOrder, setViewingOrder] = useState<SalesOrder | null>(null);
@@ -484,6 +248,7 @@ export default function SalesManagement({
 
   // Top KPIs for Orders
   const totalOrdersCount = orders.length;
+  const todayOrdersCount = useMemo(() => orders.filter((o) => o.date === todayDateStr).length, [orders, todayDateStr]);
   const totalGrossRevenue = useMemo(() => orders.filter((o) => o.orderStatus === 'Completed').reduce((acc, o) => acc + o.totalAmount, 0), [orders]);
   const avgOrderValue = totalOrdersCount > 0 ? (totalGrossRevenue / orders.filter((o) => o.orderStatus === 'Completed').length || 1).toFixed(0) : 0;
 
@@ -658,14 +423,14 @@ export default function SalesManagement({
       {/* ==================================================================== */}
       {currentTab === 'orders' && (
         <>
-          {/* Top KPI Card: Total Orders Only */}
+          {/* Top KPI Card: Today's Orders */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 320px))',
             gap: '1.25rem',
             marginBottom: '1.5rem',
           }}>
-            {/* Total Orders */}
+            {/* Today's Orders */}
             <div style={{
               backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
               border: `1px solid ${theme.border}`,
@@ -680,7 +445,7 @@ export default function SalesManagement({
                 letterSpacing: '-0.01em',
                 marginBottom: '0.65rem',
               }}>
-                Total Orders
+                Today&apos;s Orders
               </div>
               <div style={{
                 display: 'flex',
@@ -688,7 +453,7 @@ export default function SalesManagement({
                 gap: '0.45rem',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {totalOrdersCount}
+                  {todayOrdersCount}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   tickets rung

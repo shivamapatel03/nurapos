@@ -66,45 +66,17 @@ export default function ManagerDashboardPage() {
   };
 
   // Weekly bar chart data
-  const weeklySalesData = [
-    { day: 'Mon', sales: 38400, orders: 104 },
-    { day: 'Tue', sales: 42100, orders: 112 },
-    { day: 'Wed', sales: 35800, orders: 98 },
-    { day: 'Thu', sales: 48250, orders: 128, isToday: true },
-    { day: 'Fri', sales: 52400, orders: 142 },
-    { day: 'Sat', sales: 68900, orders: 186 },
-    { day: 'Sun', sales: 62400, orders: 165 },
-  ];
-
-  // Monthly bar chart data
-  const monthlySalesData = [
-    { day: 'Jan', sales: 420000, orders: 1120 },
-    { day: 'Feb', sales: 480000, orders: 1240 },
-    { day: 'Mar', sales: 510000, orders: 1350 },
-    { day: 'Apr', sales: 460000, orders: 1210 },
-    { day: 'May', sales: 580000, orders: 1540 },
-    { day: 'Jun', sales: 640000, orders: 1720 },
-    { day: 'Jul', sales: 710000, orders: 1890, isToday: true },
-  ];
+  const weeklySalesData: { day: string; sales: number; orders: number; isToday?: boolean }[] = [];
+  const monthlySalesData: { day: string; sales: number; orders: number; isToday?: boolean }[] = [];
 
   const chartData = chartTimeframe === 'weekly' ? weeklySalesData : monthlySalesData;
-  const maxSales = chartTimeframe === 'weekly' ? 75000 : 750000;
+  const maxSales = 1;
 
-  // Recent orders list from screenshot
-  const recentOrders = [
-    { id: '#1024', customer: 'Rahul', amount: '₹2,499', status: 'Paid', time: '10 mins ago', items: 3 },
-    { id: '#1023', customer: 'Amit', amount: '₹1,299', status: 'Paid', time: '25 mins ago', items: 2 },
-    { id: '#1022', customer: 'Priya', amount: '₹850', status: 'Paid', time: '42 mins ago', items: 1 },
-    { id: '#1021', customer: 'Sneha Patel', amount: '₹3,400', status: 'Paid', time: '1 hour ago', items: 4 },
-    { id: '#1020', customer: 'Vikram Shah', amount: '₹1,120', status: 'Paid', time: '2 hours ago', items: 2 },
-  ];
+  // Recent orders list
+  const recentOrders: { id: string; customer: string; amount: string; status: string; time: string; items: number }[] = [];
 
   // Manager store notifications
-  const notifications = [
-    { id: '1', title: 'Ahmedabad Shift Active', desc: 'Amit started morning shift at 08:00 AM.', time: '15m ago' },
-    { id: '2', title: 'Daily Target Exceeded', desc: '₹48,250 sales reached today in SP CAFE.', time: '1h ago' },
-    { id: '3', title: 'Stock Notice', desc: 'Espresso Blend 1kg has 4 bags remaining.', time: '2h ago' },
-  ];
+  const notifications: { id: string; title: string; desc: string; time: string }[] = [];
 
   // Dynamic Manager Dark / Light Mode State
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
@@ -384,7 +356,9 @@ export default function ManagerDashboardPage() {
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {notifications.map((n) => (
+                  {notifications.length === 0 ? (
+                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, textAlign: 'center', margin: '0.5rem 0' }}>No new notifications.</p>
+                  ) : notifications.map((n) => (
                     <div
                       key={n.id}
                       style={{
@@ -459,7 +433,7 @@ export default function ManagerDashboardPage() {
                 color: theme.textPrimary,
                 letterSpacing: '-0.01em',
               }}>
-                Amit
+                Manager
               </span>
               <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
             </div>
@@ -479,8 +453,8 @@ export default function ManagerDashboardPage() {
                 zIndex: 50,
               }}>
                 <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Amit</div>
-                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Store Manager • Ahmedabad Store</div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Manager</div>
+                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Store Manager</div>
                 </div>
                 <Link
                   href="/dashboard"
@@ -806,7 +780,7 @@ export default function ManagerDashboardPage() {
                 letterSpacing: '-0.04em',
                 marginBottom: '0.35rem',
               }}>
-                Good evening, Amit 👋
+                {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()} 👋
               </h1>
               <p style={{
                 fontSize: '15px',
@@ -815,7 +789,7 @@ export default function ManagerDashboardPage() {
                 letterSpacing: '-0.01em',
                 margin: 0,
               }}>
-                Ahmedabad Store.
+                Welcome to your Manager Dashboard.
               </p>
             </div>
 
@@ -849,22 +823,10 @@ export default function ManagerDashboardPage() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Today&apos;s Sales
                   </span>
-                  <span style={{
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    backgroundColor: theme.badgeBg,
-                    color: theme.badgeText,
-                    border: `1px solid ${theme.badgeBorder}`,
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    letterSpacing: '0.02em',
-                  }}>
-                    +12.5%
-                  </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
                   <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    ₹48,250
+                    ₹0
                   </span>
                 </div>
               </div>
@@ -892,22 +854,10 @@ export default function ManagerDashboardPage() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Orders
                   </span>
-                  <span style={{
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    backgroundColor: theme.secondaryBadgeBg,
-                    color: theme.secondaryBadgeText,
-                    border: `1px solid ${theme.secondaryBadgeBorder}`,
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    letterSpacing: '0.02em',
-                  }}>
-                    +12.5%
-                  </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
                   <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    128
+                    0
                   </span>
                 </div>
               </div>
@@ -935,22 +885,10 @@ export default function ManagerDashboardPage() {
                   <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     Customers
                   </span>
-                  <span style={{
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    backgroundColor: theme.secondaryBadgeBg,
-                    color: theme.secondaryBadgeText,
-                    border: `1px solid ${theme.secondaryBadgeBorder}`,
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    letterSpacing: '0.02em',
-                  }}>
-                    +12.5%
-                  </span>
                 </div>
                 <div style={{ marginTop: '0.9rem' }}>
                   <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    843
+                    0
                   </span>
                 </div>
               </div>
@@ -1042,7 +980,7 @@ export default function ManagerDashboardPage() {
                       {chartTimeframe === 'weekly' ? 'Total Weekly Revenue' : 'Total Monthly Revenue'}
                     </span>
                     <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>
-                      {chartTimeframe === 'weekly' ? '₹3,48,250' : '₹38,00,000'}
+                      ₹0
                     </div>
                   </div>
                   <div style={{
@@ -1218,6 +1156,13 @@ export default function ManagerDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {recentOrders.length === 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary, fontSize: '14px' }}>
+                          No orders yet.
+                        </td>
+                      </tr>
+                    )}
                     {recentOrders.map((order, i) => (
                       <tr
                         key={order.id}
@@ -1302,7 +1247,7 @@ export default function ManagerDashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
                 <span style={{ fontSize: '13px', color: theme.textSecondary }}>Manager on Duty</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Amit (SP CAFE)</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Store Manager</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
                 <span style={{ fontSize: '13px', color: theme.textSecondary }}>Shift Started</span>
@@ -1310,11 +1255,11 @@ export default function ManagerDashboardPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
                 <span style={{ fontSize: '13px', color: theme.textSecondary }}>Opening Cash Float</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>₹5,000</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>₹0</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
                 <span style={{ fontSize: '13px', color: theme.textSecondary }}>Current Cash in Drawer</span>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>₹28,450</span>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>₹0</span>
               </div>
             </div>
 

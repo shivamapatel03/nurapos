@@ -154,448 +154,17 @@ export interface EmployeesManagementProps {
 // ============================================================================
 // INITIAL SAMPLE DATA
 // ============================================================================
-const INITIAL_EMPLOYEES: Employee[] = [
-  {
-    id: 'EMP-101',
-    name: 'Rahul Sharma',
-    role: 'Store Manager',
-    department: 'Operations',
-    email: 'rahul.s@nuradesk.pos',
-    phone: '+91 98250 11440',
-    assignedTerminal: 'POS-Ahmedabad-01',
-    basePay: '₹65,000/mo',
-    status: 'Active',
-    joinedDate: '2023-01-15',
-    emergencyContact: '+91 98250 99881 (Spouse)',
-    pinSet: true,
-    avatarColor: '#1E293B',
-  },
-  {
-    id: 'EMP-102',
-    name: 'Priya Sharma',
-    role: 'Shift Supervisor',
-    department: 'Front of House',
-    email: 'priya.s@nuradesk.pos',
-    phone: '+91 97241 88920',
-    assignedTerminal: 'POS-Ahmedabad-01',
-    basePay: '₹38,000/mo',
-    status: 'Active',
-    joinedDate: '2023-08-01',
-    emergencyContact: '+91 97241 12345 (Father)',
-    pinSet: true,
-    avatarColor: '#0F766E',
-  },
-  {
-    id: 'EMP-103',
-    name: 'Aarav Mehta',
-    role: 'Senior Cashier',
-    department: 'Front of House',
-    email: 'aarav.m@nuradesk.pos',
-    phone: '+91 98980 44512',
-    assignedTerminal: 'POS-Ahmedabad-02',
-    basePay: '₹26,000/mo',
-    status: 'Active',
-    joinedDate: '2024-02-10',
-    emergencyContact: '+91 98980 77788 (Mother)',
-    pinSet: true,
-    avatarColor: '#1D4ED8',
-  },
-  {
-    id: 'EMP-104',
-    name: 'Rohan Patel',
-    role: 'Cashier',
-    department: 'Front of House',
-    email: 'rohan.p@nuradesk.pos',
-    phone: '+91 99099 33211',
-    assignedTerminal: 'POS-Ahmedabad-03',
-    basePay: '₹22,000/mo',
-    status: 'Active',
-    joinedDate: '2024-05-20',
-    emergencyContact: '+91 99099 55667 (Brother)',
-    pinSet: true,
-    avatarColor: '#B45309',
-  },
-  {
-    id: 'EMP-105',
-    name: 'Ananya Iyer',
-    role: 'Cashier',
-    department: 'Front of House',
-    email: 'ananya.i@nuradesk.pos',
-    phone: '+91 98240 77651',
-    assignedTerminal: 'POS-Ahmedabad-02',
-    basePay: '₹22,000/mo',
-    status: 'Active',
-    joinedDate: '2024-06-15',
-    emergencyContact: '+91 98240 11223 (Sister)',
-    pinSet: true,
-    avatarColor: '#7C3AED',
-  },
-  {
-    id: 'EMP-106',
-    name: 'Vikram Singh',
-    role: 'Barista',
-    department: 'Front of House',
-    email: 'vikram.s@nuradesk.pos',
-    phone: '+91 98765 43210',
-    assignedTerminal: 'POS-Ahmedabad-01',
-    basePay: '₹21,000/mo',
-    status: 'Active',
-    joinedDate: '2024-07-01',
-    emergencyContact: '+91 98765 99887 (Father)',
-    pinSet: true,
-    avatarColor: '#BE185D',
-  },
-  {
-    id: 'EMP-107',
-    name: 'Sunil Joshi',
-    role: 'Kitchen Lead',
-    department: 'Kitchen',
-    email: 'sunil.j@nuradesk.pos',
-    phone: '+91 98111 22334',
-    assignedTerminal: 'KDS-Kitchen-01',
-    basePay: '₹34,000/mo',
-    status: 'Active',
-    joinedDate: '2023-04-10',
-    emergencyContact: '+91 98111 44556 (Spouse)',
-    pinSet: false,
-    avatarColor: '#4338CA',
-  },
-  {
-    id: 'EMP-108',
-    name: 'Deepak Parmar',
-    role: 'Inventory Clerk',
-    department: 'Inventory & Store',
-    email: 'deepak.p@nuradesk.pos',
-    phone: '+91 99222 33445',
-    assignedTerminal: 'INV-Store-01',
-    basePay: '₹24,000/mo',
-    status: 'On Leave',
-    joinedDate: '2024-01-20',
-    emergencyContact: '+91 99222 77889 (Father)',
-    pinSet: true,
-    avatarColor: '#047857',
-  },
-];
+const INITIAL_EMPLOYEES: Employee[] = [];
 
-const INITIAL_CASHIERS: CashierAccount[] = [
-  {
-    id: 'CSH-01',
-    employeeId: 'EMP-102',
-    name: 'Priya Sharma',
-    terminalId: 'POS-Ahmedabad-01',
-    pinMasked: '****',
-    maxDiscountPercent: 20,
-    canOpenDrawerNoSale: true,
-    canReprintReceipts: true,
-    shiftStatus: 'On Register',
-    status: 'Active',
-  },
-  {
-    id: 'CSH-02',
-    employeeId: 'EMP-103',
-    name: 'Aarav Mehta',
-    terminalId: 'POS-Ahmedabad-02',
-    pinMasked: '****',
-    maxDiscountPercent: 15,
-    canOpenDrawerNoSale: true,
-    canReprintReceipts: true,
-    shiftStatus: 'On Register',
-    status: 'Active',
-  },
-  {
-    id: 'CSH-03',
-    employeeId: 'EMP-104',
-    name: 'Rohan Patel',
-    terminalId: 'POS-Ahmedabad-03',
-    pinMasked: '****',
-    maxDiscountPercent: 10,
-    canOpenDrawerNoSale: false,
-    canReprintReceipts: true,
-    shiftStatus: 'On Register',
-    status: 'Active',
-  },
-  {
-    id: 'CSH-04',
-    employeeId: 'EMP-105',
-    name: 'Ananya Iyer',
-    terminalId: 'POS-Ahmedabad-02',
-    pinMasked: '****',
-    maxDiscountPercent: 10,
-    canOpenDrawerNoSale: false,
-    canReprintReceipts: true,
-    shiftStatus: 'On Break',
-    status: 'Active',
-  },
-  {
-    id: 'CSH-05',
-    employeeId: 'EMP-106',
-    name: 'Vikram Singh',
-    terminalId: 'POS-Ahmedabad-01',
-    pinMasked: '****',
-    maxDiscountPercent: 10,
-    canOpenDrawerNoSale: false,
-    canReprintReceipts: false,
-    shiftStatus: 'Off Duty',
-    status: 'Active',
-  },
-];
+const INITIAL_CASHIERS: CashierAccount[] = [];
 
-const INITIAL_MANAGERS: ManagerAccount[] = [
-  {
-    id: 'MGR-01',
-    employeeId: 'EMP-101',
-    name: 'Rahul Sharma',
-    title: 'Store Manager',
-    branch: 'SP CAFE - Ahmedabad Flagship',
-    approvalLimit: 50000,
-    canApproveReturns: true,
-    canPerformZReport: true,
-    canModifyCatalog: true,
-    canAccessAuditLogs: true,
-    twoFactorEnabled: true,
-    overridePinSet: true,
-  },
-  {
-    id: 'MGR-02',
-    employeeId: 'EMP-102',
-    name: 'Priya Sharma',
-    title: 'Shift Supervisor',
-    branch: 'SP CAFE - Ahmedabad Flagship',
-    approvalLimit: 5000,
-    canApproveReturns: true,
-    canPerformZReport: true,
-    canModifyCatalog: false,
-    canAccessAuditLogs: true,
-    twoFactorEnabled: true,
-    overridePinSet: true,
-  },
-];
+const INITIAL_MANAGERS: ManagerAccount[] = [];
 
-const INITIAL_SHIFTS: ShiftRecord[] = [
-  {
-    id: 'SH-2026-0920-1',
-    employeeId: 'EMP-102',
-    employeeName: 'Priya Sharma',
-    role: 'Shift Supervisor',
-    terminalId: 'POS-Ahmedabad-01',
-    date: '2026-09-20',
-    clockIn: '07:45',
-    clockOut: '16:00',
-    openingFloat: 5000,
-    expectedCash: 15950,
-    actualCash: 15950,
-    variance: 0,
-    totalTransactions: 64,
-    status: 'Closed',
-    notes: 'Morning shift drawer reconciled cleanly with zero discrepancy.',
-  },
-  {
-    id: 'SH-2026-0920-2',
-    employeeId: 'EMP-103',
-    employeeName: 'Aarav Mehta',
-    role: 'Senior Cashier',
-    terminalId: 'POS-Ahmedabad-02',
-    date: '2026-09-20',
-    clockIn: '08:00',
-    clockOut: '16:15',
-    openingFloat: 5000,
-    expectedCash: 12400,
-    actualCash: 12400,
-    variance: 0,
-    totalTransactions: 52,
-    status: 'Closed',
-    notes: 'Smooth lunch rush, UPI transactions predominated.',
-  },
-  {
-    id: 'SH-2026-0920-3',
-    employeeId: 'EMP-104',
-    employeeName: 'Rohan Patel',
-    role: 'Cashier',
-    terminalId: 'POS-Ahmedabad-03',
-    date: '2026-09-20',
-    clockIn: '12:00',
-    clockOut: '— (Active)',
-    openingFloat: 5000,
-    expectedCash: 8900,
-    actualCash: 8900,
-    variance: 0,
-    totalTransactions: 36,
-    status: 'Active / Open',
-    notes: 'Mid-day shift currently in progress.',
-  },
-  {
-    id: 'SH-2026-0919-4',
-    employeeId: 'EMP-105',
-    employeeName: 'Ananya Iyer',
-    role: 'Cashier',
-    terminalId: 'POS-Ahmedabad-02',
-    date: '2026-09-19',
-    clockIn: '14:00',
-    clockOut: '22:30',
-    openingFloat: 5000,
-    expectedCash: 14200,
-    actualCash: 14150,
-    variance: -50,
-    totalTransactions: 58,
-    status: 'Discrepancy',
-    notes: 'Short by ₹50 due to 10-rupee coin drawer shortage, logged by supervisor.',
-  },
-];
+const INITIAL_SHIFTS: ShiftRecord[] = [];
 
-const INITIAL_ATTENDANCE: AttendanceRecord[] = [
-  {
-    id: 'ATT-01',
-    employeeId: 'EMP-101',
-    employeeName: 'Rahul Sharma',
-    role: 'Store Manager',
-    date: '2026-09-20',
-    scheduledShift: '08:00 - 17:00',
-    clockInTime: '07:50',
-    clockOutTime: '17:15',
-    totalHours: 9.4,
-    overtimeHours: 0.4,
-    status: 'Present',
-    approvalStatus: 'Approved',
-  },
-  {
-    id: 'ATT-02',
-    employeeId: 'EMP-102',
-    employeeName: 'Priya Sharma',
-    role: 'Shift Supervisor',
-    date: '2026-09-20',
-    scheduledShift: '08:00 - 16:00',
-    clockInTime: '07:45',
-    clockOutTime: '16:05',
-    totalHours: 8.3,
-    overtimeHours: 0.3,
-    status: 'Present',
-    approvalStatus: 'Approved',
-  },
-  {
-    id: 'ATT-03',
-    employeeId: 'EMP-103',
-    employeeName: 'Aarav Mehta',
-    role: 'Senior Cashier',
-    date: '2026-09-20',
-    scheduledShift: '08:00 - 16:00',
-    clockInTime: '08:05',
-    clockOutTime: '16:15',
-    totalHours: 8.2,
-    overtimeHours: 0.2,
-    status: 'Late',
-    approvalStatus: 'Approved',
-  },
-  {
-    id: 'ATT-04',
-    employeeId: 'EMP-104',
-    employeeName: 'Rohan Patel',
-    role: 'Cashier',
-    date: '2026-09-20',
-    scheduledShift: '12:00 - 20:30',
-    clockInTime: '11:58',
-    clockOutTime: '— (Active)',
-    totalHours: 4.5,
-    overtimeHours: 0.0,
-    status: 'Present',
-    approvalStatus: 'Approved',
-  },
-  {
-    id: 'ATT-05',
-    employeeId: 'EMP-105',
-    employeeName: 'Ananya Iyer',
-    role: 'Cashier',
-    date: '2026-09-20',
-    scheduledShift: '12:00 - 20:30',
-    clockInTime: '12:00',
-    clockOutTime: '— (Active)',
-    totalHours: 4.5,
-    overtimeHours: 0.0,
-    status: 'Present',
-    approvalStatus: 'Approved',
-  },
-  {
-    id: 'ATT-06',
-    employeeId: 'EMP-108',
-    employeeName: 'Deepak Parmar',
-    role: 'Inventory Clerk',
-    date: '2026-09-20',
-    scheduledShift: '09:00 - 17:30',
-    clockInTime: '—',
-    clockOutTime: '—',
-    totalHours: 0.0,
-    overtimeHours: 0.0,
-    status: 'On Leave',
-    approvalStatus: 'Approved',
-  },
-];
+const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
 
-const INITIAL_PERFORMANCE: PerformanceRecord[] = [
-  {
-    employeeId: 'EMP-102',
-    employeeName: 'Priya Sharma',
-    role: 'Shift Supervisor',
-    totalSales: 98400,
-    ordersCount: 238,
-    aov: 413,
-    shiftsWorked: 14,
-    speedSec: 48,
-    discountsAuthorized: 4200,
-    refundsProcessed: 850,
-    rating: 4.9,
-  },
-  {
-    employeeId: 'EMP-103',
-    employeeName: 'Aarav Mehta',
-    role: 'Senior Barista & Cashier',
-    totalSales: 84250,
-    ordersCount: 204,
-    aov: 413,
-    shiftsWorked: 14,
-    speedSec: 52,
-    discountsAuthorized: 3800,
-    refundsProcessed: 620,
-    rating: 4.8,
-  },
-  {
-    employeeId: 'EMP-104',
-    employeeName: 'Rohan Patel',
-    role: 'POS Cashier',
-    totalSales: 68900,
-    ordersCount: 172,
-    aov: 400,
-    shiftsWorked: 13,
-    speedSec: 61,
-    discountsAuthorized: 2900,
-    refundsProcessed: 480,
-    rating: 4.7,
-  },
-  {
-    employeeId: 'EMP-105',
-    employeeName: 'Ananya Iyer',
-    role: 'Drive-Thru / Express',
-    totalSales: 54600,
-    ordersCount: 135,
-    aov: 404,
-    shiftsWorked: 14,
-    speedSec: 42,
-    discountsAuthorized: 2100,
-    refundsProcessed: 310,
-    rating: 4.9,
-  },
-  {
-    employeeId: 'EMP-106',
-    employeeName: 'Vikram Singh',
-    role: 'Night Shift Cashier',
-    totalSales: 42100,
-    ordersCount: 94,
-    aov: 447,
-    shiftsWorked: 13,
-    speedSec: 68,
-    discountsAuthorized: 1200,
-    refundsProcessed: 580,
-    rating: 4.6,
-  },
-];
+const INITIAL_PERFORMANCE: PerformanceRecord[] = [];
 
 interface RolePermissionDef {
   key: string;
@@ -1047,10 +616,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  2
+                  0
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Hiring Barista & Line Cook
+                  No active job openings
                 </span>
               </div>
             </div>
@@ -1356,10 +925,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  3 Terminals
+                  {cashiers.length > 0 ? `${new Set(cashiers.map((c) => c.terminalId)).size} Terminals` : '0 Terminals'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Terminal 01, 02, 03 online
+                  {cashiers.length > 0 ? 'Assigned POS registers' : 'No terminals online'}
                 </span>
               </div>
             </div>
@@ -1388,10 +957,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  100% Set
+                  {cashiers.length > 0 ? '100% Set' : '0% Set'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  All 5 cashiers encrypted
+                  {cashiers.length > 0 ? `All ${cashiers.length} cashiers encrypted` : 'No cashiers configured'}
                 </span>
               </div>
             </div>
@@ -1420,7 +989,7 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  52s / Order
+                  0s / Order
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Checkout velocity benchmark
@@ -1546,6 +1115,13 @@ export default function EmployeesManagement({
                       </td>
                     </tr>
                   ))}
+                  {cashiers.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No cashier accounts configured yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1653,7 +1229,7 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.02em' }}>
-                  Ahmedabad Flagship
+                  Primary Store
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Terminal Zone
@@ -1788,6 +1364,13 @@ export default function EmployeesManagement({
                       </td>
                     </tr>
                   ))}
+                  {managers.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No manager accounts configured yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2004,10 +1587,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  68
+                  {shifts.filter((s) => s.status === 'Closed').length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  544 total store hours
+                  {shifts.filter((s) => s.status === 'Closed').length * 8} total store hours
                 </span>
               </div>
             </div>
@@ -2036,10 +1619,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  1 On Floor
+                  {shifts.filter((s) => s.status === 'Active / Open').length} On Floor
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Register 03 live
+                  {shifts.filter((s) => s.status === 'Active / Open').length > 0 ? 'Registers live' : 'No active shifts'}
                 </span>
               </div>
             </div>
@@ -2068,10 +1651,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  -₹50.00
+                  {shifts.length > 0 ? `₹${shifts.reduce((acc, s) => acc + (s.variance || 0), 0).toFixed(2)}` : '₹0.00'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  99.9% drawer precision
+                  Drawer precision benchmark
                 </span>
               </div>
             </div>
@@ -2100,7 +1683,7 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  98.5%
+                  {shifts.length > 0 ? `${((shifts.filter((s) => s.status === 'Closed').length / shifts.length) * 100).toFixed(0)}%` : '0%'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Sign-off by manager
@@ -2243,6 +1826,13 @@ export default function EmployeesManagement({
                         </td>
                       </tr>
                     ))}
+                  {shifts.filter((s) => shiftFilterStatus === 'ALL' || s.status === shiftFilterStatus).length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No shift records found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2286,10 +1876,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  94%
+                  {attendance.length > 0 ? `${((attendance.filter((a) => a.status === 'Present').length / attendance.length) * 100).toFixed(0)}%` : '0%'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  5 of 6 on duty
+                  {attendance.filter((a) => a.status === 'Present').length} on duty
                 </span>
               </div>
             </div>
@@ -2318,10 +1908,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  88% On-Time
+                  {attendance.length > 0 ? `${((attendance.filter((a) => a.status === 'Present').length / attendance.length) * 100).toFixed(0)}% On-Time` : '0% On-Time'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  1 late clock-in logged
+                  {attendance.filter((a) => a.status === 'Late').length} late clock-in logged
                 </span>
               </div>
             </div>
@@ -2350,7 +1940,7 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  14.5 hrs
+                  {attendance.reduce((acc, a) => acc + (a.overtimeHours || 0), 0)} hrs
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Approved supervisor hours
@@ -2382,10 +1972,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  1 Staff
+                  {employees.filter((e) => e.status === 'On Leave').length} Staff
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Deepak P. (Sick Leave)
+                  {employees.filter((e) => e.status === 'On Leave').length > 0 ? 'On approved leave' : 'No staff on leave'}
                 </span>
               </div>
             </div>
@@ -2490,6 +2080,13 @@ export default function EmployeesManagement({
                       </td>
                     </tr>
                   ))}
+                  {attendance.length === 0 && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No attendance logs recorded yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2533,10 +2130,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹3,48,250
+                  {performanceRecords.reduce((acc, p) => acc + p.totalSales, 0) > 0 ? '₹' + performanceRecords.reduce((acc, p) => acc + p.totalSales, 0).toLocaleString('en-IN') : '₹0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Across 5 cashiers
+                  {performanceRecords.length > 0 ? `Across ${performanceRecords.length} cashiers` : 'No sales recorded'}
                 </span>
               </div>
             </div>
@@ -2565,10 +2162,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  843
+                  {performanceRecords.reduce((acc, p) => acc + p.ordersCount, 0)}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Avg ~168 orders / cashier
+                  {performanceRecords.length > 0 ? `Avg ~${Math.round(performanceRecords.reduce((acc, p) => acc + p.ordersCount, 0) / performanceRecords.length)} orders / cashier` : 'No orders handled'}
                 </span>
               </div>
             </div>
@@ -2597,7 +2194,7 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  54s
+                  {performanceRecords.length > 0 ? `${(performanceRecords.reduce((acc, p) => acc + p.speedSec, 0) / performanceRecords.length).toFixed(0)}s` : '0s'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   Avg checkout duration
@@ -2629,10 +2226,10 @@ export default function EmployeesManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0.8%
+                  0.0%
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  High cashier integrity score
+                  Cashier integrity score
                 </span>
               </div>
             </div>
@@ -2725,6 +2322,13 @@ export default function EmployeesManagement({
                       </td>
                     </tr>
                   ))}
+                  {performanceRecords.length === 0 && (
+                    <tr>
+                      <td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                        No performance records logged yet.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

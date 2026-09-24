@@ -51,6 +51,7 @@ import SalesManagement from '@/components/admin/SalesManagement';
 import EmployeesManagement from '@/components/admin/EmployeesManagement';
 import CustomersManagement from '@/components/admin/CustomersManagement';
 import SettingsManagement from '@/components/admin/SettingsManagement';
+import PaymentSetupOnboarding from '@/components/admin/PaymentSetupOnboarding';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
@@ -100,6 +101,24 @@ export default function AdminDashboardPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
+
+  // Dedicated payment setup page state
+  const isPaymentSetupActive = activeTabId === 'setup_payments';
+  const [paymentSetupStatus, setPaymentSetupStatus] = useState<{ connected: boolean; provider?: string }>({ connected: false });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('nuradesk_payment_setup_state');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.status === 'connected') {
+          setPaymentSetupStatus({ connected: true, provider: parsed.provider });
+        } else {
+          setPaymentSetupStatus({ connected: false });
+        }
+      }
+    } catch (e) {}
+  }, [activeTabId]);
 
   const isSettingsActive =
     activeTabId === 'settings' ||
@@ -317,12 +336,60 @@ export default function AdminDashboardPage() {
   ];
 
 
-  // System notifications (Strictly monochrome)
-  const notifications = [
-    { id: '1', title: 'Daily Target Reached', desc: '₹48,250 in sales exceeded today’s projection.', time: '15m ago' },
-    { id: '2', title: 'Low Stock Alert', desc: 'Espresso Blend 1kg is down to 4 units in SP CAFE.', time: '1h ago' },
-    { id: '3', title: 'Register Shift Reconciled', desc: 'Shift #42 was closed and verified by Alex Vance.', time: '3h ago' },
-  ];
+  // Dynamic greeting based on current local hour
+  const [greeting, setGreeting] = useState('Welcome');
+  const [merchantName, setMerchantName] = useState('');
+
+  // Real-time dashboard KPI states (defaults to zero / empty when no mock data)
+  const [todayRevenue, setTodayRevenue] = useState('₹0');
+  const [todayOrdersCount, setTodayOrdersCount] = useState(0);
+  const [activeProductsCount, setActiveProductsCount] = useState(0);
+  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; desc: string; time: string }>>([]);
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good morning');
+    else if (hour < 17) setGreeting('Good afternoon');
+    else setGreeting('Good evening');
+
+    try {
+      const storedName = localStorage.getItem('nuradesk_user_name') || localStorage.getItem('storeName') || '';
+      if (storedName) {
+        setMerchantName(storedName);
+      }
+
+      // Check real stored products
+      const savedProducts = localStorage.getItem('nuradesk_products');
+      if (savedProducts) {
+        const parsed = JSON.parse(savedProducts);
+        if (Array.isArray(parsed)) {
+          setActiveProductsCount(parsed.filter((p: any) => p.isActive !== false).length);
+        }
+      }
+
+      // Check real stored orders
+      const savedOrders = localStorage.getItem('nuradesk_orders');
+      if (savedOrders) {
+        const parsed = JSON.parse(savedOrders);
+        if (Array.isArray(parsed)) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const todayOrders = parsed.filter((o: any) => o.date === todayStr || o.timestamp?.startsWith(todayStr));
+          setTodayOrdersCount(todayOrders.length);
+          const rev = todayOrders.reduce((sum: number, o: any) => sum + (Number(o.totalAmount || o.total) || 0), 0);
+          setTodayRevenue(`₹${rev.toLocaleString('en-IN')}`);
+        }
+      }
+
+      // Check real notifications
+      const savedNotifications = localStorage.getItem('nuradesk_notifications');
+      if (savedNotifications) {
+        const parsed = JSON.parse(savedNotifications);
+        if (Array.isArray(parsed)) {
+          setNotifications(parsed);
+        }
+      }
+    } catch (e) {}
+  }, [activeTabId]);
 
   // Dynamic Admin Dark / Light Mode State
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
@@ -918,6 +985,14 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
+          ) : isPaymentSetupActive ? (
+            <div style={{ flex: 1, height: '100%', overflowY: 'auto' }}>
+              <PaymentSetupOnboarding
+                theme={theme}
+                onComplete={() => setActiveTabId('dashboard')}
+                onBack={() => setActiveTabId('dashboard')}
+              />
+            </div>
           ) : isSettingsActive ? (
             <SettingsManagement
               activeSubTab={
@@ -938,6 +1013,7 @@ export default function AdminDashboardPage() {
               theme={theme}
               currentThemeId={currentThemeId}
               onSelectTheme={handleSelectTheme}
+              onOpenPaymentSetup={() => setActiveTabId('setup_payments')}
             />
           ) : isCustomersActive ? (
             <CustomersManagement
@@ -1043,7 +1119,7 @@ export default function AdminDashboardPage() {
                       letterSpacing: '-0.035em',
                       margin: '0 0 0.25rem 0',
                     }}>
-                      Good evening, Rahul 👋
+                      {greeting}{merchantName ? `, ${merchantName}` : ''} 👋
                     </h1>
                     <p style={{
                       fontSize: '14px',
@@ -1171,7 +1247,7 @@ export default function AdminDashboardPage() {
                       <div
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                          border: `1px solid ${theme.borderCard}`,
+                          border: `1px solid ${paymentSetupStatus.connected ? '#10B981' : theme.borderCard}`,
                           borderRadius: '0.9rem',
                           padding: '1.15rem 1.15rem',
                           display: 'flex',
@@ -1183,9 +1259,37 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <div>
-                          {/* Top Icon */}
-                          <div style={{ display: 'flex', alignItems: 'center', height: '18px', marginBottom: '0.75rem' }}>
-                            <PaymentsRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+                          {/* Top Icon & Status Badge */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <PaymentsRoundedIcon sx={{ fontSize: 18, color: paymentSetupStatus.connected ? '#10B981' : theme.textSecondary }} />
+                            </div>
+                            {paymentSetupStatus.connected ? (
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: '#065F46',
+                                backgroundColor: '#D1FAE5',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}>
+                                ✓ Ready
+                              </span>
+                            ) : (
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: theme.textSecondary,
+                                backgroundColor: theme.hoverBg,
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                              }}>
+                                Step 2
+                              </span>
+                            )}
                           </div>
 
                           {/* Headline */}
@@ -1208,7 +1312,9 @@ export default function AdminDashboardPage() {
                             margin: 0,
                             fontWeight: 450,
                           }}>
-                            Enable dynamic UPI QR codes, card payments, and configure GST tax rates.
+                            {paymentSetupStatus.connected
+                              ? `Connected to ${paymentSetupStatus.provider === 'cashfree' ? 'Cashfree' : 'Razorpay'}. Cash, UPI QR & Card payments active.`
+                              : 'Connect your payment account and start accepting UPI and card payments from your POS.'}
                           </p>
                         </div>
 
@@ -1217,18 +1323,18 @@ export default function AdminDashboardPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveTabId('set_payments');
-                              openSingleMenu('settings');
+                              setActiveTabId('setup_payments');
+                              closeAllMenus();
                             }}
                             style={{
-                              backgroundColor: theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF',
-                              color: theme.textPrimary,
+                              backgroundColor: paymentSetupStatus.connected ? (theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF') : theme.activeBg,
+                              color: paymentSetupStatus.connected ? theme.textPrimary : theme.activeText,
                               borderRadius: '9999px',
-                              padding: '0.45rem 0.95rem',
+                              padding: '0.45rem 1rem',
                               fontSize: '12px',
                               fontWeight: 700,
-                              border: `1px solid ${theme.border}`,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                              border: paymentSetupStatus.connected ? `1px solid ${theme.border}` : 'none',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                               cursor: 'pointer',
                               fontFamily: 'inherit',
                               display: 'inline-flex',
@@ -1236,10 +1342,10 @@ export default function AdminDashboardPage() {
                               justifyContent: 'center',
                               transition: 'opacity 0.15s ease',
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
                           >
-                            <span>Configure payments</span>
+                            <span>{paymentSetupStatus.connected ? 'Manage payments' : 'Connect account'}</span>
                           </button>
 
                           <button
@@ -1251,9 +1357,9 @@ export default function AdminDashboardPage() {
                             style={{
                               background: 'none',
                               border: 'none',
-                              color: theme.textPrimary,
+                              color: theme.textSecondary,
                               fontSize: '12px',
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: 'pointer',
                               padding: '0.45rem 0.45rem',
                               display: 'inline-flex',
@@ -1429,7 +1535,7 @@ export default function AdminDashboardPage() {
                       Today&apos;s revenue
                     </span>
                     <span style={{ fontSize: '15.5px', fontWeight: 700, color: theme.textPrimary }}>
-                      ₹48,250
+                      {todayRevenue}
                     </span>
                   </div>
                 </div>
@@ -1468,10 +1574,10 @@ export default function AdminDashboardPage() {
                     marginTop: '1.25rem',
                   }}>
                     <span style={{ fontSize: '15px', fontWeight: 700, color: theme.textPrimary }}>
-                      Total orders
+                      Today&apos;s orders
                     </span>
                     <span style={{ fontSize: '15.5px', fontWeight: 700, color: theme.textPrimary }}>
-                      128
+                      {todayOrdersCount}
                     </span>
                   </div>
                 </div>
@@ -1513,7 +1619,7 @@ export default function AdminDashboardPage() {
                       Active on POS
                     </span>
                     <span style={{ fontSize: '15.5px', fontWeight: 700, color: theme.textPrimary }}>
-                      10 items
+                      {activeProductsCount} {activeProductsCount === 1 ? 'item' : 'items'}
                     </span>
                   </div>
                 </div>
@@ -1553,32 +1659,50 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    {notifications.map((n, idx) => (
-                      <div
-                        key={n.id}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.2rem',
-                          paddingBottom: idx !== notifications.length - 1 ? '0.75rem' : 0,
-                          borderBottom: idx !== notifications.length - 1 ? `1px solid ${theme.border}` : 'none',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
-                            {n.title}
-                          </span>
-                          <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
-                            {n.time}
+                  {notifications.length === 0 ? (
+                    <div style={{
+                      padding: '1.5rem 0',
+                      textAlign: 'center',
+                      color: theme.textSecondary,
+                      fontSize: '13px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                    }}>
+                      <NotificationsNoneRoundedIcon sx={{ fontSize: 24, opacity: 0.35, color: theme.textSecondary }} />
+                      <span style={{ fontWeight: 600, color: theme.textPrimary }}>No notifications</span>
+                      <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>You&apos;re all caught up</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {notifications.map((n, idx) => (
+                        <div
+                          key={n.id}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.2rem',
+                            paddingBottom: idx !== notifications.length - 1 ? '0.75rem' : 0,
+                            borderBottom: idx !== notifications.length - 1 ? `1px solid ${theme.border}` : 'none',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
+                              {n.title}
+                            </span>
+                            <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
+                              {n.time}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: 1.4 }}>
+                            {n.desc}
                           </span>
                         </div>
-                        <span style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: 1.4 }}>
-                          {n.desc}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </aside>
             </div>
