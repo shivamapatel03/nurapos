@@ -64,7 +64,6 @@ interface SettingsManagementProps {
   theme: any;
   currentThemeId?: ThemeId;
   onSelectTheme?: (themeId: ThemeId) => void;
-  onOpenPaymentSetup?: () => void;
 }
 
 export default function SettingsManagement({
@@ -73,7 +72,6 @@ export default function SettingsManagement({
   theme,
   currentThemeId = 'bw_light',
   onSelectTheme,
-  onOpenPaymentSetup,
 }: SettingsManagementProps) {
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1347,68 +1345,7 @@ export default function SettingsManagement({
       {/* SUB-TAB 4: PAYMENTS */}
       {activeSubTab === 'set_payments' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Quick Connect & Account Banner */}
-          <div
-            style={{
-              padding: '1.25rem 1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>
-                  Store Payment Provider Connection
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    backgroundColor: theme.badgeBg,
-                    color: theme.badgeText,
-                    border: `1px solid ${theme.badgeBorder}`,
-                  }}
-                >
-                  Modern Onboarding
-                </span>
-              </div>
-              <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.45 }}>
-                Connect Razorpay or Cashfree to accept UPI, Dynamic QR, and Card payments directly without managing raw API keys.
-              </p>
-            </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              {onOpenPaymentSetup && (
-                <button
-                  type="button"
-                  onClick={onOpenPaymentSetup}
-                  style={{
-                    padding: '0.55rem 1.15rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.activeBg,
-                    color: theme.activeText,
-                    border: 'none',
-                    fontSize: '12.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <span>Launch Payment Setup Wizard</span>
-                </button>
-              )}
-            </div>
-          </div>
 
           {/* Active Tender Methods */}
           <div

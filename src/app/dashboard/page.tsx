@@ -51,13 +51,10 @@ import SalesManagement from '@/components/admin/SalesManagement';
 import EmployeesManagement from '@/components/admin/EmployeesManagement';
 import CustomersManagement from '@/components/admin/CustomersManagement';
 import SettingsManagement from '@/components/admin/SettingsManagement';
-import PaymentSetupOnboarding from '@/components/admin/PaymentSetupOnboarding';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
-import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
-import GroupWorkRoundedIcon from '@mui/icons-material/GroupWorkRounded';
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
@@ -102,23 +99,6 @@ export default function AdminDashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
 
-  // Dedicated payment setup page state
-  const isPaymentSetupActive = activeTabId === 'setup_payments';
-  const [paymentSetupStatus, setPaymentSetupStatus] = useState<{ connected: boolean; provider?: string }>({ connected: false });
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('nuradesk_payment_setup_state');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.status === 'connected') {
-          setPaymentSetupStatus({ connected: true, provider: parsed.provider });
-        } else {
-          setPaymentSetupStatus({ connected: false });
-        }
-      }
-    } catch (e) {}
-  }, [activeTabId]);
 
   const isSettingsActive =
     activeTabId === 'settings' ||
@@ -137,8 +117,6 @@ export default function AdminDashboardPage() {
     activeTabId === 'customers' ||
     activeTabId === 'cust_all' ||
     activeTabId === 'cust_history' ||
-    activeTabId === 'cust_loyalty' ||
-    activeTabId === 'cust_groups' ||
     activeTabId === 'cust_feedback';
 
   const isEmployeesActive =
@@ -299,8 +277,6 @@ export default function AdminDashboardPage() {
       subItems: [
         { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'cust_loyalty', label: 'Loyalty & Rewards', icon: <CardGiftcardRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'cust_groups', label: 'Customer Groups', icon: <GroupWorkRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'cust_feedback', label: 'Feedback & Reviews', icon: <RateReviewRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
@@ -344,7 +320,6 @@ export default function AdminDashboardPage() {
   const [todayRevenue, setTodayRevenue] = useState('₹0');
   const [todayOrdersCount, setTodayOrdersCount] = useState(0);
   const [activeProductsCount, setActiveProductsCount] = useState(0);
-  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; desc: string; time: string }>>([]);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -377,15 +352,6 @@ export default function AdminDashboardPage() {
           setTodayOrdersCount(todayOrders.length);
           const rev = todayOrders.reduce((sum: number, o: any) => sum + (Number(o.totalAmount || o.total) || 0), 0);
           setTodayRevenue(`₹${rev.toLocaleString('en-IN')}`);
-        }
-      }
-
-      // Check real notifications
-      const savedNotifications = localStorage.getItem('nuradesk_notifications');
-      if (savedNotifications) {
-        const parsed = JSON.parse(savedNotifications);
-        if (Array.isArray(parsed)) {
-          setNotifications(parsed);
         }
       }
     } catch (e) {}
@@ -985,14 +951,6 @@ export default function AdminDashboardPage() {
                 </div>
               ))}
             </div>
-          ) : isPaymentSetupActive ? (
-            <div style={{ flex: 1, height: '100%', overflowY: 'auto' }}>
-              <PaymentSetupOnboarding
-                theme={theme}
-                onComplete={() => setActiveTabId('dashboard')}
-                onBack={() => setActiveTabId('dashboard')}
-              />
-            </div>
           ) : isSettingsActive ? (
             <SettingsManagement
               activeSubTab={
@@ -1013,14 +971,11 @@ export default function AdminDashboardPage() {
               theme={theme}
               currentThemeId={currentThemeId}
               onSelectTheme={handleSelectTheme}
-              onOpenPaymentSetup={() => setActiveTabId('setup_payments')}
             />
           ) : isCustomersActive ? (
             <CustomersManagement
               activeSubTab={
                 activeTabId === 'cust_history' ? 'cust_history' :
-                activeTabId === 'cust_loyalty' ? 'cust_loyalty' :
-                activeTabId === 'cust_groups' ? 'cust_groups' :
                 activeTabId === 'cust_feedback' ? 'cust_feedback' : 'cust_all'
               }
               onSelectSubTab={(tab) => {
@@ -1144,15 +1099,15 @@ export default function AdminDashboardPage() {
                           letterSpacing: '-0.01em',
                           color: theme.textPrimary,
                         }}>
-                          Store Setup · 3 Simple Steps
+                          Store Setup · 2 Simple Steps
                         </span>
                       </div>
                     </div>
 
-                    {/* 3 Setup Cards Grid - Compact Modern UI */}
+                    {/* 2 Setup Cards Grid - Compact Modern UI */}
                     <div style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                       gap: '0.85rem',
                     }}>
                       {/* Card 1: Add your first product (UP NEXT) */}
@@ -1211,171 +1166,53 @@ export default function AdminDashboardPage() {
                           </p>
                         </div>
 
+                        {/* Middle Illustration */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0.5rem 0',
+                          margin: '0.35rem 0',
+                        }}>
+                          <Image
+                            src="/dashimages/card1dash.png"
+                            alt="Add first product"
+                            width={130}
+                            height={130}
+                            style={{
+                              objectFit: 'contain',
+                              maxHeight: '130px',
+                              width: 'auto',
+                              borderRadius: '0.6rem',
+                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
+                            }}
+                            priority
+                          />
+                        </div>
+
                         {/* Bottom Action */}
-                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <button
                             type="button"
                             onClick={() => {
                               setActiveTabId('products');
                               openSingleMenu('catalog');
                             }}
+                            className="button-20"
                             style={{
-                              backgroundColor: theme.activeBg,
-                              color: theme.activeText,
                               borderRadius: '9999px',
-                              padding: '0.45rem 1.1rem',
+                              padding: '0.45rem 1.15rem',
                               fontSize: '12px',
                               fontWeight: 700,
-                              border: 'none',
-                              cursor: 'pointer',
                               fontFamily: 'inherit',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'opacity 0.15s ease',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
                           >
                             <span>Add product</span>
                           </button>
                         </div>
                       </div>
 
-                      {/* Card 2: Set up payments & tax */}
-                      <div
-                        style={{
-                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                          border: `1px solid ${paymentSetupStatus.connected ? '#10B981' : theme.borderCard}`,
-                          borderRadius: '0.9rem',
-                          padding: '1.15rem 1.15rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          minHeight: '170px',
-                          boxSizing: 'border-box',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                        }}
-                      >
-                        <div>
-                          {/* Top Icon & Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <PaymentsRoundedIcon sx={{ fontSize: 18, color: paymentSetupStatus.connected ? '#10B981' : theme.textSecondary }} />
-                            </div>
-                            {paymentSetupStatus.connected ? (
-                              <span style={{
-                                fontSize: '11px',
-                                fontWeight: 800,
-                                color: '#065F46',
-                                backgroundColor: '#D1FAE5',
-                                padding: '2px 8px',
-                                borderRadius: '9999px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px'
-                              }}>
-                                ✓ Ready
-                              </span>
-                            ) : (
-                              <span style={{
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                color: theme.textSecondary,
-                                backgroundColor: theme.hoverBg,
-                                padding: '2px 8px',
-                                borderRadius: '9999px',
-                              }}>
-                                Step 2
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Headline */}
-                          <h3 style={{
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            color: theme.textPrimary,
-                            letterSpacing: '-0.02em',
-                            margin: '0 0 0.35rem 0',
-                            lineHeight: 1.25,
-                          }}>
-                            Set up payments & tax
-                          </h3>
-
-                          {/* Description */}
-                          <p style={{
-                            fontSize: '12px',
-                            color: theme.textSecondary,
-                            lineHeight: 1.45,
-                            margin: 0,
-                            fontWeight: 450,
-                          }}>
-                            {paymentSetupStatus.connected
-                              ? `Connected to ${paymentSetupStatus.provider === 'cashfree' ? 'Cashfree' : 'Razorpay'}. Cash, UPI QR & Card payments active.`
-                              : 'Connect your payment account and start accepting UPI and card payments from your POS.'}
-                          </p>
-                        </div>
-
-                        {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('setup_payments');
-                              closeAllMenus();
-                            }}
-                            style={{
-                              backgroundColor: paymentSetupStatus.connected ? (theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF') : theme.activeBg,
-                              color: paymentSetupStatus.connected ? theme.textPrimary : theme.activeText,
-                              borderRadius: '9999px',
-                              padding: '0.45rem 1rem',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              border: paymentSetupStatus.connected ? `1px solid ${theme.border}` : 'none',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'opacity 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <span>{paymentSetupStatus.connected ? 'Manage payments' : 'Connect account'}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('set_tax');
-                              openSingleMenu('settings');
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: theme.textSecondary,
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              padding: '0.45rem 0.45rem',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontFamily: 'inherit',
-                              transition: 'opacity 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.75'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <span>Tax & invoicing</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card 3: Start selling on POS */}
+                      {/* Card 2: Start selling on POS */}
                       <div
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
@@ -1391,9 +1228,21 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <div>
-                          {/* Top Icon */}
-                          <div style={{ display: 'flex', alignItems: 'center', height: '18px', marginBottom: '0.75rem' }}>
-                            <PointOfSaleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+                          {/* Top Icon & Status Badge */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <PointOfSaleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+                            </div>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: theme.textSecondary,
+                              backgroundColor: theme.hoverBg,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                            }}>
+                              Step 2
+                            </span>
                           </div>
 
                           {/* Headline */}
@@ -1420,8 +1269,32 @@ export default function AdminDashboardPage() {
                           </p>
                         </div>
 
+                        {/* Middle Illustration */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0.5rem 0',
+                          margin: '0.35rem 0',
+                        }}>
+                          <Image
+                            src="/dashimages/card2dash.png"
+                            alt="Start selling on POS"
+                            width={195}
+                            height={130}
+                            style={{
+                              objectFit: 'contain',
+                              maxHeight: '130px',
+                              width: 'auto',
+                              borderRadius: '0.6rem',
+                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
+                            }}
+                            priority
+                          />
+                        </div>
+
                         {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '1.15rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <Link
                             href="/pos"
                             style={{
@@ -1489,7 +1362,6 @@ export default function AdminDashboardPage() {
                 height: '100%',
                 overflowY: 'auto',
                 backgroundColor: theme.sidebarIsDark ? theme.bgSidebar : '#FAFAFA',
-                borderLeft: `1px solid ${theme.border}`,
                 padding: '1.5rem 1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
@@ -1622,87 +1494,6 @@ export default function AdminDashboardPage() {
                       {activeProductsCount} {activeProductsCount === 1 ? 'item' : 'items'}
                     </span>
                   </div>
-                </div>
-
-                {/* Notifications - Simple Card matching Sales/Orders/Products */}
-                <div
-                  style={{
-                    backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '1rem',
-                    padding: '1.4rem 1.35rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                  }}>
-                    <span style={{
-                      fontSize: '14.5px',
-                      fontWeight: 500,
-                      color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
-                      letterSpacing: '-0.01em',
-                    }}>
-                      Notifications
-                    </span>
-                    <span style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: theme.textSecondary,
-                    }}>
-                      {notifications.length} recent
-                    </span>
-                  </div>
-
-                  {notifications.length === 0 ? (
-                    <div style={{
-                      padding: '1.5rem 0',
-                      textAlign: 'center',
-                      color: theme.textSecondary,
-                      fontSize: '13px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                    }}>
-                      <NotificationsNoneRoundedIcon sx={{ fontSize: 24, opacity: 0.35, color: theme.textSecondary }} />
-                      <span style={{ fontWeight: 600, color: theme.textPrimary }}>No notifications</span>
-                      <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>You&apos;re all caught up</span>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                      {notifications.map((n, idx) => (
-                        <div
-                          key={n.id}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.2rem',
-                            paddingBottom: idx !== notifications.length - 1 ? '0.75rem' : 0,
-                            borderBottom: idx !== notifications.length - 1 ? `1px solid ${theme.border}` : 'none',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
-                              {n.title}
-                            </span>
-                            <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
-                              {n.time}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: 1.4 }}>
-                            {n.desc}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </aside>
             </div>
@@ -1868,15 +1659,12 @@ export default function AdminDashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowUpgradeModal(false)}
+                className="button-20-secondary"
                 style={{
                   padding: '0.5rem 1rem',
-                  borderRadius: '0.6rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: 'transparent',
-                  color: theme.textPrimary,
+                  borderRadius: '9999px',
                   fontSize: '12.5px',
                   fontWeight: 700,
-                  cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
@@ -1888,15 +1676,12 @@ export default function AdminDashboardPage() {
                   setShowUpgradeModal(false);
                   alert('Thank you! Your trial has been extended to Nuradesk Annual Pro.');
                 }}
+                className="button-20"
                 style={{
                   padding: '0.5rem 1.25rem',
-                  borderRadius: '0.6rem',
-                  border: 'none',
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
+                  borderRadius: '9999px',
                   fontSize: '12.5px',
                   fontWeight: 800,
-                  cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
