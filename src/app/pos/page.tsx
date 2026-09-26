@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -41,19 +41,43 @@ import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import PriceChangeRoundedIcon from '@mui/icons-material/PriceChangeRounded';
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
 import RestaurantRoundedIcon from '@mui/icons-material/RestaurantRounded';
+import LunchDiningRoundedIcon from '@mui/icons-material/LunchDiningRounded';
+import LocalCafeRoundedIcon from '@mui/icons-material/LocalCafeRounded';
+import BakeryDiningRoundedIcon from '@mui/icons-material/BakeryDiningRounded';
+import CheckroomRoundedIcon from '@mui/icons-material/CheckroomRounded';
 import TakeoutDiningRoundedIcon from '@mui/icons-material/TakeoutDiningRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import TableBarRoundedIcon from '@mui/icons-material/TableBarRounded';
+import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 
 interface Product {
   id: string;
   name: string;
   variant: string;
   price: number;
+  originalPrice?: number;
   category: string;
   image: string;
   isOffer?: boolean;
+  offerBadge?: string;
+}
+
+interface StoreOffer {
+  id: string;
+  title: string;
+  code?: string;
+  badgeText: string;
+  discountType: 'percentage' | 'fixed_amount' | 'promo_price';
+  discountValue: number;
+  appliesTo: 'all' | 'category' | 'products';
+  targetCategories?: string[];
+  targetProductIds?: string[];
+  minSubtotal?: number;
+  maxDiscount?: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
 }
 
 interface CartItem {
@@ -117,42 +141,11 @@ export default function PosMainScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Cart / Current Sale state
-  const [cart, setCart] = useState<CartItem[]>([
-    {
-      product: {
-        id: '1',
-        name: 'T-Shirt',
-        variant: 'Classic',
-        price: 799,
-        category: 'Apparel',
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-      },
-      quantity: 1,
-    },
-  ]);
+  // Cart / Current Sale state (starts empty)
+  const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Held sales list
-  const [heldSales, setHeldSales] = useState<HeldSale[]>([
-    {
-      id: 'HELD-101',
-      items: [
-        {
-          product: {
-            id: '2',
-            name: 'Double Cheeseburger',
-            variant: 'Single Combo',
-            price: 280,
-            category: 'Burgers',
-            image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80',
-          },
-          quantity: 2,
-        },
-      ],
-      time: '12 mins ago',
-      total: 588,
-    },
-  ]);
+  // Held sales list (starts empty)
+  const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
 
   // Customer state & Order Type state
   const [customerName, setCustomerName] = useState('Guest Customer');
@@ -162,14 +155,8 @@ export default function PosMainScreen() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [discountPct, setDiscountPct] = useState(0);
 
-  // Frequent customers list for quick selection
-  const frequentCustomers = [
-    { name: 'Rahul Sharma', phone: '+91 98765 43210' },
-    { name: 'Priya Mehta', phone: '+91 98123 45678' },
-    { name: 'Amit Patel', phone: '+91 97654 32109' },
-    { name: 'Sneha Rao', phone: '+91 99887 76655' },
-    { name: 'Vikram Singh', phone: '+91 98220 11223' },
-  ];
+  // Frequent customers list (loaded dynamically from store database)
+  const [frequentCustomers, setFrequentCustomers] = useState<{ name: string; phone: string }[]>([]);
 
   // Modals
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -177,98 +164,185 @@ export default function PosMainScreen() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [showEndShiftModal, setShowEndShiftModal] = useState(false);
 
-  // Product Catalog
-  const products: Product[] = [
-    {
-      id: '1',
-      name: 'T-Shirt',
-      variant: 'Classic',
-      price: 799,
-      category: 'Apparel',
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-      isOffer: true,
-    },
-    {
-      id: '2',
-      name: 'Classic Burger',
-      variant: 'Gourmet Beef',
-      price: 240,
-      category: 'Burgers',
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '3',
-      name: 'Double Cheeseburger',
-      variant: 'Double Patty',
-      price: 320,
-      category: 'Burgers',
-      image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80',
-      isOffer: true,
-    },
-    {
-      id: '4',
-      name: 'Cold Brew Coffee',
-      variant: '16oz Steeped',
-      price: 180,
-      category: 'Beverages',
-      image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '5',
-      name: 'Cappuccino',
-      variant: 'Hot / Arabica',
-      price: 160,
-      category: 'Beverages',
-      image: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '6',
-      name: 'Butter Croissant',
-      variant: 'French Flaky',
-      price: 120,
-      category: 'Bakery',
-      image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '7',
-      name: 'Peri Peri Fries',
-      variant: 'Large Crispy',
-      price: 140,
-      category: 'Burgers',
-      image: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500&auto=format&fit=crop&q=80',
-    },
-    {
-      id: '8',
-      name: 'Matcha Iced Latte',
-      variant: 'Oat Milk',
-      price: 220,
-      category: 'Beverages',
-      image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=500&auto=format&fit=crop&q=80',
-      isOffer: true,
-    },
-    {
-      id: '9',
-      name: 'Nuradesk Hoodie',
-      variant: 'Heavyweight Black',
-      price: 1499,
-      category: 'Apparel',
-      image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80',
-    },
-  ];
+  // Product Catalog (loaded dynamically from store inventory/catalog)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [storeOffers, setStoreOffers] = useState<StoreOffer[]>([]);
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string>('');
+  const [promoDiscountAmount, setPromoDiscountAmount] = useState<number>(0);
+  const [promoMessage, setPromoMessage] = useState<string>('');
+
+  // Dynamic order sequence number
+  const [orderNumber, setOrderNumber] = useState<string>('#ORD-1001');
+
+  // Load real store data from localStorage on mount
+  useEffect(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Load offers first so products can calculate promotional pricing
+      const savedOffers = localStorage.getItem('nuradesk_offers');
+      let loadedOffers: StoreOffer[] = [];
+      if (savedOffers) {
+        const parsedOffers = JSON.parse(savedOffers);
+        if (Array.isArray(parsedOffers)) {
+          loadedOffers = parsedOffers.filter(
+            (o: any) => o.isActive && o.startDate <= today && o.endDate >= today
+          );
+          setStoreOffers(loadedOffers);
+        }
+      }
+
+      const autoOffers = loadedOffers.filter((o) => !o.code);
+
+      const savedProducts = localStorage.getItem('nuradesk_products');
+      if (savedProducts) {
+        const parsed = JSON.parse(savedProducts);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mapped: Product[] = parsed
+            .filter((p: any) => p.isActive !== false)
+            .map((p: any) => {
+              const basePrice = Number(p.sellingPrice) || 0;
+              const prodId = String(p.id);
+              const prodCat = p.category || 'General';
+
+              // Find matching auto-applied offer
+              const matchingOffer = autoOffers.find((offer) => {
+                if (offer.appliesTo === 'all') return true;
+                if (offer.appliesTo === 'category' && offer.targetCategories?.includes(prodCat)) return true;
+                if (offer.appliesTo === 'products' && offer.targetProductIds?.includes(prodId)) return true;
+                return false;
+              });
+
+              if (matchingOffer) {
+                let discountedPrice = basePrice;
+                if (matchingOffer.discountType === 'percentage') {
+                  discountedPrice = Math.max(0, basePrice * (1 - matchingOffer.discountValue / 100));
+                } else if (matchingOffer.discountType === 'fixed_amount') {
+                  discountedPrice = Math.max(0, basePrice - matchingOffer.discountValue);
+                } else if (matchingOffer.discountType === 'promo_price') {
+                  discountedPrice = matchingOffer.discountValue;
+                }
+                discountedPrice = Math.round(discountedPrice * 100) / 100;
+
+                return {
+                  id: prodId,
+                  name: p.name,
+                  variant: p.hasVariants && p.variants?.[0]?.name ? p.variants[0].name : (p.brand || 'Standard'),
+                  price: discountedPrice,
+                  originalPrice: basePrice > discountedPrice ? basePrice : undefined,
+                  category: prodCat,
+                  image: p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                  isOffer: true,
+                  offerBadge: matchingOffer.badgeText || 'OFFER',
+                };
+              }
+
+              return {
+                id: prodId,
+                name: p.name,
+                variant: p.hasVariants && p.variants?.[0]?.name ? p.variants[0].name : (p.brand || 'Standard'),
+                price: basePrice,
+                category: prodCat,
+                image: p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                isOffer: Boolean(p.isOffer),
+                offerBadge: 'OFFER',
+              };
+            });
+          setProducts(mapped);
+        }
+      }
+
+      const savedCustomers = localStorage.getItem('nuradesk_customers');
+      if (savedCustomers) {
+        const parsedCust = JSON.parse(savedCustomers);
+        if (Array.isArray(parsedCust) && parsedCust.length > 0) {
+          setFrequentCustomers(parsedCust.map((c: any) => ({ name: c.name, phone: c.phone })));
+        }
+      }
+
+      const savedHolds = localStorage.getItem('nuradesk_held_sales');
+      if (savedHolds) {
+        const parsedHolds = JSON.parse(savedHolds);
+        if (Array.isArray(parsedHolds)) {
+          setHeldSales(parsedHolds);
+        }
+      }
+
+      const savedOrders = localStorage.getItem('nuradesk_orders');
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        if (Array.isArray(parsedOrders)) {
+          setOrderNumber(`#ORD-${1000 + parsedOrders.length + 1}`);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  // Sync held sales to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('nuradesk_held_sales', JSON.stringify(heldSales));
+    } catch (e) {}
+  }, [heldSales]);
+
+  // Dynamic categories list: Only "All Items" by default, plus any categories created by admin
+  const categoriesList = useMemo(() => {
+    // Unique categories from products
+    const customCats = Array.from(
+      new Set(
+        products
+          .map((p) => p.category)
+          .filter((cat) => cat && cat !== 'All' && cat !== 'General' && cat.toLowerCase() !== 'no category')
+      )
+    );
+
+    // Also include any categories saved by admin in localStorage
+    try {
+      const savedCats = localStorage.getItem('nuradesk_categories');
+      if (savedCats) {
+        const parsed = JSON.parse(savedCats);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((c: any) => {
+            if (c.name && !customCats.includes(c.name) && c.name !== 'All' && c.name !== 'General') {
+              customCats.push(c.name);
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    const list = [
+      {
+        id: 'All',
+        name: 'All Items',
+        count: products.length,
+        icon: <RestaurantRoundedIcon sx={{ fontSize: 20 }} />,
+      },
+    ];
+
+    customCats.forEach((catName) => {
+      list.push({
+        id: catName,
+        name: catName,
+        count: products.filter((p) => p.category?.toLowerCase() === catName.toLowerCase()).length,
+        icon: <CategoryRoundedIcon sx={{ fontSize: 20 }} />,
+      });
+    });
+
+    return list;
+  }, [products]);
 
   // Filter products by category and search
   const filteredProducts = products.filter((p) => {
     const matchesCategory =
       selectedCategory === 'All'
         ? true
-        : selectedCategory === 'Offer'
-        ? p.isOffer
-        : p.category.toLowerCase() === selectedCategory.toLowerCase();
+        : p.category?.toLowerCase() === selectedCategory.toLowerCase();
 
     const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.variant.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+      (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesCategory && matchesSearch;
   });
@@ -426,10 +500,49 @@ export default function PosMainScreen() {
 
   // Calculations
   const subtotal = cart.reduce((acc, item) => acc + getItemLineTotal(item), 0);
-  const discountAmount = Math.round((subtotal * discountPct) / 100);
+  const manualDiscount = Math.round((subtotal * discountPct) / 100);
+  const discountAmount = manualDiscount + promoDiscountAmount;
   const taxableAmount = Math.max(0, subtotal - discountAmount);
   const tax = Math.round(taxableAmount * 0.05); // 5% GST
   const total = taxableAmount + tax;
+
+  const handleApplyCouponCode = (code: string) => {
+    if (!code.trim()) {
+      setAppliedPromoCode('');
+      setPromoDiscountAmount(0);
+      setPromoMessage('');
+      return;
+    }
+    const cleanCode = code.trim().toUpperCase();
+    const matched = storeOffers.find((o) => o.code?.toUpperCase() === cleanCode);
+
+    if (!matched) {
+      setPromoMessage('Invalid coupon code');
+      setPromoDiscountAmount(0);
+      return;
+    }
+
+    if (matched.minSubtotal && subtotal < matched.minSubtotal) {
+      setPromoMessage(`Min order of ₹${matched.minSubtotal} required for ${cleanCode}`);
+      setPromoDiscountAmount(0);
+      return;
+    }
+
+    let calculatedDiscount = 0;
+    if (matched.discountType === 'percentage') {
+      calculatedDiscount = (subtotal * matched.discountValue) / 100;
+      if (matched.maxDiscount && calculatedDiscount > matched.maxDiscount) {
+        calculatedDiscount = matched.maxDiscount;
+      }
+    } else if (matched.discountType === 'fixed_amount') {
+      calculatedDiscount = Math.min(subtotal, matched.discountValue);
+    }
+
+    calculatedDiscount = Math.round(calculatedDiscount);
+    setAppliedPromoCode(cleanCode);
+    setPromoDiscountAmount(calculatedDiscount);
+    setPromoMessage(`Offer applied! Saved ₹${calculatedDiscount}`);
+  };
 
   function calculateTotal() {
     return total;
@@ -437,6 +550,38 @@ export default function PosMainScreen() {
 
   const handleProcessPayment = () => {
     setPaymentSuccess(true);
+
+    try {
+      const newOrder = {
+        id: orderNumber.replace('#', ''),
+        orderNumber,
+        date: new Date().toISOString().split('T')[0],
+        timestamp: new Date().toISOString(),
+        customerName: customerName.trim() || 'Guest Customer',
+        customerPhone: customerPhone.trim() || '',
+        items: cart.map((i) => ({
+          id: i.product.id,
+          name: i.product.name,
+          price: getItemUnitPrice(i),
+          quantity: i.quantity,
+          total: getItemLineTotal(i),
+        })),
+        subtotal,
+        discountAmount,
+        taxAmount: tax,
+        totalAmount: total,
+        total,
+        paymentMethod,
+        orderType,
+        tableNumber: orderType === 'dine_in' ? tableNumber : undefined,
+        status: 'Completed',
+      };
+      const existing = JSON.parse(localStorage.getItem('nuradesk_orders') || '[]');
+      const updatedOrders = [newOrder, ...existing];
+      localStorage.setItem('nuradesk_orders', JSON.stringify(updatedOrders));
+      setOrderNumber(`#ORD-${1000 + updatedOrders.length + 1}`);
+    } catch (e) {}
+
     setTimeout(() => {
       setPaymentSuccess(false);
       setShowPaymentModal(false);
@@ -1080,173 +1225,287 @@ export default function PosMainScreen() {
             </button>
           </div>
 
-          {/* Category Filter Pills: All | Burgers | Beverages | Bakery | Apparel | Offer */}
+          {/* Categories Section Heading */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '0.45rem',
+            padding: '0 2px',
+          }}>
+            <h2 style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: theme.textPrimary,
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}>
+              Categories
+            </h2>
+          </div>
+
+          {/* Category Filter Cards: Responsive Grid */}
           <div
-            className="no-scrollbar"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              flexShrink: 0,
-              minHeight: '44px',
-              padding: '4px 2px 6px 2px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 175px))',
+              gap: '0.65rem',
+              marginBottom: '1.25rem',
               boxSizing: 'border-box',
             }}
           >
-            {['All', 'Burgers', 'Beverages', 'Bakery', 'Apparel', 'Offer'].map((cat) => {
-              const isSelected = selectedCategory === cat;
+            {categoriesList.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
               return (
                 <button
-                  key={cat}
+                  key={cat.id}
                   type="button"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => setSelectedCategory(cat.id)}
                   style={{
-                    flexShrink: 0,
-                    height: '36px',
-                    padding: '0 1.25rem',
-                    borderRadius: '9999px',
-                    border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                    backgroundColor: isSelected ? theme.activeBg : theme.bgCard,
-                    color: isSelected ? theme.activeText : theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: isSelected ? 800 : 600,
+                    height: '50px',
+                    padding: '0.35rem 0.65rem 0.35rem 0.45rem',
+                    borderRadius: '12px',
+                    border: isSelected
+                      ? `1.5px solid ${theme.sidebarIsDark ? '#FFFFFF' : '#191a19'}`
+                      : `1px solid ${theme.border}`,
+                    backgroundColor: isSelected
+                      ? (theme.sidebarIsDark ? '#272827' : '#191a19')
+                      : (theme.sidebarIsDark ? theme.bgCard : '#FFFFFF'),
+                    color: isSelected ? '#FFFFFF' : theme.textPrimary,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
-                    whiteSpace: 'nowrap',
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.35rem',
-                    lineHeight: 1,
-                    transition: 'all 0.15s ease',
+                    gap: '0.65rem',
                     boxSizing: 'border-box',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = theme.borderHover;
-                      e.currentTarget.style.backgroundColor = theme.hoverBg;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = theme.border;
-                      e.currentTarget.style.backgroundColor = theme.bgCard;
-                    }
+                    boxShadow: 'none',
+                    textAlign: 'left',
+                    width: '100%',
                   }}
                 >
-                  {cat === 'Offer' && <LocalOfferRoundedIcon sx={{ fontSize: 14 }} />}
-                  <span>{cat}</span>
+                  {/* Left soft-tinted icon box */}
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '9px',
+                    backgroundColor: isSelected
+                      ? 'rgba(255,255,255,0.18)'
+                      : (theme.sidebarIsDark ? 'rgba(59, 130, 246, 0.14)' : '#EFF6FF'),
+                    color: isSelected ? '#FFFFFF' : '#3B82F6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    {cat.icon}
+                  </div>
+
+                  {/* Right label + item count */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    textAlign: 'left',
+                    lineHeight: 1.2,
+                    overflow: 'hidden',
+                  }}>
+                    <span style={{
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      whiteSpace: 'nowrap',
+                      color: isSelected ? '#FFFFFF' : theme.textPrimary,
+                      letterSpacing: '-0.01em',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {cat.name}
+                    </span>
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: isSelected ? 'rgba(255,255,255,0.75)' : theme.textSecondary,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {cat.count} Items
+                    </span>
+                  </div>
                 </button>
               );
             })}
           </div>
 
+          {/* Products Section Heading */}
+          {activeNav === 'new_sale' && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '0.65rem',
+              padding: '0 2px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2 style={{
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: theme.textPrimary,
+                  letterSpacing: '-0.02em',
+                  margin: 0,
+                }}>
+                  {selectedCategory === 'All' ? 'All Products' : selectedCategory}
+                </h2>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: theme.textSecondary,
+                  backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F1F5F9',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  border: `1px solid ${theme.border}`,
+                }}>
+                  {filteredProducts.length} items
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Main Product Grid or Held Sales / Invoices Views */}
           {activeNav === 'new_sale' ? (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '1rem',
-              paddingBottom: '1.5rem',
-            }}>
-              {filteredProducts.map((p) => {
-                const countInCart = cart.find((c) => c.product.id === p.id)?.quantity || 0;
+            filteredProducts.length === 0 ? (
+              <div style={{
+                padding: '3.5rem 1.5rem',
+                textAlign: 'center',
+                backgroundColor: theme.bgCardSubtle,
+                borderRadius: '1rem',
+                border: `1px dashed ${theme.border}`,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                margin: '0.5rem 0',
+              }}>
+                <RestaurantRoundedIcon sx={{ fontSize: 44, color: theme.textMuted, opacity: 0.35 }} />
+                <div style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>
+                  {products.length === 0 ? 'No products in catalog' : 'No matching products'}
+                </div>
+                <div style={{ fontSize: '12.5px', color: theme.textSecondary, maxWidth: '340px', lineHeight: 1.4 }}>
+                  {products.length === 0
+                    ? 'Your product catalog is currently empty. Add products in Product Management to begin ringing up sales.'
+                    : 'Try selecting another category or clearing your search query.'}
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: '1rem',
+                paddingBottom: '1.5rem',
+              }}>
+                {filteredProducts.map((p) => {
+                  const countInCart = cart.find((c) => c.product.id === p.id)?.quantity || 0;
 
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => addToCart(p)}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                      backgroundColor: theme.bgCard,
-                      border: countInCart > 0 ? `2px solid ${theme.activeBg}` : `1px solid ${theme.borderCard}`,
-                      borderRadius: '1rem',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'all 0.15s ease',
-                      position: 'relative',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = theme.borderHover;
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (countInCart === 0) e.currentTarget.style.borderColor = theme.borderCard;
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    {/* Product Image Pod */}
-                    <div style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '135px',
-                      backgroundColor: theme.bgCardSubtle,
-                    }}>
-                      <Image
-                        src={p.image}
-                        alt={p.name}
-                        fill
-                        unoptimized
-                        sizes="(max-width: 768px) 100vw, 240px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                      {/* Quantity in Cart Badge */}
-                      {countInCart > 0 && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          backgroundColor: theme.badgeBg,
-                          color: theme.badgeText,
-                          border: `1px solid ${theme.border}`,
-                          borderRadius: '9999px',
-                          padding: '2px 8px',
-                          fontSize: '11.5px',
-                          fontWeight: 800,
-                        }}>
-                          {countInCart}x
-                        </div>
-                      )}
-                      {p.isOffer && (
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '8px',
-                          left: '8px',
-                          backgroundColor: theme.activeBg,
-                          color: theme.activeText,
-                          borderRadius: '9999px',
-                          padding: '2px 7px',
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                        }}>
-                          Offer
-                        </div>
-                      )}
-                    </div>
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => addToCart(p)}
+                      role="button"
+                      tabIndex={0}
+                      style={{
+                        backgroundColor: theme.bgCard,
+                        border: countInCart > 0 ? `2px solid ${theme.activeBg}` : `1px solid ${theme.borderCard}`,
+                        borderRadius: '1rem',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.15s ease',
+                        position: 'relative',
+                        boxShadow: 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = theme.borderHover;
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (countInCart === 0) e.currentTarget.style.borderColor = theme.borderCard;
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      {/* Product Image Pod */}
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '135px',
+                        backgroundColor: theme.bgCardSubtle,
+                      }}>
+                        <Image
+                          src={p.image}
+                          alt={p.name}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 768px) 100vw, 240px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                        {/* Quantity in Cart Badge */}
+                        {countInCart > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            backgroundColor: theme.badgeBg,
+                            color: theme.badgeText,
+                            border: `1px solid ${theme.border}`,
+                            borderRadius: '9999px',
+                            padding: '2px 8px',
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                          }}>
+                            {countInCart}x
+                          </div>
+                        )}
+                        {p.isOffer && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '8px',
+                            left: '8px',
+                            backgroundColor: '#F59E0B',
+                            color: '#FFFFFF',
+                            borderRadius: '9999px',
+                            padding: '2px 8px',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+                          }}>
+                            {p.offerBadge || 'Offer'}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Product Details */}
-                    <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em' }}>
-                        {p.name}
-                      </span>
-                      <span style={{ fontSize: '12px', color: theme.textSecondary }}>
-                        {p.variant}
-                      </span>
-                      <span style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, marginTop: '0.35rem' }}>
-                        ₹{p.price}
-                      </span>
+                      {/* Product Details */}
+                      <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em' }}>
+                          {p.name}
+                        </span>
+                        <span style={{ fontSize: '12px', color: theme.textSecondary }}>
+                          {p.variant}
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem', marginTop: '0.35rem' }}>
+                          <span style={{ fontSize: '16px', fontWeight: 800, color: p.isOffer ? '#059669' : theme.textPrimary }}>
+                            ₹{p.price}
+                          </span>
+                          {p.isOffer && p.originalPrice && p.originalPrice > p.price && (
+                            <span style={{ fontSize: '12px', color: theme.textSecondary, textDecoration: 'line-through' }}>
+                              ₹{p.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )
           ) : activeNav === 'held_sales' ? (
             /* Held Sales List View */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1422,7 +1681,7 @@ export default function PosMainScreen() {
                 padding: '1px 6px',
                 borderRadius: '9999px',
               }}>
-                #ORD-1025
+                {orderNumber}
               </span>
             </div>
 
@@ -1803,37 +2062,43 @@ export default function PosMainScreen() {
                     <CloseRoundedIcon sx={{ fontSize: 13 }} />
                   </button>
                 </div>
-                {frequentCustomers.map((cust) => (
-                  <div
-                    key={cust.phone}
-                    onClick={() => {
-                      setCustomerName(cust.name);
-                      setCustomerPhone(cust.phone);
-                      setShowCustomerPicker(false);
-                    }}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.35rem 0.5rem',
-                      borderRadius: '0.45rem',
-                      cursor: 'pointer',
-                      backgroundColor: customerPhone === cust.phone ? theme.hoverBg : 'transparent',
-                      transition: 'background-color 0.1s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = customerPhone === cust.phone ? theme.hoverBg : 'transparent';
-                    }}
-                  >
-                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textPrimary }}>
-                      {cust.name}
-                    </span>
-                    <span style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace, inherit' }}>
-                      {cust.phone}
-                    </span>
+                {frequentCustomers.length === 0 ? (
+                  <div style={{ padding: '0.65rem 0.5rem', fontSize: '11px', color: theme.textSecondary, textAlign: 'center' }}>
+                    No saved customers yet
                   </div>
-                ))}
+                ) : (
+                  frequentCustomers.map((cust) => (
+                    <div
+                      key={cust.phone}
+                      onClick={() => {
+                        setCustomerName(cust.name);
+                        setCustomerPhone(cust.phone);
+                        setShowCustomerPicker(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '0.35rem 0.5rem',
+                        borderRadius: '0.45rem',
+                        cursor: 'pointer',
+                        backgroundColor: customerPhone === cust.phone ? theme.hoverBg : 'transparent',
+                        transition: 'background-color 0.1s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = customerPhone === cust.phone ? theme.hoverBg : 'transparent';
+                      }}
+                    >
+                      <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textPrimary }}>
+                        {cust.name}
+                      </span>
+                      <span style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace, inherit' }}>
+                        {cust.phone}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -2038,7 +2303,13 @@ export default function PosMainScreen() {
               {discountPct > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#22C55E' }}>
                   <span>Discount ({discountPct}%)</span>
-                  <span style={{ fontWeight: 700 }}>-₹{discountAmount}</span>
+                  <span style={{ fontWeight: 700 }}>-₹{manualDiscount}</span>
+                </div>
+              )}
+              {promoDiscountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#059669' }}>
+                  <span>Promo Offer ({appliedPromoCode})</span>
+                  <span style={{ fontWeight: 700 }}>-₹{promoDiscountAmount}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: theme.textSecondary }}>
@@ -2060,6 +2331,88 @@ export default function PosMainScreen() {
                 <span style={{ fontSize: '19px', fontWeight: 900, color: theme.textPrimary }}>₹{total}</span>
               </div>
             </div>
+
+            {/* Promo Code Input / Applied Badge */}
+            <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+              <div
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F8FAFC',
+                  borderRadius: '0.5rem',
+                  border: `1px solid ${theme.border}`,
+                  padding: '2px 8px',
+                  height: '31px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <LocalOfferRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary }} />
+                <input
+                  type="text"
+                  placeholder="Promo / Coupon code"
+                  value={appliedPromoCode}
+                  onChange={(e) => setAppliedPromoCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleApplyCouponCode(appliedPromoCode);
+                    }
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    fontSize: '11px',
+                    fontFamily: 'monospace',
+                    fontWeight: 700,
+                    color: theme.textPrimary,
+                    width: '100%',
+                  }}
+                />
+                {appliedPromoCode && (
+                  <button
+                    type="button"
+                    onClick={() => handleApplyCouponCode('')}
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: theme.textSecondary, padding: 0, display: 'flex' }}
+                  >
+                    <CloseRoundedIcon sx={{ fontSize: 13 }} />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={cart.length === 0 || !appliedPromoCode}
+                onClick={() => handleApplyCouponCode(appliedPromoCode)}
+                style={{
+                  height: '31px',
+                  padding: '0 10px',
+                  borderRadius: '0.5rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: promoDiscountAmount > 0 ? '#10B981' : (theme.sidebarIsDark ? theme.bgCard : '#F1F5F9'),
+                  color: promoDiscountAmount > 0 ? '#FFFFFF' : theme.textPrimary,
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: cart.length === 0 || !appliedPromoCode ? 'not-allowed' : 'pointer',
+                  opacity: cart.length === 0 || !appliedPromoCode ? 0.5 : 1,
+                  fontFamily: 'inherit',
+                }}
+              >
+                {promoDiscountAmount > 0 ? 'Applied' : 'Apply'}
+              </button>
+            </div>
+            {promoMessage && (
+              <div
+                style={{
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  color: promoDiscountAmount > 0 ? '#059669' : '#DC2626',
+                  padding: '0 2px',
+                }}
+              >
+                {promoMessage}
+              </div>
+            )}
 
             {/* Action Buttons: Hold Sale + 10% Discount */}
             <div style={{ display: 'flex', gap: '0.45rem' }}>
@@ -2110,32 +2463,19 @@ export default function PosMainScreen() {
             {/* Primary Payment Button (Charge ₹Total) */}
             <button
               type="button"
+              role="button"
+              className="button-20"
               disabled={cart.length === 0}
               onClick={() => setShowPaymentModal(true)}
               style={{
                 width: '100%',
-                height: '42px',
-                borderRadius: '0.75rem',
-                backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                color: theme.sidebarIsDark ? '#FFFFFF' : '#191a19',
-                fontSize: '14px',
+                height: '44px',
+                borderRadius: '6px',
+                fontSize: '15px',
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
-                border: `1px solid ${theme.sidebarIsDark ? theme.border : '#e2e8f0'}`,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                 cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                 opacity: cart.length === 0 ? 0.45 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (cart.length > 0) e.currentTarget.style.opacity = '0.9';
-              }}
-              onMouseLeave={(e) => {
-                if (cart.length > 0) e.currentTarget.style.opacity = '1';
               }}
             >
               <span>Charge ₹{total}</span>
@@ -2172,7 +2512,7 @@ export default function PosMainScreen() {
                   Payment of ₹{total} Successful!
                 </h3>
                 <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 0.5rem 0' }}>
-                  Order #ORD-1025 completed • Receipt printing...
+                  Order {orderNumber} completed • Receipt printing...
                 </p>
                 <div style={{
                   display: 'inline-flex',
@@ -2394,7 +2734,7 @@ export default function PosMainScreen() {
                   style={{
                     width: '100%',
                     height: '46px',
-                    borderRadius: '0.75rem',
+                    borderRadius: '6px',
                     backgroundColor: theme.posBtnBg,
                     color: theme.posBtnText,
                     fontSize: '14.5px',

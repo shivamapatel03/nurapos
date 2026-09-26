@@ -391,29 +391,28 @@ export default function SalesManagement({
           </p>
         </div>
 
-        {/* Global Print / Refresh Action */}
+        {/* Global Print Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => window.print()}
+            title="Print Ledger"
             style={{
               height: '36px',
-              padding: '0 0.95rem',
+              width: '36px',
+              padding: 0,
               borderRadius: '0.65rem',
               border: `1px solid ${theme.border}`,
               backgroundColor: theme.bgCard,
               color: theme.textPrimary,
-              fontSize: '12.5px',
-              fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.45rem',
+              justifyContent: 'center',
               transition: 'all 0.15s ease',
             }}
           >
-            <PrintRoundedIcon sx={{ fontSize: 16 }} />
-            <span>Print Ledger</span>
+            <PrintRoundedIcon sx={{ fontSize: 18 }} />
           </button>
         </div>
       </div>

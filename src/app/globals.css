@@ -180,6 +180,63 @@ a {
   pointer-events: none;
 }
 
+/* Danger / Destructive Button-20 (Red Edition with Gradient & Inset Highlight) */
+.button-20-danger {
+  appearance: button;
+  background-color: #DC2626;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0));
+  border: 1px solid #B91C1C;
+  border-radius: 1rem;
+  box-shadow: rgba(255, 255, 255, 0.2) 0 1px 0 inset, rgba(220, 38, 38, 0.2) 0 1px 2px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-inter, Inter, sans-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+  padding: .5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+.button-20-danger:focus:not(:focus-visible),
+.button-20-danger:focus {
+  outline: 0;
+  box-shadow: rgba(255, 255, 255, 0.2) 0 1px 0 inset, rgba(220, 38, 38, 0.35) 0 0 0 .2rem;
+}
+
+.button-20-danger:hover {
+  background-color: #B91C1C;
+  border-color: #991B1B;
+  color: #FFFFFF;
+}
+
+.button-20-danger:active {
+  background-color: #991B1B;
+  background-image: none;
+  border-color: #7F1D1D;
+  box-shadow: rgba(0, 0, 0, 0.25) 0 3px 5px inset;
+}
+
+.button-20-danger:disabled {
+  background-image: none;
+  box-shadow: none;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
 /* 3D Tactile Button-20 */
 .button-20-3d {
   appearance: button;

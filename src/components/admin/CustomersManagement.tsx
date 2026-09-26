@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 // Material Rounded Icons
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
@@ -18,8 +18,6 @@ import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
-import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
-import StarsRoundedIcon from '@mui/icons-material/StarsRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
@@ -45,7 +43,6 @@ export interface CustomerOrderRecord {
   items: CustomerOrderItem[];
   totalAmount: number;
   paymentMethod: 'UPI' | 'Card' | 'Cash' | 'Wallet';
-  loyaltyPointsEarned: number;
   status: 'Completed' | 'Refunded';
 }
 
@@ -55,25 +52,14 @@ export interface Customer {
   phone: string;
   email: string;
   group: 'VIP Elite' | 'Store Regulars' | 'New Patrons' | 'At-Risk';
-  loyaltyTier: 'Platinum VIP' | 'Gold' | 'Silver' | 'Bronze';
   totalOrders: number;
   lifetimeSpend: number;
-  pointsBalance: number;
   lastVisit: string;
   joinedDate: string;
   favoriteItem: string;
   notes?: string;
   birthday?: string;
   avatarColor: string;
-}
-
-export interface LoyaltyRewardVoucher {
-  id: string;
-  title: string;
-  pointsCost: number;
-  description: string;
-  category: 'Discount' | 'Complimentary' | 'VIP Experience';
-  minOrderValue?: number;
 }
 
 export interface CustomerFeedbackRecord {
@@ -126,40 +112,6 @@ const INITIAL_CUSTOMERS: Customer[] = [];
 
 const INITIAL_ORDERS: CustomerOrderRecord[] = [];
 
-const REWARD_VOUCHERS: LoyaltyRewardVoucher[] = [
-  {
-    id: 'VOUCH-01',
-    title: 'Flat ₹100 Off Bill',
-    pointsCost: 200,
-    description: 'Instant deduction applied at checkout counter on tickets above ₹500.',
-    category: 'Discount',
-    minOrderValue: 500,
-  },
-  {
-    id: 'VOUCH-02',
-    title: 'Complimentary Artisan Cappuccino',
-    pointsCost: 350,
-    description: 'Freshly brewed single origin Arabica coffee (Regular 8oz).',
-    category: 'Complimentary',
-  },
-  {
-    id: 'VOUCH-03',
-    title: 'Free Truffle Fries Upgrade',
-    pointsCost: 250,
-    description: 'Upgrade any classic french fries to Truffle Parmesan seasoning.',
-    category: 'Complimentary',
-    minOrderValue: 400,
-  },
-  {
-    id: 'VOUCH-04',
-    title: 'Flat 20% Off Weekend Feast',
-    pointsCost: 600,
-    description: 'Exclusive 20% total bill discount on Saturday & Sunday orders.',
-    category: 'VIP Experience',
-    minOrderValue: 1200,
-  },
-];
-
 const INITIAL_FEEDBACK: CustomerFeedbackRecord[] = [];
 
 export default function CustomersManagement({
@@ -178,9 +130,27 @@ export default function CustomersManagement({
 
   // Customers State
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+
+  // Sync customers with localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nuradesk_customers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCustomers(parsed);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('nuradesk_customers', JSON.stringify(customers));
+    } catch (e) {}
+  }, [customers]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('ALL');
-  const [tierFilter, setTierFilter] = useState('ALL');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
 
@@ -197,17 +167,12 @@ export default function CustomersManagement({
   const [orderSearch, setOrderSearch] = useState('');
   const [orderPaymentFilter, setOrderPaymentFilter] = useState('ALL');
   const [viewingReceiptOrder, setViewingReceiptOrder] = useState<CustomerOrderRecord | null>(null);
-
-  // Points Adjustment State
-  const [adjustPointsCustomer, setAdjustPointsCustomer] = useState<Customer | null>(null);
-  const [pointsDelta, setPointsDelta] = useState<number>(100);
-  const [pointsReason, setPointsReason] = useState('Loyalty Promotional Reward');
   const [toastNotice, setToastNotice] = useState<string | null>(null);
 
   // Feedback State
   const [feedbacks, setFeedbacks] = useState<CustomerFeedbackRecord[]>(INITIAL_FEEDBACK);
   const [resolvingFeedback, setResolvingFeedback] = useState<CustomerFeedbackRecord | null>(null);
-  const [resolutionActionText, setResolutionActionText] = useState('Offered ₹100 apology voucher and SMS apology.');
+  const [resolutionActionText, setResolutionActionText] = useState('Offered compensation and apology.');
 
   // Filtered Customers
   const filteredCustomers = useMemo(() => {
@@ -219,11 +184,10 @@ export default function CustomersManagement({
         c.id.toLowerCase().includes(customerSearch.toLowerCase());
 
       const matchGroup = groupFilter === 'ALL' || c.group === groupFilter;
-      const matchTier = tierFilter === 'ALL' || c.loyaltyTier === tierFilter;
 
-      return matchSearch && matchGroup && matchTier;
+      return matchSearch && matchGroup;
     });
-  }, [customers, customerSearch, groupFilter, tierFilter]);
+  }, [customers, customerSearch, groupFilter]);
 
   // Filtered Orders
   const filteredOrders = useMemo(() => {
@@ -251,10 +215,8 @@ export default function CustomersManagement({
       phone: newCustPhone.trim(),
       email: newCustEmail.trim() || `${newCustName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
       group: newCustGroup,
-      loyaltyTier: 'Bronze',
       totalOrders: 1,
       lifetimeSpend: 0,
-      pointsBalance: 50, // Welcome points
       lastVisit: 'Today (New)',
       joinedDate: '2026-09-20',
       favoriteItem: 'Pending first order',
@@ -264,7 +226,7 @@ export default function CustomersManagement({
     };
 
     setCustomers((prev) => [newCust, ...prev]);
-    setToastNotice(`Customer ${newCust.name} added with 50 Welcome Loyalty Points.`);
+    setToastNotice(`Customer ${newCust.name} added successfully.`);
     setTimeout(() => setToastNotice(null), 3500);
 
     setNewCustName('');
@@ -273,24 +235,6 @@ export default function CustomersManagement({
     setNewCustBirthday('');
     setNewCustNotes('');
     setShowAddCustomerModal(false);
-  };
-
-  // Handle Adjust Points
-  const handleConfirmPointsAdjustment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adjustPointsCustomer) return;
-
-    setCustomers((prev) =>
-      prev.map((c) =>
-        c.id === adjustPointsCustomer.id
-          ? { ...c, pointsBalance: Math.max(0, c.pointsBalance + pointsDelta) }
-          : c
-      )
-    );
-
-    setToastNotice(`Adjusted ${pointsDelta >= 0 ? `+${pointsDelta}` : pointsDelta} points for ${adjustPointsCustomer.name}.`);
-    setTimeout(() => setToastNotice(null), 3500);
-    setAdjustPointsCustomer(null);
   };
 
   // Handle Resolve Feedback
@@ -437,7 +381,7 @@ export default function CustomersManagement({
                 letterSpacing: '-0.01em',
                 marginBottom: '0.65rem',
               }}>
-                Active Loyalty Members
+                Repeat Customers
               </div>
               <div style={{
                 display: 'flex',
@@ -446,10 +390,10 @@ export default function CustomersManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  {customers.filter(c => c.loyaltyTier !== 'Bronze').length}
+                  {customers.filter(c => c.totalOrders > 1).length}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {customers.length > 0 ? `${((customers.filter(c => c.loyaltyTier !== 'Bronze').length / customers.length) * 100).toFixed(1)}% loyalty participation` : '0% loyalty participation'}
+                  {customers.length > 0 ? `${((customers.filter(c => c.totalOrders > 1).length / customers.length) * 100).toFixed(1)}% repeat rate` : '0% repeat rate'}
                 </span>
               </div>
             </div>
@@ -587,29 +531,6 @@ export default function CustomersManagement({
                 <option value="New Patrons">New Patrons</option>
                 <option value="At-Risk">At-Risk</option>
               </select>
-
-              <select
-                value={tierFilter}
-                onChange={(e) => setTierFilter(e.target.value)}
-                style={{
-                  height: '38px',
-                  borderRadius: '0.65rem',
-                  backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                  color: theme.textPrimary,
-                  border: `1px solid ${theme.border}`,
-                  padding: '0 0.85rem',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="ALL">All Tiers</option>
-                <option value="Platinum VIP">Platinum VIP</option>
-                <option value="Gold">Gold</option>
-                <option value="Silver">Silver</option>
-                <option value="Bronze">Bronze</option>
-              </select>
             </div>
           </div>
 
@@ -626,10 +547,9 @@ export default function CustomersManagement({
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Customer</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Group & Tier</th>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Group</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Orders</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Lifetime Spend</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Loyalty Points</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Last Visit</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
                   </tr>
@@ -667,27 +587,22 @@ export default function CustomersManagement({
                       </td>
 
                       <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span style={{
-                            padding: '2px 7px',
-                            borderRadius: '9999px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            backgroundColor:
-                              c.group === 'VIP Elite' ? '#FEF3C7' :
-                              c.group === 'Store Regulars' ? '#DBEAFE' :
-                              c.group === 'New Patrons' ? '#DCFCE7' : '#FEE2E2',
-                            color:
-                              c.group === 'VIP Elite' ? '#92400E' :
-                              c.group === 'Store Regulars' ? '#1E40AF' :
-                              c.group === 'New Patrons' ? '#166534' : '#991B1B',
-                          }}>
-                            {c.group}
-                          </span>
-                          <span style={{ fontSize: '11.5px', color: theme.textSecondary, fontWeight: 700 }}>
-                            {c.loyaltyTier}
-                          </span>
-                        </div>
+                        <span style={{
+                          padding: '2px 7px',
+                          borderRadius: '9999px',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          backgroundColor:
+                            c.group === 'VIP Elite' ? '#FEF3C7' :
+                            c.group === 'Store Regulars' ? '#DBEAFE' :
+                            c.group === 'New Patrons' ? '#DCFCE7' : '#FEE2E2',
+                          color:
+                            c.group === 'VIP Elite' ? '#92400E' :
+                            c.group === 'Store Regulars' ? '#1E40AF' :
+                            c.group === 'New Patrons' ? '#166534' : '#991B1B',
+                        }}>
+                          {c.group}
+                        </span>
                       </td>
 
                       <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
@@ -696,23 +611,6 @@ export default function CustomersManagement({
 
                       <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#166534' }}>
                         ₹{c.lifetimeSpend.toLocaleString('en-IN')}
-                      </td>
-
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          fontWeight: 800,
-                          color: '#B45309',
-                          backgroundColor: '#FEF3C7',
-                          padding: '2px 7px',
-                          borderRadius: '0.35rem',
-                          fontSize: '12px',
-                        }}>
-                          <StarsRoundedIcon sx={{ fontSize: 14, color: '#F59E0B' }} />
-                          {c.pointsBalance} pts
-                        </span>
                       </td>
 
                       <td style={{ padding: '0.85rem 1rem', color: theme.textSecondary, fontSize: '12px', fontWeight: 600 }}>
@@ -738,30 +636,13 @@ export default function CustomersManagement({
                             <VisibilityRoundedIcon sx={{ fontSize: 14 }} />
                             <span>Profile</span>
                           </button>
-                          <button
-                            type="button"
-                            className="button-20-secondary"
-                            role="button"
-                            onClick={() => setAdjustPointsCustomer(c)}
-                            title="Adjust Loyalty Points"
-                            style={{
-                              padding: '0 8px',
-                              height: '28px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            <LoyaltyRoundedIcon sx={{ fontSize: 14 }} />
-                            <span>Points</span>
-                          </button>
                         </div>
                       </td>
                     </tr>
                   ))}
                   {filteredCustomers.length === 0 && (
                     <tr>
-                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
                         No customers match the current filter criteria.
                       </td>
                     </tr>
@@ -988,7 +869,6 @@ export default function CustomersManagement({
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Items Summary</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Amount</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Tender</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Points</th>
                     <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Receipt</th>
                   </tr>
                 </thead>
@@ -1012,11 +892,6 @@ export default function CustomersManagement({
                       <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
                         {o.paymentMethod}
                       </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{ fontWeight: 800, color: '#166534' }}>
-                          +{o.loyaltyPointsEarned} pts
-                        </span>
-                      </td>
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                         <button
                           type="button"
@@ -1039,7 +914,7 @@ export default function CustomersManagement({
                   ))}
                   {filteredOrders.length === 0 && (
                     <tr>
-                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
                         No purchase orders recorded yet.
                       </td>
                     </tr>
@@ -1329,7 +1204,7 @@ export default function CustomersManagement({
                   Add New Customer
                 </h3>
                 <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '3px 0 0 0' }}>
-                  Register patron details for loyalty points and personalized orders.
+                  Register patron details for store membership and personalized orders.
                 </p>
               </div>
               <button
@@ -1576,16 +1451,6 @@ export default function CustomersManagement({
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '3px' }}>
                     <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>{selectedCustomer.id}</span>
-                    <span style={{
-                      padding: '1px 6px',
-                      borderRadius: '9999px',
-                      fontSize: '10.5px',
-                      fontWeight: 800,
-                      backgroundColor: '#FEF3C7',
-                      color: '#B45309',
-                    }}>
-                      {selectedCustomer.loyaltyTier}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -1601,7 +1466,7 @@ export default function CustomersManagement({
             {/* Lifetime Metrics Summary */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '0.75rem',
               marginBottom: '1.25rem',
             }}>
@@ -1612,10 +1477,6 @@ export default function CustomersManagement({
               <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase' }}>Lifetime Spend</div>
                 <div style={{ fontSize: '18px', fontWeight: 800, color: '#166534', marginTop: '2px' }}>₹{selectedCustomer.lifetimeSpend.toLocaleString('en-IN')}</div>
-              </div>
-              <div style={{ padding: '0.75rem', borderRadius: '0.65rem', backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
-                <div style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase' }}>Loyalty Points</div>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: '#B45309', marginTop: '2px' }}>{selectedCustomer.pointsBalance}</div>
               </div>
             </div>
 
@@ -1680,135 +1541,6 @@ export default function CustomersManagement({
                 Close Profile
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL 3: ADJUST LOYALTY POINTS MODAL                                 */}
-      {/* ==================================================================== */}
-      {adjustPointsCustomer && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            width: '100%',
-            maxWidth: '440px',
-            padding: '1.75rem',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Adjust Loyalty Points
-                </h3>
-                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                  {adjustPointsCustomer.name} (Current: {adjustPointsCustomer.pointsBalance} pts)
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAdjustPointsCustomer(null)}
-                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmPointsAdjustment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
-                  POINTS TO CREDIT / DEBIT (+ / -)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={pointsDelta}
-                  onChange={(e) => setPointsDelta(parseInt(e.target.value, 10) || 0)}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0 0.85rem',
-                    fontSize: '16px',
-                    fontWeight: 800,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
-                  REASON FOR ADJUSTMENT
-                </label>
-                <select
-                  value={pointsReason}
-                  onChange={(e) => setPointsReason(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0 0.75rem',
-                    fontSize: '13px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="Loyalty Promotional Reward">Loyalty Promotional Reward</option>
-                  <option value="Customer Satisfaction Compensation">Customer Satisfaction Compensation</option>
-                  <option value="Special Birthday Perk">Special Birthday Perk</option>
-                  <option value="Correction of Missed Points">Correction of Missed Points</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="button-20-secondary"
-                  role="button"
-                  onClick={() => setAdjustPointsCustomer(null)}
-                  style={{
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="button-20"
-                  role="button"
-                  style={{
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Confirm Points
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

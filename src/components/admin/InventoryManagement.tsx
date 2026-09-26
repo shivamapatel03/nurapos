@@ -2500,14 +2500,12 @@ export default function InventoryManagement({
 
               <button
                 type="button"
+                className="button-20-danger"
+                role="button"
                 onClick={confirmDeleteItem}
                 style={{
                   height: '38px',
                   padding: '0 1.25rem',
-                  borderRadius: '1rem',
-                  border: '1px solid #DC2626',
-                  backgroundColor: '#DC2626',
-                  color: '#FFFFFF',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',

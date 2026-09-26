@@ -51,6 +51,7 @@ import SalesManagement from '@/components/admin/SalesManagement';
 import EmployeesManagement from '@/components/admin/EmployeesManagement';
 import CustomersManagement from '@/components/admin/CustomersManagement';
 import SettingsManagement from '@/components/admin/SettingsManagement';
+import OffersManagement from '@/components/admin/OffersManagement';
 import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
@@ -59,6 +60,7 @@ import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
 import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
+import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRounded';
 import { ThemeId, ThemeMode, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
 
 interface SubNavItem {
@@ -104,6 +106,7 @@ export default function AdminDashboardPage() {
     activeTabId === 'settings' ||
     activeTabId === 'set_store' ||
     activeTabId === 'set_business' ||
+    activeTabId === 'set_tables' ||
     activeTabId === 'set_tax' ||
     activeTabId === 'set_payments' ||
     activeTabId === 'set_hardware' ||
@@ -235,6 +238,7 @@ export default function AdminDashboardPage() {
         { id: 'add_product', label: 'Add Product', icon: <AddRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'categories', label: 'Categories', icon: <GridViewRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'brands', label: 'Brands', icon: <BrandingWatermarkRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'offers', label: 'Offers & Discounts', icon: <LocalOfferOutlinedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -295,6 +299,7 @@ export default function AdminDashboardPage() {
       subItems: [
         { id: 'set_store', label: 'Store Profile', icon: <StoreRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_business', label: 'Business Settings', icon: <TuneRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'set_tables', label: 'Tables & Dining', icon: <TableRestaurantRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_tax', label: 'Tax & Invoicing', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_payments', label: 'Payments', icon: <PaymentsRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_hardware', label: 'Hardware', icon: <PrintRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -410,6 +415,15 @@ export default function AdminDashboardPage() {
             transform: translateY(0) scale(1);
           }
         }
+        .sidebar-nav-btn .sidebar-chevron-arrow {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.18s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-nav-btn:hover .sidebar-chevron-arrow,
+        .sidebar-nav-btn.is-expanded .sidebar-chevron-arrow {
+          opacity: 1;
+        }
       `}</style>
 
       {/* Main Body Layout: Sidebar + Main Scrollable Area */}
@@ -494,6 +508,7 @@ export default function AdminDashboardPage() {
                 <div key={item.id}>
                   <button
                     type="button"
+                    className={`sidebar-nav-btn ${isExpanded ? 'is-expanded' : ''}`}
                     onClick={() => {
                       if (item.href) {
                         router.push(item.href);
@@ -560,22 +575,26 @@ export default function AdminDashboardPage() {
 
                     {/* Submenu Accordion Chevron or Link Arrow */}
                     {hasSubItems ? (
-                      <span style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
-                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}>
+                      <span
+                        className="sidebar-chevron-arrow"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                      >
                         <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary) }} />
                       </span>
                     ) : item.href ? (
-                      <span style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: theme.sidebarTextSecondary || theme.textSecondary,
-                        opacity: 0.7,
-                      }}>
+                      <span
+                        className="sidebar-chevron-arrow"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: theme.sidebarTextSecondary || theme.textSecondary,
+                        }}
+                      >
                         <ArrowOutwardRoundedIcon sx={{ fontSize: 13 }} />
                       </span>
                     ) : null}
@@ -957,6 +976,7 @@ export default function AdminDashboardPage() {
             <SettingsManagement
               activeSubTab={
                 activeTabId === 'set_business' ? 'set_business' :
+                activeTabId === 'set_tables' ? 'set_tables' :
                 activeTabId === 'set_tax' ? 'set_tax' :
                 activeTabId === 'set_payments' ? 'set_payments' :
                 activeTabId === 'set_hardware' ? 'set_hardware' :
@@ -1027,6 +1047,8 @@ export default function AdminDashboardPage() {
               }}
               theme={theme}
             />
+          ) : activeTabId === 'offers' ? (
+            <OffersManagement theme={theme} />
           ) : isCatalogActive ? (
             <ProductManagement
               activeSubTab={
@@ -1102,7 +1124,7 @@ export default function AdminDashboardPage() {
                           letterSpacing: '-0.01em',
                           color: theme.textPrimary,
                         }}>
-                          Store Setup · 2 Simple Steps
+                          Store Setup · 3 Quick Steps
                         </span>
                       </div>
                     </div>
@@ -1347,6 +1369,134 @@ export default function AdminDashboardPage() {
                             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
                           >
                             <span>POS settings</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Set tables for cafe or restaurant */}
+                      <div
+                        style={{
+                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                          border: `1px solid ${theme.borderCard}`,
+                          borderRadius: '0.9rem',
+                          padding: '1.15rem 1.15rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minHeight: '170px',
+                          boxSizing: 'border-box',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                        }}
+                      >
+                        <div>
+                          {/* Top Icon & Status Badge */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <TableRestaurantRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
+                            </div>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: theme.textSecondary,
+                              backgroundColor: theme.hoverBg,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                            }}>
+                              Step 3
+                            </span>
+                          </div>
+
+                          {/* Headline */}
+                          <h3 style={{
+                            fontSize: '15px',
+                            fontWeight: 800,
+                            color: theme.textPrimary,
+                            letterSpacing: '-0.02em',
+                            margin: '0 0 0.35rem 0',
+                            lineHeight: 1.25,
+                          }}>
+                            Set tables for cafe or restaurant
+                          </h3>
+
+                          {/* Description */}
+                          <p style={{
+                            fontSize: '12px',
+                            color: theme.textSecondary,
+                            lineHeight: 1.45,
+                            margin: 0,
+                            fontWeight: 450,
+                          }}>
+                            Configure floor layouts, seating capacity, table numbers, and order ticket tokens.
+                          </p>
+                        </div>
+
+                        {/* Middle Illustration */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0.5rem 0',
+                          margin: '0.35rem 0',
+                        }}>
+                          <Image
+                            src="/dashimages/card3dash.png"
+                            alt="Set tables for cafe or restaurant"
+                            width={195}
+                            height={130}
+                            style={{
+                              objectFit: 'contain',
+                              maxHeight: '130px',
+                              width: 'auto',
+                              borderRadius: '0.6rem',
+                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
+                            }}
+                            priority
+                          />
+                        </div>
+
+                        {/* Bottom Actions Row */}
+                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTabId('set_tables');
+                              openSingleMenu('settings');
+                            }}
+                            className="button-20"
+                            style={{
+                              borderRadius: '9999px',
+                              padding: '0.45rem 1.15rem',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            <span>Set tables</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTabId('set_tables');
+                              openSingleMenu('settings');
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: theme.textPrimary,
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: '0.45rem 0.45rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontFamily: 'inherit',
+                              transition: 'opacity 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.75'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                          >
+                            <span>Ticket settings</span>
                           </button>
                         </div>
                       </div>

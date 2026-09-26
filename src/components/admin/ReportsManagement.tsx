@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 // Material Rounded Icons
@@ -29,6 +29,8 @@ import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 export interface ReportsManagementProps {
   activeSubTab?: 'rep_sales' | 'rep_inventory' | 'rep_customers' | 'rep_performance';
@@ -432,8 +434,129 @@ export default function ReportsManagement({
     }
   }, [activeSubTab]);
 
-  // Global Timeframe State (Daily, Weekly, Monthly)
-  const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  // Global Timeframe State (Daily, Weekly, Monthly, or Custom Range)
+  const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('weekly');
+
+  // Calendar Date Range Selection State
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePreset, setDatePreset] = useState<'today' | 'yesterday' | '7days' | '30days' | 'this_month' | 'custom'>('7days');
+
+  // Date calculation helpers
+  const getTodayStr = () => '2026-09-25';
+  const getDaysAgoStr = (days: number) => {
+    const d = new Date(2026, 8, 25);
+    d.setDate(d.getDate() - days);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [startDate, setStartDate] = useState(getDaysAgoStr(6)); // Default: Last 7 Days (Sep 19 - Sep 25)
+  const [endDate, setEndDate] = useState(getTodayStr());
+  const [tempStartDate, setTempStartDate] = useState(getDaysAgoStr(6));
+  const [tempEndDate, setTempEndDate] = useState(getTodayStr());
+
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Close calendar popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
+
+  const formatDisplayDate = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const dateRangeDisplay = useMemo(() => {
+    if (datePreset === 'today') {
+      return `Today (${formatDisplayDate(startDate)})`;
+    }
+    if (datePreset === 'yesterday') {
+      return `Yesterday (${formatDisplayDate(startDate)})`;
+    }
+    if (startDate === endDate) {
+      return formatDisplayDate(startDate);
+    }
+    return `${formatDisplayDate(startDate)} – ${formatDisplayDate(endDate)}`;
+  }, [startDate, endDate, datePreset]);
+
+  const applyPreset = (preset: 'today' | 'yesterday' | '7days' | '30days' | 'this_month') => {
+    setDatePreset(preset);
+    const today = getTodayStr();
+    if (preset === 'today') {
+      setStartDate(today);
+      setEndDate(today);
+      setTempStartDate(today);
+      setTempEndDate(today);
+      setTimeframe('daily');
+    } else if (preset === 'yesterday') {
+      const yesterday = getDaysAgoStr(1);
+      setStartDate(yesterday);
+      setEndDate(yesterday);
+      setTempStartDate(yesterday);
+      setTempEndDate(yesterday);
+      setTimeframe('daily');
+    } else if (preset === '7days') {
+      const start = getDaysAgoStr(6);
+      setStartDate(start);
+      setEndDate(today);
+      setTempStartDate(start);
+      setTempEndDate(today);
+      setTimeframe('weekly');
+    } else if (preset === '30days') {
+      const start = getDaysAgoStr(29);
+      setStartDate(start);
+      setEndDate(today);
+      setTempStartDate(start);
+      setTempEndDate(today);
+      setTimeframe('monthly');
+    } else if (preset === 'this_month') {
+      const start = '2026-09-01';
+      setStartDate(start);
+      setEndDate(today);
+      setTempStartDate(start);
+      setTempEndDate(today);
+      setTimeframe('monthly');
+    }
+    setShowDatePicker(false);
+  };
+
+  const handleApplyCustomDates = () => {
+    if (!tempStartDate || !tempEndDate) return;
+    setDatePreset('custom');
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+    setTimeframe('custom');
+    setShowDatePicker(false);
+  };
+
+  const handleTimeframeChange = (t: 'daily' | 'weekly' | 'monthly') => {
+    setTimeframe(t);
+    if (t === 'daily') {
+      applyPreset('today');
+    } else if (t === 'weekly') {
+      applyPreset('7days');
+    } else if (t === 'monthly') {
+      applyPreset('this_month');
+    }
+  };
 
   // Print simulation
   const handlePrint = () => {
@@ -575,8 +698,217 @@ export default function ReportsManagement({
           </p>
         </div>
 
-        {/* Header Controls: Timeframe Filter + Export */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        {/* Header Controls: Calendar Date Range + Timeframe Filter + Export */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {/* Calendar Date Range Dropdown Popover */}
+          <div ref={datePickerRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setTempStartDate(startDate);
+                setTempEndDate(endDate);
+                setShowDatePicker((prev) => !prev);
+              }}
+              title="Filter by calendar date range"
+              style={{
+                height: '34px',
+                padding: '0 0.85rem',
+                borderRadius: '0.65rem',
+                border: `1px solid ${showDatePicker ? theme.textPrimary : theme.border}`,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                color: theme.textPrimary,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                boxShadow: showDatePicker ? '0 0 0 2px rgba(0,0,0,0.06)' : 'none',
+                transition: 'all 0.18s ease',
+              }}
+            >
+              <CalendarTodayRoundedIcon sx={{ fontSize: 14, color: theme.textSecondary }} />
+              <span>{dateRangeDisplay}</span>
+              <KeyboardArrowDownRoundedIcon sx={{
+                fontSize: 16,
+                color: theme.textSecondary,
+                transform: showDatePicker ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.2s ease',
+              }} />
+            </button>
+
+            {/* Calendar Popover */}
+            {showDatePicker && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                width: '310px',
+                maxWidth: 'calc(100vw - 240px)',
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${theme.border}`,
+                borderRadius: '0.85rem',
+                boxShadow: '0 16px 36px rgba(0,0,0,0.18)',
+                padding: '1.15rem',
+                zIndex: 60,
+                boxSizing: 'border-box',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
+                    Filter Report Period
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDatePicker(false)}
+                    style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '2px' }}
+                  >
+                    <CloseRoundedIcon sx={{ fontSize: 18 }} />
+                  </button>
+                </div>
+
+                {/* Quick Presets Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '0.45rem',
+                  marginBottom: '1rem',
+                }}>
+                  {[
+                    { id: 'today', label: 'Today' },
+                    { id: 'yesterday', label: 'Yesterday' },
+                    { id: '7days', label: 'Last 7 Days' },
+                    { id: '30days', label: 'Last 30 Days' },
+                    { id: 'this_month', label: 'This Month' },
+                  ].map((p) => {
+                    const isSelected = datePreset === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => applyPreset(p.id as any)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: '0.45rem',
+                          border: `1px solid ${isSelected ? theme.textPrimary : theme.border}`,
+                          backgroundColor: isSelected ? theme.activeBg : (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+                          color: isSelected ? theme.activeText : theme.textPrimary,
+                          fontSize: '11.5px',
+                          fontWeight: isSelected ? 800 : 600,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          textAlign: 'center',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Date Range Pickers */}
+                <div style={{
+                  borderTop: `1px solid ${theme.border}`,
+                  paddingTop: '0.85rem',
+                  marginBottom: '0.85rem',
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.65rem' }}>
+                    Custom Date Range
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                    <div>
+                      <span style={{ fontSize: '11.5px', color: theme.textSecondary, display: 'block', marginBottom: '3px' }}>
+                        From Date
+                      </span>
+                      <input
+                        type="date"
+                        value={tempStartDate}
+                        onChange={(e) => setTempStartDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          height: '36px',
+                          padding: '0 0.65rem',
+                          borderRadius: '0.5rem',
+                          backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+                          border: `1px solid ${theme.border}`,
+                          color: theme.textPrimary,
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          fontFamily: 'inherit',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '11.5px', color: theme.textSecondary, display: 'block', marginBottom: '3px' }}>
+                        To Date
+                      </span>
+                      <input
+                        type="date"
+                        value={tempEndDate}
+                        onChange={(e) => setTempEndDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          height: '36px',
+                          padding: '0 0.65rem',
+                          borderRadius: '0.5rem',
+                          backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
+                          border: `1px solid ${theme.border}`,
+                          color: theme.textPrimary,
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          fontFamily: 'inherit',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Popover Footer Actions */}
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => applyPreset('7days')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '0.5rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: 'transparent',
+                      color: theme.textSecondary,
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyCustomDates}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      backgroundColor: theme.activeBg,
+                      color: theme.activeText,
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Apply Range
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Timeframe Segmented Switcher */}
           <div style={{
             position: 'relative',
@@ -596,8 +928,9 @@ export default function ReportsManagement({
               width: 'calc((100% - 6px) / 3)',
               borderRadius: '0.45rem',
               backgroundColor: theme.activeBg,
-              transform: `translateX(${timeframe === 'daily' ? '0%' : timeframe === 'weekly' ? '100%' : '200%'})`,
-              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: `translateX(${timeframe === 'daily' ? '0%' : timeframe === 'weekly' ? '100%' : timeframe === 'monthly' ? '200%' : '100%'})`,
+              opacity: timeframe === 'custom' ? 0.35 : 1,
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
               pointerEvents: 'none',
               boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
             }} />
@@ -608,7 +941,7 @@ export default function ReportsManagement({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setTimeframe(t)}
+                  onClick={() => handleTimeframeChange(t)}
                   style={{
                     position: 'relative',
                     zIndex: 1,
@@ -636,24 +969,23 @@ export default function ReportsManagement({
           <button
             type="button"
             onClick={handlePrint}
+            title="Print Report"
             style={{
               height: '34px',
-              padding: '0 0.85rem',
+              width: '34px',
+              padding: 0,
               borderRadius: '0.6rem',
               border: `1px solid ${theme.border}`,
               backgroundColor: theme.bgCard,
               color: theme.textPrimary,
-              fontSize: '12.5px',
-              fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              justifyContent: 'center',
               transition: 'all 0.15s ease',
             }}
           >
-            <PrintRoundedIcon sx={{ fontSize: 16 }} />
-            <span>Print Report</span>
+            <PrintRoundedIcon sx={{ fontSize: 18 }} />
           </button>
         </div>
       </div>

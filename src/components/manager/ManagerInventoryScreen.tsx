@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 
 // Material Rounded Icons
-import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -15,10 +14,8 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import MoveToInboxRoundedIcon from '@mui/icons-material/MoveToInboxRounded';
 import QrCodeRoundedIcon from '@mui/icons-material/QrCodeRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 
 export interface ManagerProduct {
@@ -49,6 +46,8 @@ export interface StockMovement {
 }
 
 interface ManagerInventoryScreenProps {
+  activeSubTab?: 'inv_overview' | 'inv_low' | 'inv_adjustments' | 'inv_movement';
+  onSelectSubTab?: (tab: string) => void;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -72,182 +71,20 @@ interface ManagerInventoryScreenProps {
     tableRowHover: string;
     popoverBg: string;
     popoverBorder: string;
+    sidebarIsDark?: boolean;
   };
 }
 
-const INITIAL_MANAGER_PRODUCTS: ManagerProduct[] = [
-  {
-    id: 'prod-1',
-    name: 'Classic Burger Patty (Beef)',
-    sku: 'SKU-BRG-001',
-    barcode: '890103001001',
-    category: 'Burgers',
-    currentStock: 85,
-    minStock: 30,
-    unitPrice: 240,
-    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80',
-    location: 'Freezer Shelf A-1',
-  },
-  {
-    id: 'prod-2',
-    name: 'Brioche Burger Buns (Pack 12)',
-    sku: 'SKU-BRG-002',
-    barcode: '890103001002',
-    category: 'Bakery',
-    currentStock: 42,
-    minStock: 20,
-    unitPrice: 150,
-    image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400&auto=format&fit=crop&q=80',
-    location: 'Bakery Rack B',
-  },
-  {
-    id: 'prod-3',
-    name: 'Espresso Roast Beans 1kg',
-    sku: 'SKU-DRK-001',
-    barcode: '890103002001',
-    category: 'Beverages',
-    currentStock: 4,
-    minStock: 10,
-    unitPrice: 1250,
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80',
-    location: 'Espresso Bar Shelf',
-  },
-  {
-    id: 'prod-4',
-    name: 'Amul Cheddar Cheese Slices (1kg)',
-    sku: 'SKU-DAI-001',
-    barcode: '890103003001',
-    category: 'Dairy',
-    currentStock: 18,
-    minStock: 12,
-    unitPrice: 520,
-    image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&auto=format&fit=crop&q=80',
-    location: 'Chiller Bin 2',
-  },
-  {
-    id: 'prod-5',
-    name: 'Whole Milk Pouches 1L',
-    sku: 'SKU-DRK-002',
-    barcode: '890103003002',
-    category: 'Dairy',
-    currentStock: 0,
-    minStock: 25,
-    unitPrice: 70,
-    image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&auto=format&fit=crop&q=80',
-    location: 'Chiller Bin 1',
-  },
-  {
-    id: 'prod-6',
-    name: 'Nuradesk Staff T-Shirt (M)',
-    sku: 'SKU-APP-001',
-    barcode: '890103004001',
-    category: 'Apparel',
-    currentStock: 22,
-    minStock: 10,
-    unitPrice: 799,
-    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80',
-    location: 'Staff Locker Unit',
-  },
-  {
-    id: 'prod-7',
-    name: 'Smokey BBQ Dip Sauce 500ml',
-    sku: 'SKU-SAU-001',
-    barcode: '890103005001',
-    category: 'Sauces',
-    currentStock: 3,
-    minStock: 8,
-    unitPrice: 220,
-    image: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=400&auto=format&fit=crop&q=80',
-    location: 'Sauce Rack 1',
-  },
-  {
-    id: 'prod-8',
-    name: 'Eco Paper Takeaway Bags (100pk)',
-    sku: 'SKU-PKG-001',
-    barcode: '890103006001',
-    category: 'Packaging',
-    currentStock: 15,
-    minStock: 10,
-    unitPrice: 650,
-    image: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=400&auto=format&fit=crop&q=80',
-    location: 'Packing Station C',
-  },
-];
+const INITIAL_MANAGER_PRODUCTS: ManagerProduct[] = [];
 
-const INITIAL_MOVEMENTS: StockMovement[] = [
-  {
-    id: 'MOV-1052',
-    productId: 'prod-1',
-    productName: 'Classic Burger Patty (Beef)',
-    sku: 'SKU-BRG-001',
-    date: 'Today, 01:45 PM',
-    type: 'received',
-    quantityChange: 50,
-    balanceAfter: 85,
-    reason: 'Stock Received from Metro Wholesale Depot',
-    managedBy: 'Amit Patel (Manager)',
-    refCode: 'PO-2026-086',
-  },
-  {
-    id: 'MOV-1051',
-    productId: 'prod-3',
-    productName: 'Espresso Roast Beans 1kg',
-    sku: 'SKU-DRK-001',
-    date: 'Today, 11:20 AM',
-    type: 'internal',
-    quantityChange: -2,
-    balanceAfter: 4,
-    reason: 'Barista staff training & cupping tasting',
-    managedBy: 'Amit Patel (Manager)',
-    refCode: 'INTERNAL-09',
-  },
-  {
-    id: 'MOV-1050',
-    productId: 'prod-5',
-    productName: 'Whole Milk Pouches 1L',
-    sku: 'SKU-DRK-002',
-    date: 'Today, 09:15 AM',
-    type: 'damage',
-    quantityChange: -5,
-    balanceAfter: 0,
-    reason: 'Compromised seal during delivery unloading',
-    managedBy: 'Amit Patel (Manager)',
-    refCode: 'QC-DAM-14',
-  },
-  {
-    id: 'MOV-1049',
-    productId: 'prod-4',
-    productName: 'Amul Cheddar Cheese Slices (1kg)',
-    sku: 'SKU-DAI-001',
-    date: 'Yesterday, 05:30 PM',
-    type: 'received',
-    quantityChange: 10,
-    balanceAfter: 18,
-    reason: 'Daily Dairy Intake delivery',
-    managedBy: 'Amit Patel (Manager)',
-    refCode: 'PO-2026-084',
-  },
-  {
-    id: 'MOV-1048',
-    productId: 'prod-7',
-    productName: 'Smokey BBQ Dip Sauce 500ml',
-    sku: 'SKU-SAU-001',
-    date: 'Sep 18, 2026',
-    type: 'adjusted',
-    quantityChange: -2,
-    balanceAfter: 3,
-    reason: 'Inventory Audit Discrepancy Correction',
-    managedBy: 'Amit Patel (Manager)',
-    refCode: 'AUDIT-SEP-3',
-  },
-];
+const INITIAL_MOVEMENTS: StockMovement[] = [];
 
-export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreenProps) {
+export default function ManagerInventoryScreen({ activeSubTab, onSelectSubTab, theme }: ManagerInventoryScreenProps) {
   // State
   const [products, setProducts] = useState<ManagerProduct[]>(INITIAL_MANAGER_PRODUCTS);
   const [movements, setMovements] = useState<StockMovement[]>(INITIAL_MOVEMENTS);
 
-  // Active View Tab inside inventory: 'list' (Product List) or 'history' (Stock Movement History)
+  // Active View Tab: 'list' (Product Inventory) or 'history' (Stock Movement History)
   const [activeView, setActiveView] = useState<'list' | 'history'>('list');
 
   // Search & Filter State
@@ -255,11 +92,29 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [statusFilter, setStatusFilter] = useState<'All' | 'low_stock' | 'out_of_stock' | 'in_stock'>('All');
 
-  // Modals
+  // Modals (Strictly limited to intake & audit write-offs; NO product creation or deletion)
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [targetProduct, setTargetProduct] = useState<ManagerProduct | null>(null);
+
+  // Feedback banner
+  const [feedbackNotice, setFeedbackNotice] = useState<string | null>(null);
+
+  // Sync with activeSubTab from sidebar
+  useEffect(() => {
+    if (activeSubTab === 'inv_movement') {
+      setActiveView('history');
+    } else if (activeSubTab === 'inv_low') {
+      setActiveView('list');
+      setStatusFilter('low_stock');
+    } else if (activeSubTab === 'inv_adjustments') {
+      setActiveView('list');
+      handleOpenAdjust();
+    } else if (activeSubTab === 'inv_overview') {
+      setActiveView('list');
+      setStatusFilter('All');
+    }
+  }, [activeSubTab]);
 
   // Add Stock Form
   const [addQty, setAddQty] = useState<number>(10);
@@ -281,10 +136,12 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
   // Filtered Products
   const filteredProducts = useMemo(() => {
     return products.filter((prod) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prod.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prod.barcode.includes(searchQuery);
+        !q ||
+        prod.name.toLowerCase().includes(q) ||
+        prod.sku.toLowerCase().includes(q) ||
+        prod.barcode.includes(q);
 
       const matchesCategory = selectedCategory === 'All' || prod.category === selectedCategory;
 
@@ -301,7 +158,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
     });
   }, [products, searchQuery, selectedCategory, statusFilter]);
 
-  // 4 Top Metrics
+  // Top Metrics
   const totalProductsCount = products.length;
   const lowStockItems = useMemo(() => products.filter((p) => p.currentStock > 0 && p.currentStock <= p.minStock), [products]);
   const outOfStockItems = useMemo(() => products.filter((p) => p.currentStock === 0), [products]);
@@ -313,7 +170,13 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
   // Handlers
   const handleOpenAddStock = (prod?: ManagerProduct) => {
-    setTargetProduct(prod || products[0]);
+    const target = prod || products[0];
+    if (!target) {
+      setFeedbackNotice('No products exist in inventory catalog to restock.');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+      return;
+    }
+    setTargetProduct(target);
     setAddQty(10);
     setAddSource('Supplier Delivery');
     setAddRefCode(`GRN-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -321,17 +184,18 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
   };
 
   const handleOpenAdjust = (prod?: ManagerProduct) => {
-    setTargetProduct(prod || products[0]);
+    const target = prod || products[0];
+    if (!target) {
+      setFeedbackNotice('No products exist in inventory catalog to adjust.');
+      setTimeout(() => setFeedbackNotice(null), 3500);
+      return;
+    }
+    setTargetProduct(target);
     setAdjustQty(1);
     setAdjustType('decrease');
     setAdjustReason('Damage / Spoilage');
     setAdjustNotes('');
     setShowAdjustModal(true);
-  };
-
-  const handleOpenDelete = (prod: ManagerProduct) => {
-    setTargetProduct(prod);
-    setShowDeleteModal(true);
   };
 
   const submitAddStock = (e: React.FormEvent) => {
@@ -360,6 +224,8 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
     setMovements([movement, ...movements]);
     setShowAddStockModal(false);
+    setFeedbackNotice(`Successfully added +${addQty} units to "${targetProduct.name}".`);
+    setTimeout(() => setFeedbackNotice(null), 3500);
   };
 
   const submitAdjustment = (e: React.FormEvent) => {
@@ -389,59 +255,69 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
     setMovements([movement, ...movements]);
     setShowAdjustModal(false);
-  };
-
-  const confirmDeleteProduct = () => {
-    if (!targetProduct) return;
-    setProducts((prev) => prev.filter((p) => p.id !== targetProduct.id));
-    setShowDeleteModal(false);
-    setTargetProduct(null);
+    setFeedbackNotice(`Stock adjustment recorded (${delta > 0 ? `+${delta}` : delta} units) for "${targetProduct.name}".`);
+    setTimeout(() => setFeedbackNotice(null), 3500);
   };
 
   return (
-    <div style={{ maxWidth: '1160px', margin: '0 auto', width: '100%' }}>
-      {/* 1. Header Section */}
+    <div style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', color: theme.textPrimary }}>
+      {/* Toast Feedback */}
+      {feedbackNotice && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '0.75rem',
+          backgroundColor: '#064E3B',
+          color: '#ECFDF5',
+          border: '1px solid #059669',
+          marginBottom: '1.25rem',
+          fontSize: '13.5px',
+          fontWeight: 600,
+        }}>
+          <CheckCircleRoundedIcon sx={{ fontSize: 20, color: '#34D399' }} />
+          <span>{feedbackNotice}</span>
+        </div>
+      )}
+
+      {/* 1. Header Section - Clean and matching other dashboard views */}
       <div style={{
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '1rem',
-        marginBottom: '1.75rem',
+        marginBottom: '1.5rem',
       }}>
         <div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '12px',
-            fontWeight: 700,
-            color: theme.textSecondary,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            marginBottom: '0.35rem',
-          }}>
-            <span>Manager</span>
-            <span>/</span>
-            <span>Store Operations</span>
-            <span>/</span>
-            <span style={{ color: theme.textPrimary }}>Inventory</span>
-          </div>
           <h1 style={{
-            fontSize: '26px',
+            fontSize: '24px',
             fontWeight: 800,
             color: theme.textPrimary,
-            letterSpacing: '-0.04em',
-            margin: 0,
+            letterSpacing: '-0.035em',
+            margin: '0 0 0.25rem 0',
           }}>
-            Store Inventory Management
+            {activeView === 'history' ? 'Stock Movement History' : 'Store Inventory Management'}
           </h1>
+          <p style={{
+            fontSize: '13.5px',
+            color: theme.textSecondary,
+            margin: 0,
+            fontWeight: 500,
+          }}>
+            {activeView === 'history'
+              ? 'Real-time audit log of stock deliveries, damage write-offs, and shrinkage adjustments.'
+              : 'Track store product stocks, check threshold limits, and log deliveries.'}
+          </p>
         </div>
 
-        {/* Manager Header Actions: Add Stock & Stock Adjustment Buttons */}
+        {/* Manager Actions: Stock Adjustment & Add Stock */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
+            className="button-20-secondary"
+            role="button"
             onClick={() => handleOpenAdjust()}
             style={{
               height: '38px',
@@ -451,12 +327,12 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
               backgroundColor: theme.bgCard,
               color: theme.textPrimary,
               fontSize: '13px',
-              fontWeight: 800,
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              transition: 'all 0.15s ease',
+              fontFamily: 'inherit',
             }}
           >
             <TuneRoundedIcon sx={{ fontSize: 16 }} />
@@ -465,21 +341,23 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
           <button
             type="button"
+            className="button-20"
+            role="button"
             onClick={() => handleOpenAddStock()}
             style={{
               height: '38px',
               padding: '0 1.15rem',
               borderRadius: '0.65rem',
-              border: `1px solid ${theme.activeBg}`,
               backgroundColor: theme.activeBg,
               color: theme.activeText,
               fontSize: '13px',
-              fontWeight: 800,
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              transition: 'all 0.15s ease',
+              border: 'none',
+              fontFamily: 'inherit',
             }}
           >
             <AddRoundedIcon sx={{ fontSize: 18 }} />
@@ -488,34 +366,35 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
         </div>
       </div>
 
-      {/* 2. Top 4 Metric KPI Cards Grid (Matching User Requirements) */}
+      {/* 2. Top 4 Metric KPI Cards - Clean, elegant & consistent with all screens */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '1.25rem',
-        marginBottom: '1.75rem',
+        marginBottom: '1.5rem',
       }}>
         {/* Card 1: Total Products */}
         <div style={{
-          backgroundColor: theme.bgCard,
-          border: `1px solid ${theme.borderCard}`,
-          borderRadius: '1.15rem',
-          padding: '1.25rem 1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          padding: '1.35rem 1.4rem',
+          boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Total Products
-            </span>
-            <Inventory2RoundedIcon sx={{ fontSize: 20, color: theme.textSecondary }} />
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+            letterSpacing: '-0.01em',
+            marginBottom: '0.65rem',
+          }}>
+            Total Products
           </div>
-          <div style={{ marginTop: '0.85rem' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+            <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
               {totalProductsCount}
             </span>
-            <span style={{ fontSize: '12.5px', color: theme.textSecondary, marginLeft: '0.4rem', fontWeight: 600 }}>
+            <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
               catalog items
             </span>
           </div>
@@ -523,25 +402,41 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
         {/* Card 2: Low Stock */}
         <div style={{
-          backgroundColor: lowStockItems.length > 0 ? '#FEF3C7' : theme.bgCard,
-          border: `1px solid ${lowStockItems.length > 0 ? '#F59E0B' : theme.borderCard}`,
-          borderRadius: '1.15rem',
-          padding: '1.25rem 1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          padding: '1.35rem 1.4rem',
+          boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: lowStockItems.length > 0 ? '#92400E' : theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Low Stock
-            </span>
-            <WarningAmberRoundedIcon sx={{ fontSize: 20, color: lowStockItems.length > 0 ? '#D97706' : theme.textSecondary }} />
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+            letterSpacing: '-0.01em',
+            marginBottom: '0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <span>Low Stock</span>
+            {lowStockItems.length > 0 && (
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#92400E',
+                backgroundColor: '#FEF3C7',
+                padding: '2px 7px',
+                borderRadius: '9999px',
+              }}>
+                Attention
+              </span>
+            )}
           </div>
-          <div style={{ marginTop: '0.85rem' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: lowStockItems.length > 0 ? '#92400E' : theme.textPrimary, letterSpacing: '-0.04em' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+            <span style={{ fontSize: '26px', fontWeight: 800, color: lowStockItems.length > 0 ? '#D97706' : theme.textPrimary, letterSpacing: '-0.03em' }}>
               {lowStockItems.length}
             </span>
-            <span style={{ fontSize: '12px', color: lowStockItems.length > 0 ? '#B45309' : theme.textSecondary, marginLeft: '0.4rem', fontWeight: 700 }}>
+            <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
               below min threshold
             </span>
           </div>
@@ -549,25 +444,41 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
         {/* Card 3: Out of Stock */}
         <div style={{
-          backgroundColor: outOfStockItems.length > 0 ? '#FEE2E2' : theme.bgCard,
-          border: `1px solid ${outOfStockItems.length > 0 ? '#EF4444' : theme.borderCard}`,
-          borderRadius: '1.15rem',
-          padding: '1.25rem 1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          padding: '1.35rem 1.4rem',
+          boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: outOfStockItems.length > 0 ? '#991B1B' : theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Out of Stock
-            </span>
-            <ErrorOutlineRoundedIcon sx={{ fontSize: 20, color: outOfStockItems.length > 0 ? '#DC2626' : theme.textSecondary }} />
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+            letterSpacing: '-0.01em',
+            marginBottom: '0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <span>Out of Stock</span>
+            {outOfStockItems.length > 0 && (
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#991B1B',
+                backgroundColor: '#FEE2E2',
+                padding: '2px 7px',
+                borderRadius: '9999px',
+              }}>
+                Urgent
+              </span>
+            )}
           </div>
-          <div style={{ marginTop: '0.85rem' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: outOfStockItems.length > 0 ? '#991B1B' : theme.textPrimary, letterSpacing: '-0.04em' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+            <span style={{ fontSize: '26px', fontWeight: 800, color: outOfStockItems.length > 0 ? '#DC2626' : theme.textPrimary, letterSpacing: '-0.03em' }}>
               {outOfStockItems.length}
             </span>
-            <span style={{ fontSize: '12px', color: outOfStockItems.length > 0 ? '#B91C1C' : theme.textSecondary, marginLeft: '0.4rem', fontWeight: 700 }}>
+            <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
               needs urgent restock
             </span>
           </div>
@@ -575,126 +486,70 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
         {/* Card 4: Stock Received */}
         <div style={{
-          backgroundColor: theme.bgCard,
-          border: `1px solid ${theme.borderCard}`,
-          borderRadius: '1.15rem',
-          padding: '1.25rem 1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          padding: '1.35rem 1.4rem',
+          boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Stock Received
-            </span>
-            <MoveToInboxRoundedIcon sx={{ fontSize: 20, color: theme.textSecondary }} />
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
+            letterSpacing: '-0.01em',
+            marginBottom: '0.65rem',
+          }}>
+            Stock Received Today
           </div>
-          <div style={{ marginTop: '0.85rem' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+            <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
               +{stockReceivedUnitsToday}
             </span>
-            <span style={{ fontSize: '12.5px', color: '#166534', marginLeft: '0.4rem', fontWeight: 700 }}>
+            <span style={{ fontSize: '13px', color: '#166534', fontWeight: 600 }}>
               units received
             </span>
           </div>
         </div>
       </div>
 
-      {/* 3. Low Stock Alerts Banner (Shown when items are critical) */}
-      {lowStockItems.length > 0 && (
-        <div style={{
-          backgroundColor: '#FFFBEB',
-          border: '1px solid #FCD34D',
-          borderRadius: '1rem',
-          padding: '1rem 1.25rem',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.65rem',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-              <WarningAmberRoundedIcon sx={{ fontSize: 20, color: '#D97706' }} />
-              <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#92400E' }}>
-                Low Stock Alerts ({lowStockItems.length} items require attention)
-              </span>
-            </div>
-            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#B45309' }}>
-              Ahmedabad Store Floor Alert
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {lowStockItems.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #FDE68A',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                }}
-              >
-                <span style={{ fontWeight: 700, color: '#92400E' }}>{item.name}:</span>
-                <span style={{ fontWeight: 800, color: '#DC2626' }}>{item.currentStock} left</span>
-                <span style={{ color: '#9CA3AF', fontSize: '11px' }}>(min: {item.minStock})</span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenAddStock(item)}
-                  style={{
-                    border: 'none',
-                    background: '#FEF3C7',
-                    color: '#92400E',
-                    padding: '2px 8px',
-                    borderRadius: '9999px',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  + Restock
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. Section Toggle & Search / Filter Toolbar */}
+      {/* 3. Search & Filter Bar */}
       <div style={{
         display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.85rem',
+        gap: '0.75rem',
         marginBottom: '1rem',
+        backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+        border: `1px solid ${theme.border}`,
+        borderRadius: '0.85rem',
+        padding: '0.65rem 0.85rem',
       }}>
-        {/* View Switcher Tabs: Product List / Stock Movement History */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        {/* View Switcher Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <button
             type="button"
-            onClick={() => setActiveView('list')}
+            onClick={() => {
+              setActiveView('list');
+              if (onSelectSubTab) onSelectSubTab('inv_overview');
+            }}
             style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.65rem',
-              border: activeView === 'list' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-              backgroundColor: activeView === 'list' ? theme.activeBg : theme.bgCard,
+              padding: '0.4rem 0.85rem',
+              borderRadius: '0.55rem',
+              border: 'none',
+              backgroundColor: activeView === 'list' ? theme.activeBg : 'transparent',
               color: activeView === 'list' ? theme.activeText : theme.textPrimary,
-              fontSize: '13px',
+              fontSize: '12.5px',
               fontWeight: activeView === 'list' ? 800 : 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>Product List</span>
+            <span>Products</span>
             <span style={{
               fontSize: '11px',
               padding: '1px 6px',
@@ -708,24 +563,27 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
 
           <button
             type="button"
-            onClick={() => setActiveView('history')}
+            onClick={() => {
+              setActiveView('history');
+              if (onSelectSubTab) onSelectSubTab('inv_movement');
+            }}
             style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.65rem',
-              border: activeView === 'history' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-              backgroundColor: activeView === 'history' ? theme.activeBg : theme.bgCard,
+              padding: '0.4rem 0.85rem',
+              borderRadius: '0.55rem',
+              border: 'none',
+              backgroundColor: activeView === 'history' ? theme.activeBg : 'transparent',
               color: activeView === 'history' ? theme.activeText : theme.textPrimary,
-              fontSize: '13px',
+              fontSize: '12.5px',
               fontWeight: activeView === 'history' ? 800 : 600,
               cursor: 'pointer',
               fontFamily: 'inherit',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.4rem',
+              gap: '0.35rem',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>Stock Movement History</span>
+            <span>Movement History</span>
             <span style={{
               fontSize: '11px',
               padding: '1px 6px',
@@ -738,34 +596,33 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
           </button>
         </div>
 
-        {/* Search & Category Filter Controls (Shown in Product List view) */}
+        {/* Search & Filters */}
         {activeView === 'list' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flex: 1, justifyContent: 'flex-end', minWidth: '320px' }}>
-            {/* Search Products Input */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              backgroundColor: theme.bgCard,
+              backgroundColor: theme.bgPage,
               border: `1px solid ${theme.border}`,
-              borderRadius: '0.65rem',
-              padding: '0 0.85rem',
-              height: '38px',
+              borderRadius: '0.55rem',
+              padding: '0 0.75rem',
+              height: '34px',
               minWidth: '220px',
+              maxWidth: '320px',
               flex: 1,
-              maxWidth: '360px',
             }}>
-              <SearchRoundedIcon sx={{ fontSize: 18, color: theme.textMuted }} />
+              <SearchRoundedIcon sx={{ fontSize: 17, color: theme.textMuted }} />
               <input
                 type="text"
-                placeholder="Search products, SKU, barcode..."
+                placeholder="Search products, SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   border: 'none',
                   outline: 'none',
                   backgroundColor: 'transparent',
-                  fontSize: '13px',
+                  fontSize: '12.5px',
                   color: theme.textPrimary,
                   width: '100%',
                   fontFamily: 'inherit',
@@ -777,24 +634,23 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                   onClick={() => setSearchQuery('')}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  <CloseRoundedIcon sx={{ fontSize: 15, color: theme.textSecondary }} />
+                  <CloseRoundedIcon sx={{ fontSize: 14, color: theme.textSecondary }} />
                 </button>
               )}
             </div>
 
-            {/* Category Filter Dropdown */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               style={{
-                height: '38px',
-                padding: '0 0.85rem',
-                borderRadius: '0.65rem',
-                backgroundColor: theme.bgCard,
+                height: '34px',
+                padding: '0 0.75rem',
+                borderRadius: '0.55rem',
+                backgroundColor: theme.bgPage,
                 border: `1px solid ${theme.border}`,
                 color: theme.textPrimary,
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '12px',
+                fontWeight: 600,
                 outline: 'none',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
@@ -805,19 +661,18 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
               ))}
             </select>
 
-            {/* Status Filter */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
               style={{
-                height: '38px',
-                padding: '0 0.85rem',
-                borderRadius: '0.65rem',
-                backgroundColor: theme.bgCard,
+                height: '34px',
+                padding: '0 0.75rem',
+                borderRadius: '0.55rem',
+                backgroundColor: theme.bgPage,
                 border: `1px solid ${theme.border}`,
                 color: theme.textPrimary,
-                fontSize: '12.5px',
-                fontWeight: 700,
+                fontSize: '12px',
+                fontWeight: 600,
                 outline: 'none',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
@@ -832,398 +687,384 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
         )}
       </div>
 
-      {/* 5. PRODUCT LIST TABLE VIEW */}
+      {/* 4. PRODUCT LIST TABLE */}
       {activeView === 'list' && (
         <div style={{
-          backgroundColor: theme.bgCard,
-          border: `1px solid ${theme.borderCard}`,
-          borderRadius: '1.25rem',
-          padding: '0.5rem',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          overflow: 'hidden',
           boxSizing: 'border-box',
-          overflowX: 'auto',
         }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            textAlign: 'left',
-            fontSize: '13.5px',
-          }}>
-            <thead>
-              <tr style={{
-                borderBottom: `1px solid ${theme.border}`,
-                backgroundColor: theme.tableHeaderBg,
-              }}>
-                <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Product Name
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  SKU / Barcode
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Category
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Current Stock
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Minimum Stock
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Status
-                </th>
-                <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'right' }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ padding: '2.5rem', textAlign: 'center', color: theme.textSecondary }}>
-                    No products found matching your search and category filters.
-                  </td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              textAlign: 'left',
+              fontSize: '13px',
+            }}>
+              <thead>
+                <tr style={{
+                  borderBottom: `1px solid ${theme.border}`,
+                  backgroundColor: theme.tableHeaderBg,
+                }}>
+                  <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Product Name
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    SKU / Barcode
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Category
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Current Stock
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Min Threshold
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Status
+                  </th>
+                  <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'right' }}>
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                filteredProducts.map((prod, index) => {
-                  const isOut = prod.currentStock === 0;
-                  const isLow = prod.currentStock > 0 && prod.currentStock <= prod.minStock;
+              </thead>
+              <tbody>
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: '3rem 1.5rem', textAlign: 'center', color: theme.textSecondary }}>
+                      {products.length === 0
+                        ? 'No products in inventory catalog yet.'
+                        : 'No inventory items found matching your filters.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map((prod, index) => {
+                    const isOut = prod.currentStock === 0;
+                    const isLow = prod.currentStock > 0 && prod.currentStock <= prod.minStock;
 
-                  return (
-                    <tr
-                      key={prod.id}
-                      style={{
-                        borderBottom: index < filteredProducts.length - 1 ? `1px solid ${theme.border}` : 'none',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      {/* Product Name + Image */}
-                      <td style={{ padding: '0.85rem 1.15rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{
-                            width: '38px',
-                            height: '38px',
-                            position: 'relative',
-                            borderRadius: '0.5rem',
-                            overflow: 'hidden',
-                            backgroundColor: '#E5E7EB',
-                            flexShrink: 0,
-                          }}>
-                            <Image src={prod.image} alt={prod.name} fill style={{ objectFit: 'cover' }} />
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 800, color: theme.textPrimary, fontSize: '13.5px' }}>
-                              {prod.name}
+                    return (
+                      <tr
+                        key={prod.id}
+                        style={{
+                          borderBottom: index < filteredProducts.length - 1 ? `1px solid ${theme.border}` : 'none',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                      >
+                        {/* Product Name + Location */}
+                        <td style={{ padding: '0.85rem 1.15rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{
+                              width: '36px',
+                              height: '36px',
+                              position: 'relative',
+                              borderRadius: '0.5rem',
+                              overflow: 'hidden',
+                              backgroundColor: '#E5E7EB',
+                              flexShrink: 0,
+                            }}>
+                              <Image src={prod.image} alt={prod.name} fill style={{ objectFit: 'cover' }} />
                             </div>
-                            <div style={{ fontSize: '11px', color: theme.textSecondary }}>
-                              {prod.location}
+                            <div>
+                              <div style={{ fontWeight: 800, color: theme.textPrimary, fontSize: '13px' }}>
+                                {prod.name}
+                              </div>
+                              <div style={{ fontSize: '11px', color: theme.textSecondary }}>
+                                {prod.location}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* SKU / Barcode */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ fontWeight: 700, color: theme.textPrimary, fontFamily: 'monospace', fontSize: '12.5px' }}>
-                          {prod.sku}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: theme.textSecondary, fontFamily: 'monospace' }}>
-                          <QrCodeRoundedIcon sx={{ fontSize: 12, color: theme.textMuted }} />
-                          <span>{prod.barcode}</span>
-                        </div>
-                      </td>
+                        {/* SKU / Barcode */}
+                        <td style={{ padding: '0.85rem 1rem' }}>
+                          <div style={{ fontWeight: 700, color: theme.textPrimary, fontFamily: 'monospace', fontSize: '12px' }}>
+                            {prod.sku}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '11px', color: theme.textSecondary, fontFamily: 'monospace' }}>
+                            <QrCodeRoundedIcon sx={{ fontSize: 11, color: theme.textMuted }} />
+                            <span>{prod.barcode}</span>
+                          </div>
+                        </td>
 
-                      {/* Category */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          fontSize: '11.5px',
-                          fontWeight: 700,
-                          padding: '3px 8px',
-                          borderRadius: '0.45rem',
-                          backgroundColor: theme.hoverBg,
-                          color: theme.textPrimary,
-                        }}>
-                          {prod.category}
-                        </span>
-                      </td>
-
-                      {/* Current Stock */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {/* Category */}
+                        <td style={{ padding: '0.85rem 1rem' }}>
                           <span style={{
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            color: isOut ? '#DC2626' : isLow ? '#D97706' : theme.textPrimary,
-                          }}>
-                            {prod.currentStock}
-                          </span>
-                          <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>units</span>
-                        </div>
-                      </td>
-
-                      {/* Minimum Stock */}
-                      <td style={{ padding: '0.85rem 1rem', fontSize: '13px', color: theme.textSecondary, fontWeight: 600 }}>
-                        {prod.minStock} units
-                      </td>
-
-                      {/* Status */}
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        {isOut ? (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            backgroundColor: '#FEE2E2',
-                            color: '#991B1B',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
                             padding: '3px 8px',
-                            borderRadius: '9999px',
+                            borderRadius: '0.45rem',
+                            backgroundColor: theme.hoverBg,
+                            color: theme.textPrimary,
                           }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#DC2626' }} />
-                            <span>OUT OF STOCK</span>
+                            {prod.category}
                           </span>
-                        ) : isLow ? (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            backgroundColor: '#FEF3C7',
-                            color: '#92400E',
-                            padding: '3px 8px',
-                            borderRadius: '9999px',
-                          }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#D97706' }} />
-                            <span>LOW STOCK</span>
-                          </span>
-                        ) : (
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            backgroundColor: '#DCFCE7',
-                            color: '#166534',
-                            padding: '3px 8px',
-                            borderRadius: '9999px',
-                          }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
-                            <span>IN STOCK</span>
-                          </span>
-                        )}
-                      </td>
+                        </td>
 
-                      {/* Actions: Add Stock, Stock Adjustment, Delete */}
-                      <td style={{ padding: '0.85rem 1.15rem', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAddStock(prod)}
-                            title="Add incoming stock"
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: theme.hoverBg,
-                              color: theme.textPrimary,
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
+                        {/* Current Stock */}
+                        <td style={{ padding: '0.85rem 1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{
+                              fontSize: '14.5px',
+                              fontWeight: 800,
+                              color: isOut ? '#DC2626' : isLow ? '#D97706' : theme.textPrimary,
+                            }}>
+                              {prod.currentStock}
+                            </span>
+                            <span style={{ fontSize: '11px', color: theme.textSecondary }}>units</span>
+                          </div>
+                        </td>
+
+                        {/* Min Stock */}
+                        <td style={{ padding: '0.85rem 1rem', fontSize: '12.5px', color: theme.textSecondary, fontWeight: 600 }}>
+                          {prod.minStock} units
+                        </td>
+
+                        {/* Status */}
+                        <td style={{ padding: '0.85rem 1rem' }}>
+                          {isOut ? (
+                            <span style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            <AddRoundedIcon sx={{ fontSize: 13 }} />
-                            <span>Add</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAdjust(prod)}
-                            title="Stock adjustment"
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '0.45rem',
-                              border: `1px solid ${theme.border}`,
-                              backgroundColor: theme.hoverBg,
-                              color: theme.textPrimary,
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
+                              gap: '0.35rem',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              backgroundColor: '#FEE2E2',
+                              color: '#991B1B',
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                            }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#DC2626' }} />
+                              <span>OUT OF STOCK</span>
+                            </span>
+                          ) : isLow ? (
+                            <span style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            <TuneRoundedIcon sx={{ fontSize: 13 }} />
-                            <span>Adjust</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleOpenDelete(prod)}
-                            title={`Delete ${prod.name}`}
-                            style={{
-                              padding: '4px 6px',
-                              borderRadius: '0.45rem',
-                              border: '1px solid #FECACA',
-                              backgroundColor: '#FEF2F2',
-                              color: '#DC2626',
-                              cursor: 'pointer',
+                              gap: '0.35rem',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              backgroundColor: '#FEF3C7',
+                              color: '#92400E',
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                            }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#D97706' }} />
+                              <span>LOW STOCK</span>
+                            </span>
+                          ) : (
+                            <span style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <DeleteOutlineRoundedIcon sx={{ fontSize: 14, color: '#DC2626' }} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                              gap: '0.35rem',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              backgroundColor: '#DCFCE7',
+                              color: '#166534',
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                            }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#16A34A' }} />
+                              <span>IN STOCK</span>
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Allowed Actions ONLY: Add Stock & Stock Adjustment (No Product Editing/Deleting) */}
+                        <td style={{ padding: '0.85rem 1.15rem', textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAddStock(prod)}
+                              title="Add incoming stock"
+                              style={{
+                                padding: '4px 9px',
+                                borderRadius: '0.45rem',
+                                border: `1px solid ${theme.border}`,
+                                backgroundColor: theme.hoverBg,
+                                color: theme.textPrimary,
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              <AddRoundedIcon sx={{ fontSize: 13 }} />
+                              <span>Add</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAdjust(prod)}
+                              title="Stock adjustment"
+                              style={{
+                                padding: '4px 9px',
+                                borderRadius: '0.45rem',
+                                border: `1px solid ${theme.border}`,
+                                backgroundColor: theme.hoverBg,
+                                color: theme.textPrimary,
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              <TuneRoundedIcon sx={{ fontSize: 13 }} />
+                              <span>Adjust</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {/* 6. STOCK MOVEMENT HISTORY TABLE VIEW */}
+      {/* 5. STOCK MOVEMENT HISTORY TABLE */}
       {activeView === 'history' && (
         <div style={{
-          backgroundColor: theme.bgCard,
-          border: `1px solid ${theme.borderCard}`,
-          borderRadius: '1.25rem',
-          padding: '0.5rem',
+          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+          border: `1px solid ${theme.border}`,
+          borderRadius: '1rem',
+          overflow: 'hidden',
           boxSizing: 'border-box',
-          overflowX: 'auto',
         }}>
-          <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${theme.border}` }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-              Recent Stock Movements & Audits
-            </h3>
-            <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-              Chronological log of all restocks, damages, cycle counts & internal movements in Ahmedabad store.
-            </p>
-          </div>
-
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            textAlign: 'left',
-            fontSize: '13px',
-          }}>
-            <thead>
-              <tr style={{
-                borderBottom: `1px solid ${theme.border}`,
-                backgroundColor: theme.tableHeaderBg,
-              }}>
-                <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Log Ref & Time
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Product
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Type
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Quantity Change
-                </th>
-                <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Reason / Notes
-                </th>
-                <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                  Manager
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map((mov, idx) => (
-                <tr
-                  key={mov.id}
-                  style={{
-                    borderBottom: idx < movements.length - 1 ? `1px solid ${theme.border}` : 'none',
-                    transition: 'background-color 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <td style={{ padding: '0.85rem 1.15rem' }}>
-                    <div style={{ fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace' }}>
-                      {mov.id}
-                    </div>
-                    <div style={{ fontSize: '11px', color: theme.textSecondary }}>
-                      {mov.date}
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <div style={{ fontWeight: 700, color: theme.textPrimary }}>
-                      {mov.productName}
-                    </div>
-                    <div style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace' }}>
-                      {mov.sku}
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '2px 7px',
-                      borderRadius: '0.4rem',
-                      backgroundColor:
-                        mov.type === 'received' ? '#DCFCE7' :
-                        mov.type === 'damage' ? '#FEE2E2' : '#F3F4F6',
-                      color:
-                        mov.type === 'received' ? '#166534' :
-                        mov.type === 'damage' ? '#991B1B' : '#374151',
-                    }}>
-                      {mov.type === 'received' ? 'Stock Received' :
-                       mov.type === 'damage' ? 'Damaged / Spoilage' : 'Adjustment'}
-                    </span>
-                  </td>
-
-                  <td style={{ padding: '0.85rem 1rem' }}>
-                    <span style={{
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      color: mov.quantityChange > 0 ? '#166534' : '#991B1B',
-                    }}>
-                      {mov.quantityChange > 0 ? `+${mov.quantityChange}` : mov.quantityChange} units
-                    </span>
-                    <div style={{ fontSize: '10.5px', color: theme.textSecondary }}>
-                      Balance: {mov.balanceAfter}
-                    </div>
-                  </td>
-
-                  <td style={{ padding: '0.85rem 1rem', color: theme.textPrimary, fontSize: '12.5px' }}>
-                    <div>{mov.reason}</div>
-                    {mov.refCode && (
-                      <div style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace' }}>
-                        Ref: {mov.refCode}
-                      </div>
-                    )}
-                  </td>
-
-                  <td style={{ padding: '0.85rem 1.15rem', color: theme.textSecondary, fontSize: '12px', fontWeight: 600 }}>
-                    {mov.managedBy}
-                  </td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              textAlign: 'left',
+              fontSize: '13px',
+            }}>
+              <thead>
+                <tr style={{
+                  borderBottom: `1px solid ${theme.border}`,
+                  backgroundColor: theme.tableHeaderBg,
+                }}>
+                  <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Log Ref & Time
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Product
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Type
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Quantity Change
+                  </th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Reason / Notes
+                  </th>
+                  <th style={{ padding: '0.85rem 1.15rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Recorded By
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {movements.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '3rem 1.5rem', textAlign: 'center', color: theme.textSecondary }}>
+                      No stock movement logs recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  movements.map((mov, idx) => (
+                  <tr
+                    key={mov.id}
+                    style={{
+                      borderBottom: idx < movements.length - 1 ? `1px solid ${theme.border}` : 'none',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <td style={{ padding: '0.85rem 1.15rem' }}>
+                      <div style={{ fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace' }}>
+                        {mov.id}
+                      </div>
+                      <div style={{ fontSize: '11px', color: theme.textSecondary }}>
+                        {mov.date}
+                      </div>
+                    </td>
+
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      <div style={{ fontWeight: 700, color: theme.textPrimary }}>
+                        {mov.productName}
+                      </div>
+                      <div style={{ fontSize: '11px', color: theme.textSecondary, fontFamily: 'monospace' }}>
+                        {mov.sku}
+                      </div>
+                    </td>
+
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        padding: '2px 7px',
+                        borderRadius: '0.4rem',
+                        backgroundColor:
+                          mov.type === 'received' ? '#DCFCE7' :
+                          mov.type === 'damage' ? '#FEE2E2' : '#F3F4F6',
+                        color:
+                          mov.type === 'received' ? '#166534' :
+                          mov.type === 'damage' ? '#991B1B' : '#374151',
+                      }}>
+                        {mov.type === 'received' ? 'Stock Received' :
+                         mov.type === 'damage' ? 'Damaged / Spoilage' : 'Adjustment'}
+                      </span>
+                    </td>
+
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      <span style={{
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        color: mov.quantityChange > 0 ? '#166534' : '#991B1B',
+                      }}>
+                        {mov.quantityChange > 0 ? `+${mov.quantityChange}` : mov.quantityChange} units
+                      </span>
+                      <div style={{ fontSize: '11px', color: theme.textSecondary }}>
+                        Balance: {mov.balanceAfter}
+                      </div>
+                    </td>
+
+                    <td style={{ padding: '0.85rem 1rem', color: theme.textPrimary, fontSize: '12.5px' }}>
+                      <div>{mov.reason}</div>
+                      {mov.refCode && (
+                        <div style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace' }}>
+                          Ref: {mov.refCode}
+                        </div>
+                      )}
+                    </td>
+
+                    <td style={{ padding: '0.85rem 1.15rem', color: theme.textSecondary, fontSize: '12px', fontWeight: 600 }}>
+                      {mov.managedBy}
+                    </td>
+                  </tr>
+                ))
+              )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* ============================================================ */}
-      {/* 7. MODAL: ADD STOCK                                          */}
+      {/* 6. MODAL: ADD STOCK (Delivery intake only - NO price inputs) */}
       {/* ============================================================ */}
       {showAddStockModal && targetProduct && (
         <div style={{
@@ -1254,7 +1095,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MoveToInboxRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
                 <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                  Add Incoming Stock
+                  Receive Incoming Stock
                 </h3>
               </div>
               <button
@@ -1266,7 +1107,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
               </button>
             </div>
 
-            {/* Target product pill */}
+            {/* Target product summary */}
             <div style={{
               backgroundColor: theme.bgCard,
               border: `1px solid ${theme.border}`,
@@ -1393,6 +1234,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
@@ -1408,6 +1250,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                     fontSize: '13px',
                     fontWeight: 800,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Confirm & Receive Stock
@@ -1419,7 +1262,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
       )}
 
       {/* ============================================================ */}
-      {/* 8. MODAL: STOCK ADJUSTMENT                                   */}
+      {/* 7. MODAL: STOCK ADJUSTMENT (Audit write-offs - NO price edit) */}
       {/* ============================================================ */}
       {showAdjustModal && targetProduct && (
         <div style={{
@@ -1515,6 +1358,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.4rem',
+                      fontFamily: 'inherit',
                     }}
                   >
                     <ArrowDownwardRoundedIcon sx={{ fontSize: 16 }} />
@@ -1537,6 +1381,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.4rem',
+                      fontFamily: 'inherit',
                     }}
                   >
                     <ArrowUpwardRoundedIcon sx={{ fontSize: 16 }} />
@@ -1640,6 +1485,7 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Cancel
@@ -1655,115 +1501,13 @@ export default function ManagerInventoryScreen({ theme }: ManagerInventoryScreen
                     fontSize: '13px',
                     fontWeight: 800,
                     cursor: 'pointer',
+                    fontFamily: 'inherit',
                   }}
                 >
                   Save Adjustment
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================ */}
-      {/* 9. MODAL: DELETE PRODUCT CONFIRMATION                        */}
-      {/* ============================================================ */}
-      {showDeleteModal && targetProduct && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(3px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: theme.bgPage,
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            width: '100%',
-            maxWidth: '430px',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.2)',
-            padding: '1.5rem',
-            boxSizing: 'border-box',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                backgroundColor: '#FEE2E2',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <DeleteOutlineRoundedIcon sx={{ fontSize: 22, color: '#DC2626' }} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                Remove Product from Store?
-              </h3>
-            </div>
-
-            <p style={{ fontSize: '13.5px', color: theme.textSecondary, margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
-              Are you sure you want to remove <strong>{targetProduct.name}</strong> ({targetProduct.sku})? Currently tracking <strong>{targetProduct.currentStock} units</strong>.
-            </p>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: '0.65rem',
-            }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setTargetProduct(null);
-                }}
-                style={{
-                  padding: '0.55rem 1rem',
-                  borderRadius: '0.55rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: 'transparent',
-                  color: theme.textPrimary,
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={confirmDeleteProduct}
-                style={{
-                  padding: '0.55rem 1.25rem',
-                  borderRadius: '0.55rem',
-                  border: 'none',
-                  backgroundColor: '#DC2626',
-                  color: '#FFFFFF',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                }}
-              >
-                <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Yes, Remove</span>
-              </button>
-            </div>
           </div>
         </div>
       )}

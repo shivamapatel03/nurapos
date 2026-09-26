@@ -38,6 +38,8 @@ import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import KitchenRoundedIcon from '@mui/icons-material/KitchenRounded';
 import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRounded';
+import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+import ChairRoundedIcon from '@mui/icons-material/ChairRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
@@ -49,6 +51,7 @@ import { ThemeId, APP_THEMES } from '@/lib/themeConfig';
 export type SettingsSubTab =
   | 'set_store'
   | 'set_business'
+  | 'set_tables'
   | 'set_tax'
   | 'set_payments'
   | 'set_hardware'
@@ -57,6 +60,20 @@ export type SettingsSubTab =
   | 'set_users'
   | 'set_security'
   | 'set_appearance';
+
+export interface RestaurantTable {
+  id: string;
+  number: string;
+  section: string;
+  capacity: number;
+  shape: 'square' | 'round' | 'rect';
+  status: 'available' | 'occupied' | 'reserved';
+  currentOrder?: string;
+  orderTotal?: string;
+  serverName?: string;
+  guests?: number;
+  notes?: string;
+}
 
 interface SettingsManagementProps {
   activeSubTab: SettingsSubTab;
@@ -289,6 +306,164 @@ export default function SettingsManagement({
     { id: 'sec-3', timestamp: '2026-09-20 12:30', user: 'Priya Patel (Cashier)', action: 'Shift #42 Login Verified', ip: '192.168.1.105' },
     { id: 'sec-4', timestamp: '2026-09-19 21:15', user: 'Alex Vance (Manager)', action: 'Void Order #9812 Approved', ip: '192.168.1.110' },
   ]);
+
+  // 10. TABLE SETTING & DINE-IN STATE
+  const [tableSectionFilter, setTableSectionFilter] = useState('All');
+  const [sections, setSections] = useState<string[]>([
+    'Main Dining (Indoor)',
+    'Patio / Outdoor',
+    'Rooftop Terrace',
+    'Bar & High Tops',
+  ]);
+
+  const [tables, setTables] = useState<RestaurantTable[]>([]);
+
+  // Modal State for Table Add/Edit
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [editingTableId, setEditingTableId] = useState<string | null>(null);
+  const [tableFormNumber, setTableFormNumber] = useState('');
+  const [tableFormSection, setTableFormSection] = useState('Main Dining (Indoor)');
+  const [tableFormCapacity, setTableFormCapacity] = useState(4);
+  const [tableFormShape, setTableFormShape] = useState<'square' | 'round' | 'rect'>('square');
+  const [tableFormStatus, setTableFormStatus] = useState<'available' | 'occupied' | 'reserved'>('available');
+  const [tableFormNotes, setTableFormNotes] = useState('');
+
+  // Add Section Modal State
+  const [showAddSectionModal, setShowAddSectionModal] = useState(false);
+  const [newSectionName, setNewSectionName] = useState('');
+
+  // Dine-In Rules Toggles
+  const [autoReleaseTableOnBill, setAutoReleaseTableOnBill] = useState(true);
+  const [allowTableMerging, setAllowTableMerging] = useState(true);
+  const [enforceGuestCount, setEnforceGuestCount] = useState(true);
+  const [enableQrOrdering, setEnableQrOrdering] = useState(true);
+  const [tableIdleAlert, setTableIdleAlert] = useState(true);
+
+  // 11. TICKET NUMBER & KOT SETTING STATE
+  const [ticketPrefix, setTicketPrefix] = useState('T-');
+  const [takeawayPrefix, setTakeawayPrefix] = useState('TO-');
+  const [ticketStartingNumber, setTicketStartingNumber] = useState('101');
+  const [currentTicketNumber, setCurrentTicketNumber] = useState('142');
+  const [ticketResetCycle, setTicketResetCycle] = useState<'daily' | 'continuous' | 'shift'>('daily');
+  const [ticketDigitsPadding, setTicketDigitsPadding] = useState<'3' | '2' | '4' | 'none'>('3');
+  const [separateTakeawaySequence, setSeparateTakeawaySequence] = useState(true);
+  const [printLargeTokenOnBill, setPrintLargeTokenOnBill] = useState(true);
+  const [printTableOnKot, setPrintTableOnKot] = useState(true);
+  const [printServerNameOnKot, setPrintServerNameOnKot] = useState(true);
+  const [autoIncrementOnDispatch, setAutoIncrementOnDispatch] = useState(true);
+  const [ticketSoundChime, setTicketSoundChime] = useState(true);
+
+  // Helper: Format Ticket Number
+  const formatTicketNumber = (numStr: string, prefixStr: string, padStr: string) => {
+    const n = parseInt(numStr, 10) || 1;
+    let formatted = String(n);
+    if (padStr === '2') formatted = String(n).padStart(2, '0');
+    else if (padStr === '3') formatted = String(n).padStart(3, '0');
+    else if (padStr === '4') formatted = String(n).padStart(4, '0');
+    return `${prefixStr}${formatted}`;
+  };
+
+  const handleOpenAddTable = () => {
+    setEditingTableId(null);
+    const nextNum = `T-${String(tables.length + 1).padStart(2, '0')}`;
+    setTableFormNumber(nextNum);
+    setTableFormSection(tableSectionFilter !== 'All' ? tableSectionFilter : sections[0] || 'Main Dining (Indoor)');
+    setTableFormCapacity(4);
+    setTableFormShape('square');
+    setTableFormStatus('available');
+    setTableFormNotes('');
+    setShowTableModal(true);
+  };
+
+  const handleOpenEditTable = (tbl: RestaurantTable) => {
+    setEditingTableId(tbl.id);
+    setTableFormNumber(tbl.number);
+    setTableFormSection(tbl.section);
+    setTableFormCapacity(tbl.capacity);
+    setTableFormShape(tbl.shape);
+    setTableFormStatus(tbl.status);
+    setTableFormNotes(tbl.notes || '');
+    setShowTableModal(true);
+  };
+
+  const handleSaveTable = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tableFormNumber.trim()) {
+      showToast('Please enter a table number / code.');
+      return;
+    }
+    if (editingTableId) {
+      setTables((prev) =>
+        prev.map((t) =>
+          t.id === editingTableId
+            ? {
+                ...t,
+                number: tableFormNumber.trim(),
+                section: tableFormSection,
+                capacity: tableFormCapacity,
+                shape: tableFormShape,
+                status: tableFormStatus,
+                notes: tableFormNotes.trim() || undefined,
+              }
+            : t
+        )
+      );
+      showToast(`Table ${tableFormNumber} updated successfully!`);
+    } else {
+      const newTbl: RestaurantTable = {
+        id: `tbl-${Date.now()}`,
+        number: tableFormNumber.trim(),
+        section: tableFormSection,
+        capacity: tableFormCapacity,
+        shape: tableFormShape,
+        status: tableFormStatus,
+        notes: tableFormNotes.trim() || undefined,
+      };
+      setTables((prev) => [...prev, newTbl]);
+      showToast(`Table ${tableFormNumber} created successfully!`);
+    }
+    setShowTableModal(false);
+  };
+
+  const handleDeleteTable = (id: string, num: string) => {
+    if (window.confirm(`Are you sure you want to delete Table ${num}?`)) {
+      setTables((prev) => prev.filter((t) => t.id !== id));
+      showToast(`Table ${num} deleted.`);
+    }
+  };
+
+  const handleToggleTableStatus = (id: string) => {
+    setTables((prev) =>
+      prev.map((t) => {
+        if (t.id === id) {
+          const nextStatus: RestaurantTable['status'] =
+            t.status === 'available' ? 'occupied' : t.status === 'occupied' ? 'reserved' : 'available';
+          return {
+            ...t,
+            status: nextStatus,
+            currentOrder: nextStatus === 'occupied' ? (t.currentOrder || `#${Math.floor(100 + Math.random() * 50)}`) : undefined,
+            orderTotal: nextStatus === 'occupied' ? (t.orderTotal || `₹${Math.floor(400 + Math.random() * 1500)}`) : undefined,
+          };
+        }
+        return t;
+      })
+    );
+  };
+
+  const handleAddSection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSectionName.trim()) return;
+    if (sections.includes(newSectionName.trim())) {
+      showToast('Section already exists.');
+      return;
+    }
+    const createdSection = newSectionName.trim();
+    setSections((prev) => [...prev, createdSection]);
+    setTableSectionFilter(createdSection);
+    setNewSectionName('');
+    setShowAddSectionModal(false);
+    showToast(`Section "${createdSection}" added.`);
+  };
 
 
 
@@ -1916,6 +2091,894 @@ export default function SettingsManagement({
         </div>
       )}
 
+      {/* SUB-TAB: TABLES & DINE-IN SETTINGS */}
+      {activeSubTab === 'set_tables' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Card 1: Floor Plan & Tables Setup */}
+          <div
+            style={{
+              padding: '1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <TableRestaurantRoundedIcon sx={{ fontSize: 22, color: theme.textPrimary }} />
+                <div>
+                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
+                    Floor Plan & Dine-In Tables
+                  </h2>
+                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                    Configure dining sections, seating capacities, table numbers, and real-time floor availability.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddSectionModal(true)}
+                  className="button-20-secondary"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <AddRoundedIcon sx={{ fontSize: 16 }} />
+                  <span>New Section</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOpenAddTable}
+                  className="button-20"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.45rem 1.15rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}
+                >
+                  <AddRoundedIcon sx={{ fontSize: 16 }} />
+                  <span>Add Table</span>
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Stats Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '0.75rem',
+                marginBottom: '1.25rem',
+                padding: '0.85rem 1rem',
+                borderRadius: '0.65rem',
+                backgroundColor: theme.bgPage,
+                border: `1px solid ${theme.border}`,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Total Tables
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, marginTop: '2px' }}>
+                  {tables.length} Tables
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Total Capacity
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, marginTop: '2px' }}>
+                  {tables.reduce((sum, t) => sum + t.capacity, 0)} Seats
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#16A34A', display: 'inline-block' }} />
+                  Available
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: '#16A34A', marginTop: '2px' }}>
+                  {tables.filter((t) => t.status === 'available').length} Tables
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#D97706', display: 'inline-block' }} />
+                  Occupied
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, marginTop: '2px' }}>
+                  {tables.filter((t) => t.status === 'occupied').length} Tables
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#8B5CF6', display: 'inline-block' }} />
+                  Reserved
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, marginTop: '2px' }}>
+                  {tables.filter((t) => t.status === 'reserved').length} Tables
+                </div>
+              </div>
+            </div>
+
+            {/* Section Filter Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setTableSectionFilter('All')}
+                style={{
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '9999px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: `1px solid ${tableSectionFilter === 'All' ? theme.activeBg : theme.border}`,
+                  backgroundColor: tableSectionFilter === 'All' ? theme.activeBg : 'transparent',
+                  color: tableSectionFilter === 'All' ? theme.activeText : theme.textPrimary,
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                All Tables ({tables.length})
+              </button>
+
+              {sections.map((sec) => {
+                const count = tables.filter((t) => t.section === sec).length;
+                const isSelected = tableSectionFilter === sec;
+                return (
+                  <button
+                    key={sec}
+                    type="button"
+                    onClick={() => setTableSectionFilter(sec)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '9999px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: `1px solid ${isSelected ? theme.activeBg : theme.border}`,
+                      backgroundColor: isSelected ? theme.activeBg : 'transparent',
+                      color: isSelected ? theme.activeText : theme.textPrimary,
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {sec} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Table Grid Cards */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
+                gap: '0.85rem',
+              }}
+            >
+              {tables.filter((t) => tableSectionFilter === 'All' || t.section === tableSectionFilter).length === 0 ? (
+                <div
+                  style={{
+                    gridColumn: '1 / -1',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '3.5rem 1.5rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: theme.bgPage,
+                    border: `1px dashed ${theme.border}`,
+                    textAlign: 'center',
+                  }}
+                >
+                  <TableRestaurantRoundedIcon sx={{ fontSize: 36, color: theme.textSecondary, marginBottom: '0.75rem' }} />
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.35rem', letterSpacing: '-0.01em' }}>
+                    {tableSectionFilter === 'All' ? 'No Dining Tables Added Yet' : `No tables in ${tableSectionFilter}`}
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0 0 1.25rem 0', maxWidth: '380px', lineHeight: 1.5 }}>
+                    {tableSectionFilter === 'All'
+                      ? 'Add your cafe or restaurant tables to set up floor plans, seating capacities, and dine-in billing.'
+                      : `You have no tables assigned to this section yet. Add a table to get started.`}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleOpenAddTable}
+                    className="button-20"
+                    style={{
+                      borderRadius: '9999px',
+                      padding: '0.5rem 1.35rem',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      fontFamily: 'inherit',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    <AddRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>Add First Table</span>
+                  </button>
+                </div>
+              ) : (
+                tables
+                  .filter((t) => tableSectionFilter === 'All' || t.section === tableSectionFilter)
+                  .map((table) => {
+                    const isAvailable = table.status === 'available';
+                    const isOccupied = table.status === 'occupied';
+                    const isReserved = table.status === 'reserved';
+
+                    const statusColor = isAvailable ? '#16A34A' : isOccupied ? '#D97706' : '#8B5CF6';
+                    const statusBg = isAvailable
+                      ? 'rgba(22, 163, 74, 0.1)'
+                      : isOccupied
+                      ? 'rgba(217, 119, 6, 0.1)'
+                      : 'rgba(139, 92, 246, 0.1)';
+
+                    return (
+                      <div
+                        key={table.id}
+                        style={{
+                          backgroundColor: theme.bgPage,
+                          border: `1px solid ${theme.border}`,
+                          borderRadius: '0.75rem',
+                          padding: '1rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        }}
+                      >
+                        {/* Top Row: Table Name, Shape Badge & Capacity */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span
+                              style={{
+                                fontSize: '15px',
+                                fontWeight: 800,
+                                color: theme.textPrimary,
+                                letterSpacing: '-0.01em',
+                              }}
+                            >
+                              {table.number}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                backgroundColor: theme.hoverBg,
+                                color: theme.textSecondary,
+                              }}
+                            >
+                              {table.shape}
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: theme.textSecondary,
+                              backgroundColor: theme.hoverBg,
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                            }}
+                          >
+                            <ChairRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary }} />
+                            <span>{table.capacity}p</span>
+                          </div>
+                        </div>
+
+                        {/* Middle: Status & Info */}
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                            <span
+                              onClick={() => handleToggleTableStatus(table.id)}
+                              title="Click to toggle status (Available / Occupied / Reserved)"
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: statusColor,
+                                backgroundColor: statusBg,
+                                padding: '3px 8px',
+                                borderRadius: '9999px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                userSelect: 'none',
+                              }}
+                            >
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor, display: 'inline-block' }} />
+                              {table.status.toUpperCase()}
+                            </span>
+
+                            <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
+                              {table.section.split(' ')[0]}
+                            </span>
+                          </div>
+
+                          {isOccupied && (
+                            <div style={{ fontSize: '11px', color: theme.textPrimary, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                              <span>Order {table.currentOrder}</span>
+                              <span style={{ fontWeight: 800 }}>{table.orderTotal}</span>
+                            </div>
+                          )}
+
+                          {isReserved && table.notes && (
+                            <div style={{ fontSize: '11px', color: '#8B5CF6', fontWeight: 600, marginTop: '4px' }}>
+                              {table.notes}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bottom Row Actions */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingTop: '0.5rem',
+                            borderTop: `1px solid ${theme.border}`,
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleToggleTableStatus(table.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: theme.textSecondary,
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: '2px 4px',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            Switch Status
+                          </button>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditTable(table)}
+                              title="Edit table"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: theme.textSecondary,
+                                cursor: 'pointer',
+                                padding: '3px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              <EditRoundedIcon sx={{ fontSize: 16 }} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTable(table.id, table.number)}
+                              title="Delete table"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#EF4444',
+                                cursor: 'pointer',
+                                padding: '3px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                borderRadius: '4px',
+                              }}
+                            >
+                              <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+
+            </div>
+
+            {renderCardFooter('Tables & Floor Plan')}
+          </div>
+
+          {/* Card 2: Order Token & Ticket Number Setting */}
+          <div
+            style={{
+              padding: '1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
+              <ConfirmationNumberRoundedIcon sx={{ fontSize: 22, color: theme.textPrimary }} />
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
+                  Order Token & Kitchen Ticket (KOT) Sequence Settings
+                </h2>
+                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                  Customize order ticket numbering, daily reset cycles, dine-in table prefixes, and kitchen print rules.
+                </p>
+              </div>
+            </div>
+
+            {/* Side-by-side Configuration & Live Thermal Ticket Preview */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '1.5rem',
+                alignItems: 'start',
+              }}
+            >
+              {/* Left Column: Ticket Controls */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Dine-In Ticket Prefix
+                    </label>
+                    <input
+                      type="text"
+                      value={ticketPrefix}
+                      onChange={(e) => setTicketPrefix(e.target.value)}
+                      placeholder="e.g. T- or KOT-"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Takeaway / Pickup Prefix
+                    </label>
+                    <input
+                      type="text"
+                      value={takeawayPrefix}
+                      onChange={(e) => setTakeawayPrefix(e.target.value)}
+                      placeholder="e.g. TO- or Q-"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Starting Ticket Number
+                    </label>
+                    <input
+                      type="number"
+                      value={ticketStartingNumber}
+                      onChange={(e) => setTicketStartingNumber(e.target.value)}
+                      min={1}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Current Active Queue Token
+                    </label>
+                    <div style={{ display: 'flex', gap: '0.45rem' }}>
+                      <input
+                        type="number"
+                        value={currentTicketNumber}
+                        onChange={(e) => setCurrentTicketNumber(e.target.value)}
+                        min={1}
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.85rem',
+                          borderRadius: '0.55rem',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: theme.bgPage,
+                          color: theme.textPrimary,
+                          fontSize: '13.5px',
+                          fontWeight: 700,
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentTicketNumber(ticketStartingNumber);
+                          showToast(`Token sequence reset to ${ticketStartingNumber}`);
+                        }}
+                        className="button-20-secondary"
+                        title="Reset current sequence to starting number"
+                        style={{
+                          padding: '0 0.75rem',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap',
+                          borderRadius: '0.55rem',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Sequence Reset Cycle
+                    </label>
+                    <select
+                      value={ticketResetCycle}
+                      onChange={(e) => setTicketResetCycle(e.target.value as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="daily">Daily Reset (Midnight 00:00)</option>
+                      <option value="continuous">Continuous (Never reset)</option>
+                      <option value="shift">Per Cashier Register Shift</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Token Zero-Padding
+                    </label>
+                    <select
+                      value={ticketDigitsPadding}
+                      onChange={(e) => setTicketDigitsPadding(e.target.value as any)}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="3">3 Digits (e.g. #001)</option>
+                      <option value="4">4 Digits (e.g. #0001)</option>
+                      <option value="2">2 Digits (e.g. #01)</option>
+                      <option value="none">No Padding (e.g. #1)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Print & Notification Toggles */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  {[
+                    {
+                      title: 'Print Large Token # at top of Customer Bill',
+                      desc: 'Prominently display token number so waiting customers know their queue position.',
+                      state: printLargeTokenOnBill,
+                      toggle: () => setPrintLargeTokenOnBill(!printLargeTokenOnBill),
+                    },
+                    {
+                      title: 'Print Table Number on Kitchen Order Ticket (KOT)',
+                      desc: 'Print table code and dining room section clearly on chef food preparation slip.',
+                      state: printTableOnKot,
+                      toggle: () => setPrintTableOnKot(!printTableOnKot),
+                    },
+                    {
+                      title: 'Include Server / Waiter Name on KOT',
+                      desc: 'Print server name on kitchen dispatch slips for swift table runner routing.',
+                      state: printServerNameOnKot,
+                      toggle: () => setPrintServerNameOnKot(!printServerNameOnKot),
+                    },
+                    {
+                      title: 'Auto-Increment Token on Order Dispatch',
+                      desc: 'Automatically advance to next ticket number whenever an order is printed or paid.',
+                      state: autoIncrementOnDispatch,
+                      toggle: () => setAutoIncrementOnDispatch(!autoIncrementOnDispatch),
+                    },
+                    {
+                      title: 'Audio Chime on Ticket Dispatch',
+                      desc: 'Play a notification chime on the cashier register when a ticket is generated.',
+                      state: ticketSoundChime,
+                      toggle: () => setTicketSoundChime(!ticketSoundChime),
+                    },
+                  ].map((rule, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0.95rem',
+                        borderRadius: '0.55rem',
+                        backgroundColor: theme.bgPage,
+                        border: `1px solid ${theme.border}`,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
+                          {rule.title}
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
+                          {rule.desc}
+                        </div>
+                      </div>
+                      {renderToggle(rule.state, rule.toggle)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Live KOT Thermal Ticket Preview */}
+              <div
+                style={{
+                  backgroundColor: theme.bgPage,
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: '0.75rem',
+                  padding: '1.25rem',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Live Thermal KOT Ticket Preview
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      color: '#16A34A',
+                      backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                      padding: '2px 7px',
+                      borderRadius: '9999px',
+                    }}
+                  >
+                    REALTIME 80mm
+                  </span>
+                </div>
+
+                {/* Thermal Ticket Paper Effect */}
+                <div
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    color: '#111827',
+                    borderRadius: '0.5rem',
+                    padding: '1.25rem',
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    fontSize: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    border: '1px dashed #D1D5DB',
+                  }}
+                >
+                  <div style={{ textAlign: 'center', borderBottom: '1px dashed #9CA3AF', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '0.05em' }}>
+                      *** KITCHEN ORDER TICKET ***
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#4B5563', marginTop: '2px' }}>
+                      {storeName || 'SP CAFE & Bistro'} · Main Floor
+                    </div>
+                  </div>
+
+                  {/* Prominent Token Display */}
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      backgroundColor: '#F3F4F6',
+                      padding: '0.5rem',
+                      borderRadius: '0.35rem',
+                      marginBottom: '0.75rem',
+                    }}
+                  >
+                    <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.08em', color: '#4B5563' }}>
+                      ORDER TOKEN NUMBER
+                    </div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, color: '#111827', letterSpacing: '0.05em' }}>
+                      {formatTicketNumber(currentTicketNumber, ticketPrefix, ticketDigitsPadding)}
+                    </div>
+                  </div>
+
+                  {/* Table & Server Details */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11.5px', marginBottom: '0.65rem' }}>
+                    {printTableOnKot && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontWeight: 700 }}>TABLE: T-04 (Indoor)</span>
+                        <span>DINE-IN</span>
+                      </div>
+                    )}
+                    {printServerNameOnKot && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4B5563' }}>
+                        <span>SERVER: Alex M.</span>
+                        <span>GUESTS: 4 Covers</span>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6B7280', fontSize: '10.5px' }}>
+                      <span>TIME: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span>RESET: {ticketResetCycle.toUpperCase()}</span>
+                    </div>
+                  </div>
+
+                  {/* Order Items Table */}
+                  <div style={{ borderTop: '1px dashed #9CA3AF', borderBottom: '1px dashed #9CA3AF', padding: '0.5rem 0', margin: '0.65rem 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '11px', marginBottom: '4px' }}>
+                      <span>QTY  ITEM</span>
+                      <span>NOTES</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
+                      <span>2x   Artisanal Flat White</span>
+                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Oat Milk</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
+                      <span>1x   Truffle Risotto</span>
+                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Less spicy</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
+                      <span>1x   Avocado Sourdough</span>
+                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Extra toast</span>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', fontSize: '10px', color: '#6B7280', marginTop: '0.5rem' }}>
+                    *** END OF KOT #{formatTicketNumber(currentTicketNumber, ticketPrefix, ticketDigitsPadding)} ***
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {renderCardFooter('Ticket & Token Settings')}
+          </div>
+
+          {/* Card 3: Dine-In Service Rules */}
+          <div
+            style={{
+              padding: '1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <TuneRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                Dine-In Service & Floor Plan Policies
+              </h2>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {[
+                {
+                  title: 'Auto-Release Table on Payment Settlement',
+                  desc: 'Automatically release and mark table as Available immediately after cashier settles the final bill.',
+                  state: autoReleaseTableOnBill,
+                  toggle: () => setAutoReleaseTableOnBill(!autoReleaseTableOnBill),
+                },
+                {
+                  title: 'Allow Table Merging',
+                  desc: 'Enable combining multiple tables (e.g. T-01 + T-02) for large banquets or group dining reservations.',
+                  state: allowTableMerging,
+                  toggle: () => setAllowTableMerging(!allowTableMerging),
+                },
+                {
+                  title: 'Enforce Guest / Cover Count Entry',
+                  desc: 'Prompt cashier or waiter to input party size before assigning items to a table.',
+                  state: enforceGuestCount,
+                  toggle: () => setEnforceGuestCount(!enforceGuestCount),
+                },
+                {
+                  title: 'QR Code At-Table Self Ordering',
+                  desc: 'Allow guests to scan table QR code to view live menu, order food, and request assistance.',
+                  state: enableQrOrdering,
+                  toggle: () => setEnableQrOrdering(!enableQrOrdering),
+                },
+                {
+                  title: 'Table Idle Alert (> 15 mins)',
+                  desc: 'Highlight tables on POS if occupied without any active items or beverage service for over 15 minutes.',
+                  state: tableIdleAlert,
+                  toggle: () => setTableIdleAlert(!tableIdleAlert),
+                },
+              ].map((rule, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '0.55rem',
+                    backgroundColor: theme.bgPage,
+                    border: `1px solid ${theme.border}`,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
+                      {rule.title}
+                    </div>
+                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
+                      {rule.desc}
+                    </div>
+                  </div>
+                  {renderToggle(rule.state, rule.toggle)}
+                </div>
+              ))}
+            </div>
+
+            {renderCardFooter('Dine-In Policies')}
+          </div>
+        </div>
+      )}
+
       {/* SUB-TAB 7: NOTIFICATIONS */}
       {activeSubTab === 'set_notifications' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -2442,21 +3505,11 @@ export default function SettingsManagement({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '0.65rem',
-                backgroundColor: theme.hoverBg,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {(currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos') ? (
-                  <DarkModeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-                ) : (
-                  <LightModeRoundedIcon sx={{ fontSize: 20, color: '#EAB308' }} />
-                )}
-              </div>
+              {(currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos') ? (
+                <DarkModeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
+              ) : (
+                <LightModeRoundedIcon sx={{ fontSize: 20, color: '#EAB308' }} />
+              )}
               <h2 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
                 Dark Mode
               </h2>
@@ -2471,6 +3524,397 @@ export default function SettingsManagement({
                 showToast(`Switched to ${target === 'dark' ? 'Dark Mode' : 'Light Mode'}.`);
               }
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: ADD / EDIT RESTAURANT TABLE                                   */}
+      {/* ==================================================================== */}
+      {showTableModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1.25rem',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '1.75rem',
+              boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
+              boxSizing: 'border-box',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
+                  {editingTableId ? 'Edit Dining Table' : 'Add New Dining Table'}
+                </h3>
+                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '3px 0 0 0' }}>
+                  Configure table code, dining section, seating capacity, and table layout.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTableModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveTable} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    TABLE NUMBER / CODE *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={tableFormNumber}
+                    onChange={(e) => setTableFormNumber(e.target.value)}
+                    placeholder="e.g. T-07"
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    FLOOR SECTION *
+                  </label>
+                  <select
+                    value={tableFormSection}
+                    onChange={(e) => setTableFormSection(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {sections.map((sec) => (
+                      <option key={sec} value={sec}>
+                        {sec}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Seating Capacity Selection */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  SEATING CAPACITY ({tableFormCapacity} GUESTS)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  {[2, 4, 6, 8, 10, 12].map((cap) => (
+                    <button
+                      key={cap}
+                      type="button"
+                      onClick={() => setTableFormCapacity(cap)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '0.5rem',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: `1px solid ${tableFormCapacity === cap ? theme.activeBg : theme.border}`,
+                        backgroundColor: tableFormCapacity === cap ? theme.activeBg : theme.bgPage,
+                        color: tableFormCapacity === cap ? theme.activeText : theme.textPrimary,
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {cap} Seats
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={tableFormCapacity}
+                    onChange={(e) => setTableFormCapacity(parseInt(e.target.value, 10) || 1)}
+                    style={{
+                      width: '70px',
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: '0.5rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      outline: 'none',
+                      textAlign: 'center',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Table Shape & Layout */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  TABLE SHAPE
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                  {[
+                    { shape: 'square' as const, label: 'Square' },
+                    { shape: 'round' as const, label: 'Round' },
+                    { shape: 'rect' as const, label: 'Rectangle' },
+                  ].map((s) => (
+                    <button
+                      key={s.shape}
+                      type="button"
+                      onClick={() => setTableFormShape(s.shape)}
+                      style={{
+                        padding: '0.65rem',
+                        borderRadius: '0.55rem',
+                        fontSize: '12.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: `1px solid ${tableFormShape === s.shape ? theme.activeBg : theme.border}`,
+                        backgroundColor: tableFormShape === s.shape ? theme.activeBg : theme.bgPage,
+                        color: tableFormShape === s.shape ? theme.activeText : theme.textPrimary,
+                        textAlign: 'center',
+                        textTransform: 'capitalize',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Table Status */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  STATUS
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                  {[
+                    { val: 'available' as const, label: 'Available', color: '#16A34A' },
+                    { val: 'occupied' as const, label: 'Occupied', color: '#D97706' },
+                    { val: 'reserved' as const, label: 'Reserved', color: '#8B5CF6' },
+                  ].map((st) => (
+                    <button
+                      key={st.val}
+                      type="button"
+                      onClick={() => setTableFormStatus(st.val)}
+                      style={{
+                        padding: '0.55rem',
+                        borderRadius: '0.55rem',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        border: `1px solid ${tableFormStatus === st.val ? st.color : theme.border}`,
+                        backgroundColor: tableFormStatus === st.val ? `${st.color}15` : theme.bgPage,
+                        color: tableFormStatus === st.val ? st.color : theme.textPrimary,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: st.color, display: 'inline-block' }} />
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes / Special Instructions */}
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  TABLE NOTES / SPECIAL ATTRIBUTES (OPTIONAL)
+                </label>
+                <input
+                  type="text"
+                  value={tableFormNotes}
+                  onChange={(e) => setTableFormNotes(e.target.value)}
+                  placeholder="e.g. Window view booth, near bar counter, plug point available"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgPage,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Modal Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem', paddingTop: '1rem', borderTop: `1px solid ${theme.border}` }}>
+                <button
+                  type="button"
+                  onClick={() => setShowTableModal(false)}
+                  className="button-20-secondary"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.55rem 1.15rem',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="button-20"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.55rem 1.35rem',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {editingTableId ? 'Save Table Changes' : 'Create Table'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: ADD SECTION                                                   */}
+      {/* ==================================================================== */}
+      {showAddSectionModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '1.25rem',
+              width: '100%',
+              maxWidth: '420px',
+              padding: '1.5rem',
+              boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                Add New Dining Section
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddSectionModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 18 }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddSection} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  SECTION NAME *
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  placeholder="e.g. Garden Terrace, VIP Lounge, Mezzanine"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgPage,
+                    color: theme.textPrimary,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddSectionModal(false)}
+                  className="button-20-secondary"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.45rem 1rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="button-20"
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.45rem 1.15rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Add Section
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

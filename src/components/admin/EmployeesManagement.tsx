@@ -125,6 +125,7 @@ export interface PerformanceRecord {
 export interface EmployeesManagementProps {
   activeSubTab?: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts' | 'emp_attendance' | 'emp_performance';
   onSelectSubTab?: (tab: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts' | 'emp_attendance' | 'emp_performance') => void;
+  isManagerView?: boolean;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -205,13 +206,19 @@ const PERMISSION_DEFINITIONS: RolePermissionDef[] = [
 ];
 
 const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
-  'Store Manager': PERMISSION_DEFINITIONS.map((p) => p.key),
+  // Store Manager operational role: No product creation, no pricing control, no tax/settings, no user/permission management
+  'Store Manager': PERMISSION_DEFINITIONS.filter((p) =>
+    p.key !== 'inv_edit_selling_price' && // ❌ No Pricing control
+    p.key !== 'inv_add_products' && // ❌ No Product creation/editing
+    p.key !== 'sys_edit_settings' && // ❌ No Tax settings & Payment gateway settings
+    p.key !== 'sys_reset_pins' // ❌ No User/permission management
+  ).map((p) => p.key),
   'Shift Supervisor': [
     'pos_ring_sales', 'pos_custom_discount', 'pos_void_items', 'pos_reprint_receipts', 'pos_open_drawer_no_sale',
     'ret_authorize_return', 'ret_issue_cash_refund',
     'inv_adjust_stock', 'inv_receive_po',
     'rep_view_revenue', 'rep_view_employee_perf', 'rep_run_z_report',
-    'sys_reset_pins', 'sys_view_audit_logs',
+    'sys_view_audit_logs',
   ],
   'Senior Cashier': [
     'pos_ring_sales', 'pos_custom_discount', 'pos_void_items', 'pos_reprint_receipts', 'pos_open_drawer_no_sale',
@@ -222,13 +229,14 @@ const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'pos_ring_sales', 'pos_reprint_receipts',
   ],
   'Inventory Clerk': [
-    'inv_adjust_stock', 'inv_receive_po', 'inv_add_products',
+    'inv_adjust_stock', 'inv_receive_po',
   ],
 };
 
 export default function EmployeesManagement({
   activeSubTab = 'emp_all',
   onSelectSubTab,
+  isManagerView = false,
   theme,
 }: EmployeesManagementProps) {
   // Navigation State
@@ -461,27 +469,29 @@ export default function EmployeesManagement({
           </p>
         </div>
 
-        {/* Global Action: Add Employee */}
-        <button
-          type="button"
-          className="button-20"
-          role="button"
-          onClick={() => setShowAddEmployeeModal(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0 1.15rem',
-            height: '38px',
-            fontSize: '13px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          <AddRoundedIcon sx={{ fontSize: 18 }} />
-          <span>Add Employee</span>
-        </button>
+        {/* Global Action: Add Employee (Hidden for Manager role) */}
+        {!isManagerView && (
+          <button
+            type="button"
+            className="button-20"
+            role="button"
+            onClick={() => setShowAddEmployeeModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0 1.15rem',
+              height: '38px',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            <AddRoundedIcon sx={{ fontSize: 18 }} />
+            <span>Add Employee</span>
+          </button>
+        )}
       </div>
 
       {/* ==================================================================== */}
@@ -1432,27 +1442,30 @@ export default function EmployeesManagement({
             </div>
 
             {/* Role Tabs Pill List */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
               {Object.keys(rolePermissions).map((roleName) => {
                 const isSelected = selectedRoleName === roleName;
                 return (
                   <button
                     key={roleName}
                     type="button"
+                    className={isSelected ? "button-20" : "button-20-secondary"}
+                    role="button"
                     onClick={() => setSelectedRoleName(roleName)}
                     style={{
-                      padding: '8px 16px',
-                      borderRadius: '0.65rem',
-                      border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
-                      backgroundColor: isSelected ? theme.activeBg : ((theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB'),
-                      color: isSelected ? theme.activeText : theme.textPrimary,
+                      height: '38px',
+                      padding: '0 1.25rem',
                       fontSize: '13px',
                       fontWeight: isSelected ? 800 : 600,
                       cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {roleName}
+                    <span>{roleName}</span>
                   </button>
                 );
               })}

@@ -1,87 +1,81 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // Material Rounded Icons
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
-import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import AssignmentReturnRoundedIcon from '@mui/icons-material/AssignmentReturnRounded';
+import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import WarehouseRoundedIcon from '@mui/icons-material/WarehouseRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
-import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
+import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
+import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
-import AdminPanelSettingsRoundedIcon from '@mui/icons-material/AdminPanelSettingsRounded';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+
+// Management Views
 import ManagerInventoryScreen from '@/components/manager/ManagerInventoryScreen';
-import { AppTheme, ThemeMode, APP_THEMES, getStoredThemeMode } from '@/lib/themeConfig';
+import SalesManagement from '@/components/admin/SalesManagement';
+import CustomersManagement from '@/components/admin/CustomersManagement';
+import EmployeesManagement from '@/components/admin/EmployeesManagement';
+import ReportsManagement from '@/components/admin/ReportsManagement';
+import { AppTheme, ThemeMode, ThemeId, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
+
+interface SubNavItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  href?: string;
+}
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  href?: string;
+  subItems?: SubNavItem[];
 }
 
 export default function ManagerDashboardPage() {
   const router = useRouter();
 
-  // Sidebar collapse/expand state with smooth animation
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeTabId, setActiveTabId] = useState('inventory');
+  // Active Tab & Menu Expansion State
+  const [activeTabId, setActiveTabId] = useState('dashboard');
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    orders: false,
+    inventory: false,
+    customers: false,
+    employees: false,
+    reports: false,
+  });
+
   const [chartTimeframe, setChartTimeframe] = useState<'weekly' | 'monthly'>('weekly');
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showShiftModal, setShowShiftModal] = useState(false);
-
-  // Exact Navigation Items from Manager Dashboard Screenshot
-  const mainNavItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <DashboardRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'orders', label: 'Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'products', label: 'Products', icon: <Inventory2RoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'inventory', label: 'Inventory', icon: <WarehouseRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'customers', label: 'Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'employees', label: 'Employees', icon: <BadgeRoundedIcon sx={{ fontSize: 20 }} /> },
-    { id: 'reports', label: 'Reports', icon: <AssessmentRoundedIcon sx={{ fontSize: 20 }} /> },
-  ];
-
-  // Item below horizontal line
-  const shiftNavItem: NavItem = {
-    id: 'shift',
-    label: 'Shift',
-    icon: <ScheduleRoundedIcon sx={{ fontSize: 20 }} />,
-  };
-
-  // Weekly bar chart data
-  const weeklySalesData: { day: string; sales: number; orders: number; isToday?: boolean }[] = [];
-  const monthlySalesData: { day: string; sales: number; orders: number; isToday?: boolean }[] = [];
-
-  const chartData = chartTimeframe === 'weekly' ? weeklySalesData : monthlySalesData;
-  const maxSales = 1;
-
-  // Recent orders list
-  const recentOrders: { id: string; customer: string; amount: string; status: string; time: string; items: number }[] = [];
-
-  // Manager store notifications
-  const notifications: { id: string; title: string; desc: string; time: string }[] = [];
 
   // Dynamic Manager Dark / Light Mode State
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
 
-  React.useEffect(() => {
+  useEffect(() => {
     setThemeMode(getStoredThemeMode());
     const handleThemeSync = () => {
       setThemeMode(getStoredThemeMode());
@@ -94,7 +88,173 @@ export default function ManagerDashboardPage() {
     };
   }, []);
 
+  const handleToggleTheme = () => {
+    const nextMode: ThemeMode = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(nextMode);
+    setStoredThemeMode(nextMode);
+  };
+
   const theme: AppTheme = APP_THEMES[themeMode] || APP_THEMES.light;
+
+  // Accordion navigation helpers: only ONE menu expanded at a time
+  const openSingleMenu = (menuId: string) => {
+    setExpandedMenus({
+      orders: menuId === 'orders',
+      inventory: menuId === 'inventory',
+      customers: menuId === 'customers',
+      employees: menuId === 'employees',
+      reports: menuId === 'reports',
+    });
+  };
+
+  const closeAllMenus = () => {
+    setExpandedMenus({
+      orders: false,
+      inventory: false,
+      customers: false,
+      employees: false,
+      reports: false,
+    });
+  };
+
+  const toggleMenu = (menuId: string) => {
+    setExpandedMenus((prev) => {
+      const isCurrentlyOpen = !!prev[menuId];
+      if (isCurrentlyOpen) {
+        return {
+          orders: false,
+          inventory: false,
+          customers: false,
+          employees: false,
+          reports: false,
+        };
+      }
+      return {
+        orders: menuId === 'orders',
+        inventory: menuId === 'inventory',
+        customers: menuId === 'customers',
+        employees: menuId === 'employees',
+        reports: menuId === 'reports',
+      };
+    });
+  };
+
+  // Nav Items configured per user specification:
+  // Orders (All Orders, Returns, Payments)
+  // Inventory (Unified single-page view, no submenus)
+  // Customers (All Customers, Purchase History)
+  // Employees (Staff, Shifts, Attendance, Performance)
+  // Reports (Sales, Inventory, Employee Performance)
+  const navItems: NavItem[] = [
+    {
+      id: 'dashboard',
+      label: 'Home',
+      icon: <HomeRoundedIcon sx={{ fontSize: 18 }} />,
+    },
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />,
+      subItems: [
+        { id: 'orders_all', label: 'All Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'orders_returns', label: 'Returns', icon: <AssignmentReturnRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'orders_payments', label: 'Payments', icon: <CreditCardRoundedIcon sx={{ fontSize: 14 }} /> },
+      ],
+    },
+    {
+      id: 'inventory',
+      label: 'Inventory',
+      icon: <WarehouseRoundedIcon sx={{ fontSize: 18 }} />,
+    },
+    {
+      id: 'customers',
+      label: 'Customers',
+      icon: <PeopleAltRoundedIcon sx={{ fontSize: 18 }} />,
+      subItems: [
+        { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
+      ],
+    },
+    {
+      id: 'employees',
+      label: 'Employees',
+      icon: <BadgeRoundedIcon sx={{ fontSize: 18 }} />,
+      subItems: [
+        { id: 'emp_staff', label: 'Staff', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'emp_shifts', label: 'Shifts', icon: <ScheduleRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'emp_attendance', label: 'Attendance', icon: <EventAvailableRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'emp_performance', label: 'Performance', icon: <TrendingUpRoundedIcon sx={{ fontSize: 14 }} /> },
+      ],
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      icon: <AssessmentRoundedIcon sx={{ fontSize: 18 }} />,
+      subItems: [
+        { id: 'rep_sales', label: 'Sales', icon: <BarChartRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'rep_inventory', label: 'Inventory', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
+        { id: 'rep_performance', label: 'Employee Performance', icon: <BadgeRoundedIcon sx={{ fontSize: 14 }} /> },
+      ],
+    },
+    {
+      id: 'terminal',
+      label: 'Go to terminal',
+      icon: <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} />,
+      href: '/pos',
+    },
+  ];
+
+  // Active section detectors
+  const isOrdersActive =
+    activeTabId === 'orders' ||
+    activeTabId === 'orders_all' ||
+    activeTabId === 'orders_returns' ||
+    activeTabId === 'orders_payments';
+
+  const isInventoryActive = activeTabId === 'inventory';
+
+  const isCustomersActive =
+    activeTabId === 'customers' ||
+    activeTabId === 'cust_all' ||
+    activeTabId === 'cust_history';
+
+  const isEmployeesActive =
+    activeTabId === 'employees' ||
+    activeTabId === 'emp_staff' ||
+    activeTabId === 'emp_shifts' ||
+    activeTabId === 'emp_attendance' ||
+    activeTabId === 'emp_performance';
+
+  const isReportsActive =
+    activeTabId === 'reports' ||
+    activeTabId === 'rep_sales' ||
+    activeTabId === 'rep_inventory' ||
+    activeTabId === 'rep_performance';
+
+  const isDashboardActive = activeTabId === 'dashboard';
+
+  // Weekly bar chart data for overview dashboard
+  const weeklySalesData = [
+    { day: 'Mon', sales: 0, orders: 0 },
+    { day: 'Tue', sales: 0, orders: 0 },
+    { day: 'Wed', sales: 0, orders: 0 },
+    { day: 'Thu', sales: 0, orders: 0 },
+    { day: 'Fri', sales: 0, orders: 0 },
+    { day: 'Sat', sales: 0, orders: 0 },
+    { day: 'Sun', sales: 0, orders: 0, isToday: true },
+  ];
+  const monthlySalesData = [
+    { day: 'W1', sales: 0, orders: 0 },
+    { day: 'W2', sales: 0, orders: 0 },
+    { day: 'W3', sales: 0, orders: 0 },
+    { day: 'W4', sales: 0, orders: 0, isToday: true },
+  ];
+
+  const chartData = chartTimeframe === 'weekly' ? weeklySalesData : monthlySalesData;
+  const maxSales = Math.max(...chartData.map((d) => d.sales), 1);
+
+  // Recent orders list
+  const recentOrders: { id: string; customer: string; amount: string; status: string; time: string; items: number }[] = [];
 
   return (
     <div style={{
@@ -109,67 +269,69 @@ export default function ManagerDashboardPage() {
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* Top Header Bar - Salt & Pepper */}
-      <header style={{
-        height: '62px',
-        backgroundColor: theme.bgHeader,
-        borderBottom: `1px solid ${theme.border}`,
-        padding: '0 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-        zIndex: 30,
-      }}>
-        {/* Left: Sidebar Toggle + Brand Logo + Manager Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen((prev) => !prev)}
-            title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            aria-label="Toggle sidebar"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '0.55rem',
-              backgroundColor: 'transparent',
-              border: `1px solid ${theme.border}`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: theme.textPrimary,
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.hoverBg;
-              e.currentTarget.style.borderColor = theme.borderHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = theme.border;
-            }}
-          >
-            {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
-            ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
-            )}
-          </button>
+      {/* Global CSS for Smooth Dropdown & Accordion Animations matching Dashboard */}
+      <style>{`
+        @keyframes fadeInSlideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .sidebar-nav-btn .sidebar-chevron-arrow {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.18s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-nav-btn:hover .sidebar-chevron-arrow,
+        .sidebar-nav-btn.is-expanded .sidebar-chevron-arrow {
+          opacity: 1;
+        }
+      `}</style>
 
-          {/* Logo + Brand + Manager Badge */}
+      {/* Main Body Layout: Compact Sidebar + Main Scrollable Area */}
+      <div style={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Fixed Compact Sidebar matching Dashboard Screen exactly */}
+        <aside style={{
+          width: '200px',
+          minWidth: '200px',
+          maxWidth: '200px',
+          backgroundColor: theme.bgSidebar,
+          borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
+          height: '100%',
+          overflowY: 'hidden',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '0.65rem 0.55rem',
+          boxSizing: 'border-box',
+          flexShrink: 0,
+        }}>
+          {/* Brand Logo & Name inside Left Sidebar */}
           <Link
             href="/manager"
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.65rem',
+              gap: '0.55rem',
               textDecoration: 'none',
+              padding: '0.45rem 0.55rem 0.75rem 0.55rem',
+              marginBottom: '0.45rem',
+              borderBottom: `1px solid ${theme.sidebarBorder || theme.border}`,
             }}
           >
             <div style={{
-              width: '34px',
-              height: '34px',
+              width: '28px',
+              height: '28px',
               position: 'relative',
               borderRadius: '9999px',
               overflow: 'hidden',
@@ -181,395 +343,76 @@ export default function ManagerDashboardPage() {
               <Image
                 src="/logo.png"
                 alt="Nuradesk Logo"
-                width={34}
-                height={34}
+                width={28}
+                height={28}
                 priority
-                style={{ objectFit: 'contain' }}
+                style={{
+                  objectFit: 'contain',
+                  filter: theme.sidebarIsDark ? 'invert(1)' : 'none',
+                }}
               />
             </div>
-            <span style={{
-              fontSize: '21px',
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              color: theme.textPrimary,
-            }}>
-              Nuradesk
-            </span>
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              backgroundColor: theme.secondaryBadgeBg,
-              color: theme.secondaryBadgeText,
-              border: `1px solid ${theme.secondaryBadgeBorder}`,
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              marginLeft: '0.25rem',
-            }}>
-              Manager
-            </span>
-          </Link>
-        </div>
-
-        {/* Right Controls: Switch to Admin Dashboard + POS Terminal + Notifications + Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-          {/* Switch to Admin View */}
-          <Link
-            href="/dashboard"
-            title="Switch to Owner / Admin Dashboard"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              padding: '0 0.85rem',
-              height: '34px',
-              borderRadius: '0.65rem',
-              backgroundColor: theme.hoverBg,
-              border: `1px solid ${theme.border}`,
-              color: theme.textPrimary,
-              fontSize: '12.5px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = theme.borderHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = theme.border;
-            }}
-          >
-            <AdminPanelSettingsRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-            <span>Admin View</span>
-          </Link>
-
-          {/* POS Terminal Quick Access */}
-          <Link
-            href="/pos"
-            className="button-20"
-            role="button"
-            style={{
-              height: '35px',
-              padding: '0 1.1rem',
-              fontSize: '13px',
-              fontWeight: 800,
-              borderRadius: '0.65rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              textDecoration: 'none',
-              backgroundColor: theme.posBtnBg,
-              color: theme.posBtnText,
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <span>POS Terminal</span>
-            <ArrowOutwardRoundedIcon sx={{ fontSize: 15, color: '#FFFFFF' }} />
-          </Link>
-
-          {/* Notification Bell */}
-          <div style={{ position: 'relative' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowNotifications((prev) => !prev);
-                setShowProfileMenu(false);
-              }}
-              title="Store Notifications"
-              aria-label="Notifications"
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '0.55rem',
-                border: `1px solid ${showNotifications ? theme.borderHover : theme.border}`,
-                backgroundColor: showNotifications ? theme.hoverBg : 'transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: theme.textPrimary,
-                position: 'relative',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.hoverBg;
-                e.currentTarget.style.borderColor = theme.borderHover;
-              }}
-              onMouseLeave={(e) => {
-                if (!showNotifications) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = theme.border;
-                }
-              }}
-            >
-              <NotificationsNoneRoundedIcon sx={{ fontSize: 21, color: theme.textPrimary }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flex: 1, minWidth: 0 }}>
               <span style={{
-                position: 'absolute',
-                top: '7px',
-                right: '7px',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: theme.textPrimary,
-              }} />
-            </button>
-
-            {/* Notifications Dropdown Popover */}
-            {showNotifications && (
-              <div style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '320px',
-                backgroundColor: theme.popoverBg,
-                border: `1px solid ${theme.popoverBorder}`,
-                borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
-                padding: '0.85rem',
-                zIndex: 50,
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingBottom: '0.65rem',
-                  borderBottom: `1px solid ${theme.border}`,
-                  marginBottom: '0.65rem',
-                }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
-                    Store Notifications
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNotifications(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: theme.textPrimary,
-                      cursor: 'pointer',
-                      display: 'flex',
-                    }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {notifications.length === 0 ? (
-                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, textAlign: 'center', margin: '0.5rem 0' }}>No new notifications.</p>
-                  ) : notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      style={{
-                        padding: '0.55rem 0.65rem',
-                        borderRadius: '0.5rem',
-                        backgroundColor: theme.hoverBg,
-                        border: `1px solid ${theme.border}`,
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>
-                          {n.title}
-                        </span>
-                        <span style={{ fontSize: '10.5px', color: theme.textMuted }}>
-                          {n.time}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0.25rem 0 0 0', lineHeight: 1.35 }}>
-                        {n.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* User Profile Badge (Amit - Ahmedabad Store Manager) */}
-          <div style={{ position: 'relative' }}>
-            <div
-              onClick={() => {
-                setShowProfileMenu((prev) => !prev);
-                setShowNotifications(false);
-              }}
-              role="button"
-              tabIndex={0}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                cursor: 'pointer',
-                padding: '4px 10px',
-                borderRadius: '0.65rem',
-                border: `1px solid ${showProfileMenu ? theme.borderHover : theme.border}`,
-                backgroundColor: theme.hoverBg,
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = theme.borderHover;
-              }}
-              onMouseLeave={(e) => {
-                if (!showProfileMenu) e.currentTarget.style.borderColor = theme.border;
-              }}
-            >
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                backgroundColor: theme.badgeBg,
-                color: theme.badgeText,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
+                fontSize: '17px',
                 fontWeight: 800,
+                letterSpacing: '-0.035em',
+                color: theme.sidebarTextPrimary || theme.textPrimary,
               }}>
-                AM
-              </div>
-              <span style={{
-                fontSize: '13.5px',
-                fontWeight: 700,
-                color: theme.textPrimary,
-                letterSpacing: '-0.01em',
-              }}>
-                Manager
+                Nuradesk
               </span>
-              <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-            </div>
-
-            {/* Profile Dropdown Menu */}
-            {showProfileMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '46px',
-                right: 0,
-                width: '240px',
-                backgroundColor: theme.popoverBg,
-                border: `1px solid ${theme.popoverBorder}`,
-                borderRadius: '0.85rem',
-                boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
-                padding: '0.65rem',
-                zIndex: 50,
+              <span style={{
+                fontSize: '9.5px',
+                fontWeight: 800,
+                backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#E2E8F0',
+                color: (theme as any).sidebarIsDark ? '#FFFFFF' : '#334155',
+                padding: '1px 5px',
+                borderRadius: '9999px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
               }}>
-                <div style={{ padding: '0.4rem 0.55rem', borderBottom: `1px solid ${theme.border}`, marginBottom: '0.45rem' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>Manager</div>
-                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>Store Manager</div>
-                </div>
-                <Link
-                  href="/dashboard"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <AdminPanelSettingsRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Go to Admin Dashboard</span>
-                </Link>
-                <Link
-                  href="/start-shift"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <StoreRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Switch Store / Shift</span>
-                </Link>
-                <Link
-                  href="/signin"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.55rem',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: theme.textPrimary,
-                    borderRadius: '0.45rem',
-                    textDecoration: 'none',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                  <LogoutRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                  <span>Log Out</span>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+                Mgr
+              </span>
+            </div>
+          </Link>
 
-      {/* Main Body Layout: Salt & Pepper Sidebar + Content */}
-      <div style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        overflow: 'hidden',
-        position: 'relative',
-      }}>
-        {/* Animated Collapsible Sidebar (Exact Manager Nav List) */}
-        <aside style={{
-          width: isSidebarOpen ? '236px' : '68px',
-          minWidth: isSidebarOpen ? '236px' : '68px',
-          backgroundColor: theme.bgSidebar,
-          borderRight: `1px solid ${theme.border}`,
-          height: '100%',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: isSidebarOpen ? '1.25rem 0.85rem' : '1.25rem 0.5rem',
-          transition: 'width 0.28s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxSizing: 'border-box',
-          flexShrink: 0,
-        }}>
-          <div>
-            {/* Main Menu List */}
-            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              {mainNavItems.map((item) => {
-                const isActive = activeTabId === item.id;
+          {/* Navigation Links List — scrollable area */}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+            {navItems.map((item) => {
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isExpanded = expandedMenus[item.id] ?? false;
+              const isActive = !hasSubItems && activeTabId === item.id;
 
-                return (
+              return (
+                <div key={item.id}>
                   <button
-                    key={item.id}
                     type="button"
-                    onClick={() => setActiveTabId(item.id)}
-                    title={!isSidebarOpen ? item.label : undefined}
+                    className={`sidebar-nav-btn ${isExpanded ? 'is-expanded' : ''}`}
+                    onClick={() => {
+                      if (item.href) {
+                        router.push(item.href);
+                        return;
+                      }
+                      if (hasSubItems) {
+                        toggleMenu(item.id);
+                      } else {
+                        closeAllMenus();
+                        setActiveTabId(item.id);
+                      }
+                    }}
                     style={{
                       width: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                      padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
-                      borderRadius: '0.75rem',
+                      justifyContent: 'space-between',
+                      padding: '0.42rem 0.6rem',
+                      borderRadius: '0.55rem',
                       border: 'none',
                       backgroundColor: isActive ? theme.sidebarActiveBg : 'transparent',
-                      color: isActive ? theme.sidebarActiveText : theme.textPrimary,
+                      color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
-                      gap: '0.8rem',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
@@ -582,629 +425,892 @@ export default function ManagerDashboardPage() {
                       }
                     }}
                   >
-                    <span style={{
+                    <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      color: isActive ? theme.sidebarActiveText : theme.textPrimary,
+                      gap: '0.65rem',
+                      minWidth: 0,
                     }}>
-                      {item.icon}
-                    </span>
-                    {isSidebarOpen && (
                       <span style={{
-                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                      }}>
+                        {item.icon}
+                      </span>
+                      <span style={{
+                        fontSize: '13px',
                         fontWeight: isActive ? 800 : 600,
                         letterSpacing: '-0.015em',
-                        color: isActive ? theme.sidebarActiveText : theme.textPrimary,
+                        color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                       }}>
                         {item.label}
                       </span>
-                    )}
+                    </div>
+
+                    {/* Submenu Accordion Chevron or Link Arrow */}
+                    {hasSubItems ? (
+                      <span
+                        className="sidebar-chevron-arrow"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                        }}
+                      >
+                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary) }} />
+                      </span>
+                    ) : item.href ? (
+                      <span
+                        className="sidebar-chevron-arrow"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: theme.sidebarTextSecondary || theme.textSecondary,
+                        }}
+                      >
+                        <ArrowOutwardRoundedIcon sx={{ fontSize: 13 }} />
+                      </span>
+                    ) : null}
                   </button>
-                );
-              })}
-            </nav>
 
-            {/* Horizontal Divider Line */}
-            <div style={{
-              margin: '1rem 0.5rem',
-              borderBottom: `1px solid ${theme.border}`,
-            }} />
+                  {/* Submenu List with Icons - Smooth CSS Grid Transition */}
+                  {hasSubItems && (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateRows: isExpanded ? '1fr' : '0fr',
+                        transition: 'grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          overflow: 'hidden',
+                          opacity: isExpanded ? 1 : 0,
+                          transform: isExpanded ? 'translateY(0)' : 'translateY(-6px)',
+                          transition: 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.15rem',
+                            paddingLeft: '0.65rem',
+                            paddingTop: '0.25rem',
+                            paddingBottom: '0.25rem',
+                            borderLeft: `1px solid ${theme.sidebarBorder || theme.border}`,
+                            marginLeft: '1.05rem',
+                          }}
+                        >
+                          {item.subItems?.map((sub) => {
+                            const isSubActive = activeTabId === sub.id;
 
-            {/* Shift Item below line */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTabId('shift');
-                setShowShiftModal(true);
-              }}
-              title={!isSidebarOpen ? shiftNavItem.label : undefined}
+                            if (sub.href) {
+                              return (
+                                <Link
+                                  key={sub.id}
+                                  href={sub.href}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.55rem',
+                                    textAlign: 'left',
+                                    padding: '0.32rem 0.5rem',
+                                    borderRadius: '0.45rem',
+                                    border: 'none',
+                                    textDecoration: 'none',
+                                    backgroundColor: isSubActive ? theme.sidebarActiveBg : 'transparent',
+                                    color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                    fontSize: '12px',
+                                    fontWeight: isSubActive ? 800 : 500,
+                                    cursor: 'pointer',
+                                    fontFamily: 'inherit',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!isSubActive) {
+                                      e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                                      e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isSubActive) {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                      e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
+                                    }
+                                  }}
+                                >
+                                  <span style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                  }}>
+                                    {sub.icon}
+                                  </span>
+                                  <span style={{
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}>
+                                    {sub.label}
+                                  </span>
+                                </Link>
+                              );
+                            }
+
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => {
+                                  setActiveTabId(sub.id);
+                                  openSingleMenu(item.id);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.55rem',
+                                  textAlign: 'left',
+                                  padding: '0.32rem 0.5rem',
+                                  borderRadius: '0.45rem',
+                                  border: 'none',
+                                  backgroundColor: isSubActive ? theme.sidebarActiveBg : 'transparent',
+                                  color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                  fontSize: '12px',
+                                  fontWeight: isSubActive ? 800 : 500,
+                                  cursor: 'pointer',
+                                  fontFamily: 'inherit',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isSubActive) {
+                                    e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                                    e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isSubActive) {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                    e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
+                                  }
+                                }}
+                              >
+                                <span style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                }}>
+                                  {sub.icon}
+                                </span>
+                                <span style={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}>
+                                  {sub.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Bottom Sidebar Section — Manager Shift Card */}
+          <div style={{
+            paddingTop: '0.65rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.45rem',
+            flexShrink: 0,
+          }}>
+            <div
               style={{
-                width: '100%',
+                padding: '0.55rem 0.6rem',
+                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                border: `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
+                borderRadius: '0.65rem',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
-                borderRadius: '0.75rem',
-                border: activeTabId === 'shift' ? `1px solid ${theme.activeBg}` : '1px solid transparent',
-                backgroundColor: activeTabId === 'shift' ? theme.activeBg : 'transparent',
-                color: activeTabId === 'shift' ? theme.activeText : theme.textPrimary,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-                gap: '0.8rem',
-              }}
-              onMouseEnter={(e) => {
-                if (activeTabId !== 'shift') {
-                  e.currentTarget.style.backgroundColor = theme.hoverBg;
-                  e.currentTarget.style.borderColor = theme.border;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTabId !== 'shift') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.borderColor = 'transparent';
-                }
+                flexDirection: 'column',
+                gap: '0.45rem',
+                boxSizing: 'border-box',
               }}
             >
-              <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: activeTabId === 'shift' ? theme.activeIcon : theme.textPrimary,
-              }}>
-                {shiftNavItem.icon}
-              </span>
-              {isSidebarOpen && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#16A34A',
+                    boxShadow: '0 0 6px #16A34A',
+                    display: 'inline-block',
+                  }} />
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: theme.sidebarTextPrimary || theme.textPrimary,
+                  }}>
+                    Active Shift
+                  </span>
+                </div>
                 <span style={{
-                  fontSize: '14px',
-                  fontWeight: activeTabId === 'shift' ? 800 : 600,
-                  letterSpacing: '-0.015em',
-                  color: activeTabId === 'shift' ? '#000000' : '#FFFFFF',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  color: theme.textSecondary,
                 }}>
-                  {shiftNavItem.label}
+                  08:00 AM
                 </span>
-              )}
-            </button>
-          </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShiftModal(true)}
+                className="button-20"
+                style={{
+                  width: '100%',
+                  height: '24px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  borderRadius: '0.4rem',
+                  padding: 0,
+                  border: 'none',
+                }}
+              >
+                <span>Reconcile Shift</span>
+              </button>
+            </div>
 
-          {/* Bottom Store Indicator */}
-          <Link
-            href="/pos-login"
-            style={{ textDecoration: 'none', display: 'block', marginTop: '1.25rem' }}
-          >
-            {isSidebarOpen ? (
-              <div
+            {/* Sidebar Utility Footer: Theme Toggle & Logout */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.2rem 0.2rem 0 0.2rem',
+            }}>
+              <button
+                type="button"
+                onClick={handleToggleTheme}
+                title={`Switch to ${themeMode === 'dark' ? 'Light' : 'Dark'} mode`}
                 style={{
-                  height: '46px',
-                  backgroundColor: theme.hoverBg,
+                  height: '26px',
+                  padding: '0 0.45rem',
+                  borderRadius: '0.4rem',
                   border: `1px solid ${theme.border}`,
-                  borderRadius: '0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.55rem',
-                  color: theme.textPrimary,
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  letterSpacing: '-0.01em',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.borderHover;
-                  e.currentTarget.style.backgroundColor = theme.bgCardHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.border;
-                  e.currentTarget.style.backgroundColor = theme.hoverBg;
-                }}
-              >
-                <span style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22C55E',
-                  boxShadow: '0 0 8px #22C55E',
-                  display: 'inline-block',
-                }} />
-                <span>SP CAFE — Live POS</span>
-              </div>
-            ) : (
-              <div
-                title="SP CAFE — Live POS"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: theme.hoverBg,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.75rem',
-                  margin: '0 auto',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.textPrimary,
+                  backgroundColor: 'transparent',
+                  color: theme.sidebarTextPrimary || theme.textPrimary,
                   fontSize: '11px',
-                  fontWeight: 800,
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
                   cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = theme.borderHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = theme.border;
+                  fontFamily: 'inherit',
                 }}
               >
-                POS
-                <span style={{
-                  position: 'absolute',
-                  top: '5px',
-                  right: '5px',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#22C55E',
-                }} />
-              </div>
-            )}
-          </Link>
+                {themeMode === 'dark' ? (
+                  <LightModeRoundedIcon sx={{ fontSize: 13, color: '#EAB308' }} />
+                ) : (
+                  <DarkModeRoundedIcon sx={{ fontSize: 13 }} />
+                )}
+                <span>{themeMode === 'dark' ? 'Light' : 'Dark'}</span>
+              </button>
+
+              <Link
+                href="/signin"
+                title="Log out of manager session"
+                style={{
+                  height: '26px',
+                  padding: '0 0.45rem',
+                  borderRadius: '0.4rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: 'transparent',
+                  color: theme.textSecondary,
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  textDecoration: 'none',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <LogoutRoundedIcon sx={{ fontSize: 13 }} />
+                <span>Log out</span>
+              </Link>
+            </div>
+          </div>
         </aside>
 
-        {/* Main Dashboard Content Area */}
-        <main style={{
+        {/* Main Dashboard Content Area (Topbar removed) */}
+        <div style={{
           flex: 1,
           height: '100%',
-          overflowY: 'auto',
-          padding: 'clamp(1.5rem, 3vw, 2.5rem)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          {activeTabId === 'inventory' ? (
-            <ManagerInventoryScreen theme={theme} />
-          ) : (
-            <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
-              {/* Header Greeting - Exact text: Good evening, Amit 👋 \n Ahmedabad Store. */}
-            <div style={{ marginBottom: '2rem' }}>
-              <h1 style={{
-                fontSize: '25px',
-                fontWeight: 800,
-                color: theme.textPrimary,
-                letterSpacing: '-0.04em',
-                marginBottom: '0.35rem',
-              }}>
-                {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()} 👋
-              </h1>
-              <p style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: theme.textSecondary,
-                letterSpacing: '-0.01em',
-                margin: 0,
-              }}>
-                Welcome to your Manager Dashboard.
-              </p>
-            </div>
-
-            {/* Exactly 3 KPI Cards: Today's Sales | Orders | Customers */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '1.25rem',
-              marginBottom: '2rem',
-            }}>
-              {/* Card 1: Today's Sales */}
-              <div
-                style={{
-                  backgroundColor: theme.bgCard,
-                  border: `1px solid ${hoveredCard === 'sales' ? theme.borderHover : theme.borderCard}`,
-                  borderRadius: '1.15rem',
-                  padding: '1.4rem 1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '124px',
-                  boxSizing: 'border-box',
-                  transition: 'all 0.18s ease',
-                  cursor: 'pointer',
-                  transform: hoveredCard === 'sales' ? 'translateY(-2px)' : 'translateY(0)',
+          {/* Scrollable View Area */}
+          <main style={{
+            flex: 1,
+            height: '100%',
+            overflowY: 'auto',
+            padding: (isOrdersActive || isCustomersActive || isEmployeesActive || isReportsActive || isInventoryActive)
+              ? 'clamp(1.25rem, 2.5vw, 2.25rem)'
+              : 0,
+            backgroundColor: theme.bgPage,
+            boxSizing: 'border-box',
+          }}>
+            {/* ORDERS VIEW */}
+            {isOrdersActive && (
+              <SalesManagement
+                activeSubTab={
+                  activeTabId === 'orders_returns' ? 'returns' :
+                  activeTabId === 'orders_payments' ? 'payments' : 'orders'
+                }
+                onSelectSubTab={(tab) => {
+                  const mapped = tab === 'returns' ? 'orders_returns' : tab === 'payments' ? 'orders_payments' : 'orders_all';
+                  setActiveTabId(mapped);
+                  openSingleMenu('orders');
                 }}
-                onMouseEnter={() => setHoveredCard('sales')}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Today&apos;s Sales
-                  </span>
-                </div>
-                <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    ₹0
-                  </span>
-                </div>
-              </div>
+                theme={theme}
+              />
+            )}
 
-              {/* Card 2: Orders */}
-              <div
-                style={{
-                  backgroundColor: theme.bgCard,
-                  border: `1px solid ${hoveredCard === 'orders' ? theme.borderHover : theme.borderCard}`,
-                  borderRadius: '1.15rem',
-                  padding: '1.4rem 1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '124px',
-                  boxSizing: 'border-box',
-                  transition: 'all 0.18s ease',
-                  cursor: 'pointer',
-                  transform: hoveredCard === 'orders' ? 'translateY(-2px)' : 'translateY(0)',
+            {/* INVENTORY VIEW - ONE UNIFIED PAGE */}
+            {isInventoryActive && (
+              <ManagerInventoryScreen
+                theme={theme}
+              />
+            )}
+
+            {/* CUSTOMERS VIEW (Loyalty removed) */}
+            {isCustomersActive && (
+              <CustomersManagement
+                activeSubTab={
+                  activeTabId === 'cust_history' ? 'cust_history' : 'cust_all'
+                }
+                onSelectSubTab={(tab) => {
+                  const mapped = tab === 'cust_history' ? 'cust_history' : 'cust_all';
+                  setActiveTabId(mapped);
+                  openSingleMenu('customers');
                 }}
-                onMouseEnter={() => setHoveredCard('orders')}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Orders
-                  </span>
-                </div>
-                <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    0
-                  </span>
-                </div>
-              </div>
+                theme={theme}
+              />
+            )}
 
-              {/* Card 3: Customers */}
-              <div
-                style={{
-                  backgroundColor: theme.bgCard,
-                  border: `1px solid ${hoveredCard === 'customers' ? theme.borderHover : theme.borderCard}`,
-                  borderRadius: '1.15rem',
-                  padding: '1.4rem 1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  minHeight: '124px',
-                  boxSizing: 'border-box',
-                  transition: 'all 0.18s ease',
-                  cursor: 'pointer',
-                  transform: hoveredCard === 'customers' ? 'translateY(-2px)' : 'translateY(0)',
+            {/* EMPLOYEES VIEW */}
+            {isEmployeesActive && (
+              <EmployeesManagement
+                isManagerView={true}
+                activeSubTab={
+                  activeTabId === 'emp_shifts' ? 'emp_shifts' :
+                  activeTabId === 'emp_attendance' ? 'emp_attendance' :
+                  activeTabId === 'emp_performance' ? 'emp_performance' : 'emp_all'
+                }
+                onSelectSubTab={(tab) => {
+                  const mapped =
+                    tab === 'emp_shifts' ? 'emp_shifts' :
+                    tab === 'emp_attendance' ? 'emp_attendance' :
+                    tab === 'emp_performance' ? 'emp_performance' : 'emp_staff';
+                  setActiveTabId(mapped);
+                  openSingleMenu('employees');
                 }}
-                onMouseEnter={() => setHoveredCard('customers')}
-                onMouseLeave={() => setHoveredCard(null)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Customers
-                  </span>
-                </div>
-                <div style={{ marginTop: '0.9rem' }}>
-                  <span style={{ fontSize: '32px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.045em' }}>
-                    0
-                  </span>
-                </div>
-              </div>
-            </div>
+                theme={theme}
+              />
+            )}
 
-            {/* Sales Overview Section with Interactive Salt & Pepper Bar Chart */}
-            <div style={{ marginBottom: '2.5rem' }}>
+            {/* REPORTS VIEW */}
+            {isReportsActive && (
+              <ReportsManagement
+                activeSubTab={
+                  activeTabId === 'rep_inventory' ? 'rep_inventory' :
+                  activeTabId === 'rep_performance' ? 'rep_performance' : 'rep_sales'
+                }
+                onSelectSubTab={(tab) => {
+                  setActiveTabId(tab);
+                  openSingleMenu('reports');
+                }}
+                theme={theme}
+              />
+            )}
+
+            {/* OVERVIEW DASHBOARD VIEW */}
+            {isDashboardActive && (
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1rem',
+                maxWidth: '1180px',
+                margin: '0 auto',
+                padding: 'clamp(1.25rem, 2.5vw, 2.25rem)',
               }}>
-                <h2 style={{
-                  fontSize: '19px',
-                  fontWeight: 800,
-                  color: theme.textPrimary,
-                  letterSpacing: '-0.03em',
-                  margin: 0,
-                }}>
-                  Sales Overview
-                </h2>
-
-                {/* Chart Filter Toggle */}
-                <div style={{
-                  display: 'inline-flex',
-                  backgroundColor: theme.bgCard,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.65rem',
-                  padding: '3px',
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => setChartTimeframe('weekly')}
-                    style={{
-                      padding: '4px 14px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      backgroundColor: chartTimeframe === 'weekly' ? theme.activeBg : 'transparent',
-                      color: chartTimeframe === 'weekly' ? theme.activeText : theme.textSecondary,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    Weekly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChartTimeframe('monthly')}
-                    style={{
-                      padding: '4px 14px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      backgroundColor: chartTimeframe === 'monthly' ? theme.activeBg : 'transparent',
-                      color: chartTimeframe === 'monthly' ? theme.activeText : theme.textSecondary,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    Monthly
-                  </button>
+                {/* Header Greeting */}
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <h1 style={{
+                    fontSize: '24px',
+                    fontWeight: 800,
+                    color: theme.textPrimary,
+                    letterSpacing: '-0.035em',
+                    marginBottom: '0.25rem',
+                  }}>
+                    {(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; })()}, Amit 👋
+                  </h1>
+                  <p style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: theme.textSecondary,
+                    letterSpacing: '-0.01em',
+                    margin: 0,
+                  }}>
+                    Store Manager Overview & Live Operations.
+                  </p>
                 </div>
-              </div>
 
-              {/* Bar Chart Container Card */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
-                borderRadius: '1.25rem',
-                padding: '1.75rem',
-                boxSizing: 'border-box',
-                position: 'relative',
-              }}>
-                {/* Bar Chart Header Stats */}
+                {/* 3 KPI Cards: Today's Sales | Orders | Customers */}
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: '1.25rem',
                   marginBottom: '1.75rem',
                 }}>
-                  <div>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textSecondary }}>
-                      {chartTimeframe === 'weekly' ? 'Total Weekly Revenue' : 'Total Monthly Revenue'}
-                    </span>
-                    <div style={{ fontSize: '28px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em', marginTop: '0.2rem' }}>
-                      ₹0
+                  {/* Card 1: Today's Sales */}
+                  <div
+                    style={{
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                      border: `1px solid ${hoveredCard === 'sales' ? theme.borderHover : theme.borderCard}`,
+                      borderRadius: '1rem',
+                      padding: '1.3rem 1.4rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '120px',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.18s ease',
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      transform: hoveredCard === 'sales' ? 'translateY(-2px)' : 'translateY(0)',
+                    }}
+                    onMouseEnter={() => setHoveredCard('sales')}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    onClick={() => { setActiveTabId('rep_sales'); openSingleMenu('reports'); }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        Today&apos;s Revenue
+                      </span>
+                      <TrendingUpRoundedIcon sx={{ fontSize: 16, color: '#16A34A' }} />
+                    </div>
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <span style={{ fontSize: '30px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+                        ₹0
+                      </span>
                     </div>
                   </div>
+
+                  {/* Card 2: Orders */}
+                  <div
+                    style={{
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                      border: `1px solid ${hoveredCard === 'orders' ? theme.borderHover : theme.borderCard}`,
+                      borderRadius: '1rem',
+                      padding: '1.3rem 1.4rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '120px',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.18s ease',
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      transform: hoveredCard === 'orders' ? 'translateY(-2px)' : 'translateY(0)',
+                    }}
+                    onMouseEnter={() => setHoveredCard('orders')}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    onClick={() => { setActiveTabId('orders_all'); openSingleMenu('orders'); }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        Total Orders Today
+                      </span>
+                      <ReceiptLongRoundedIcon sx={{ fontSize: 16, color: theme.textSecondary }} />
+                    </div>
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <span style={{ fontSize: '30px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+                        0
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Customers */}
+                  <div
+                    style={{
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                      border: `1px solid ${hoveredCard === 'customers' ? theme.borderHover : theme.borderCard}`,
+                      borderRadius: '1rem',
+                      padding: '1.3rem 1.4rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '120px',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.18s ease',
+                      cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      transform: hoveredCard === 'customers' ? 'translateY(-2px)' : 'translateY(0)',
+                    }}
+                    onMouseEnter={() => setHoveredCard('customers')}
+                    onMouseLeave={() => setHoveredCard(null)}
+                    onClick={() => { setActiveTabId('cust_all'); openSingleMenu('customers'); }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                        Active Customers
+                      </span>
+                      <PeopleAltRoundedIcon sx={{ fontSize: 16, color: theme.textSecondary }} />
+                    </div>
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <span style={{ fontSize: '30px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.04em' }}>
+                        0
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sales Overview Section with Interactive Bar Chart */}
+                <div style={{ marginBottom: '2rem' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.45rem',
-                    fontSize: '12.5px',
-                    fontWeight: 800,
-                    backgroundColor: '#FFFFFF',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '4px 11px',
-                    borderRadius: '9999px',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.85rem',
                   }}>
-                    <TrendingUpRoundedIcon sx={{ fontSize: 16, color: theme.textPrimary }} />
-                    <span>+14.8% vs last {chartTimeframe === 'weekly' ? 'week' : 'month'}</span>
+                    <h2 style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: theme.textPrimary,
+                      letterSpacing: '-0.025em',
+                      margin: 0,
+                    }}>
+                      Sales Overview
+                    </h2>
+
+                    {/* Chart Filter Toggle */}
+                    <div style={{
+                      display: 'inline-flex',
+                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#F3F4F6',
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.65rem',
+                      padding: '3px',
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setChartTimeframe('weekly')}
+                        style={{
+                          padding: '3px 12px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          backgroundColor: chartTimeframe === 'weekly' ? theme.activeBg : 'transparent',
+                          color: chartTimeframe === 'weekly' ? theme.activeText : theme.textSecondary,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartTimeframe('monthly')}
+                        style={{
+                          padding: '3px 12px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          backgroundColor: chartTimeframe === 'monthly' ? theme.activeBg : 'transparent',
+                          color: chartTimeframe === 'monthly' ? theme.activeText : theme.textSecondary,
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        Monthly
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bar Chart Container Card */}
+                  <div style={{
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                    border: `1px solid ${theme.borderCard}`,
+                    borderRadius: '1rem',
+                    padding: '1.5rem',
+                    boxSizing: 'border-box',
+                    position: 'relative',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '1.5rem',
+                    }}>
+                      <div>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>
+                          {chartTimeframe === 'weekly' ? 'Total Weekly Gross' : 'Total Monthly Gross'}
+                        </span>
+                        <div style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.035em', marginTop: '0.2rem' }}>
+                          ₹{chartData.reduce((acc, curr) => acc + curr.sales, 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '11.5px',
+                        fontWeight: 800,
+                        backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F0FDF4',
+                        border: `1px solid ${theme.border}`,
+                        color: '#16A34A',
+                        padding: '3px 10px',
+                        borderRadius: '9999px',
+                      }}>
+                        <TrendingUpRoundedIcon sx={{ fontSize: 15 }} />
+                        <span>0.0% vs previous period</span>
+                      </div>
+                    </div>
+
+                    {/* Bar Chart */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'space-between',
+                      height: '180px',
+                      gap: 'clamp(0.75rem, 2vw, 1.75rem)',
+                      borderBottom: `1px solid ${theme.border}`,
+                      paddingBottom: '8px',
+                      position: 'relative',
+                    }}>
+                      {chartData.map((item, index) => {
+                        const barHeightPct = (item.sales / maxSales) * 100;
+                        const isHovered = hoveredBar === index;
+                        const isHighlighted = item.isToday || isHovered;
+
+                        return (
+                          <div
+                            key={item.day}
+                            style={{
+                              flex: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              height: '100%',
+                              justifyContent: 'flex-end',
+                              position: 'relative',
+                            }}
+                            onMouseEnter={() => setHoveredBar(index)}
+                            onMouseLeave={() => setHoveredBar(null)}
+                          >
+                            {/* Interactive Floating Tooltip */}
+                            {isHovered && (
+                              <div style={{
+                                position: 'absolute',
+                                bottom: `${Math.min(barHeightPct + 12, 88)}%`,
+                                backgroundColor: theme.activeBg,
+                                color: theme.activeText,
+                                padding: '4px 8px',
+                                borderRadius: '0.45rem',
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                whiteSpace: 'nowrap',
+                                zIndex: 10,
+                                pointerEvents: 'none',
+                                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '1px',
+                              }}>
+                                <span>₹{item.sales.toLocaleString('en-IN')}</span>
+                                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>{item.orders} orders</span>
+                              </div>
+                            )}
+
+                            {/* Bar Pillar */}
+                            <div style={{
+                              width: '100%',
+                              maxWidth: '40px',
+                              height: `${barHeightPct}%`,
+                              backgroundColor: isHighlighted ? theme.activeBg : (theme as any).sidebarIsDark ? '#334155' : '#D1D5DB',
+                              borderRadius: '5px 5px 0 0',
+                              transition: 'height 0.3s ease, background-color 0.2s ease',
+                              cursor: 'pointer',
+                            }} />
+
+                            {/* Day Label */}
+                            <span style={{
+                              marginTop: '8px',
+                              fontSize: '11.5px',
+                              fontWeight: item.isToday ? 800 : 600,
+                              color: item.isToday ? theme.textPrimary : theme.textSecondary,
+                            }}>
+                              {item.day}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* SVG & HTML Interactive Salt & Pepper Bar Chart */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  height: '190px',
-                  gap: 'clamp(0.75rem, 2vw, 1.75rem)',
-                  borderBottom: `1px solid ${theme.border}`,
-                  paddingBottom: '10px',
-                  position: 'relative',
-                }}>
-                  {chartData.map((item, index) => {
-                    const barHeightPct = (item.sales / maxSales) * 100;
-                    const isHovered = hoveredBar === index;
-                    const isHighlighted = item.isToday || isHovered;
+                {/* Recent Orders Section */}
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.85rem',
+                  }}>
+                    <h2 style={{
+                      fontSize: '18px',
+                      fontWeight: 800,
+                      color: theme.textPrimary,
+                      letterSpacing: '-0.025em',
+                      margin: 0,
+                    }}>
+                      Recent Orders
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTabId('orders_all'); openSingleMenu('orders'); }}
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: theme.textPrimary,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      View all orders →
+                    </button>
+                  </div>
 
-                    return (
-                      <div
-                        key={item.day}
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          height: '100%',
-                          justifyContent: 'flex-end',
-                          position: 'relative',
-                        }}
-                        onMouseEnter={() => setHoveredBar(index)}
-                        onMouseLeave={() => setHoveredBar(null)}
-                      >
-                        {/* Interactive Floating Tooltip */}
-                        {isHovered && (
-                          <div style={{
-                            position: 'absolute',
-                            bottom: `${Math.min(barHeightPct + 10, 88)}%`,
-                            backgroundColor: theme.activeBg,
-                            color: theme.activeText,
-                            padding: '5px 10px',
-                            borderRadius: '0.5rem',
-                            fontSize: '11.5px',
-                            fontWeight: 800,
-                            whiteSpace: 'nowrap',
-                            zIndex: 10,
-                            pointerEvents: 'none',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '2px',
-                          }}>
-                            <span>₹{item.sales.toLocaleString('en-IN')}</span>
-                            <span style={{ fontSize: '10px', opacity: 0.75 }}>{item.orders} orders</span>
-                          </div>
-                        )}
-
-                        {/* Bar Pillar (#B3B3B3 default, #2B2B2B active) */}
-                        <div style={{
-                          width: '100%',
-                          maxWidth: '44px',
-                          height: `${barHeightPct}%`,
-                          backgroundColor: isHighlighted ? theme.barActive : theme.barDefault,
-                          borderRadius: '6px 6px 0 0',
-                          transition: 'height 0.3s ease, background-color 0.2s ease',
-                          cursor: 'pointer',
-                        }} />
-
-                        {/* Day Label */}
-                        <span style={{
-                          marginTop: '10px',
-                          fontSize: '12.5px',
-                          fontWeight: item.isToday ? 800 : 600,
-                          color: item.isToday ? theme.textPrimary : theme.textSecondary,
+                  {/* Table Container Card */}
+                  <div style={{
+                    backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                    border: `1px solid ${theme.borderCard}`,
+                    borderRadius: '1rem',
+                    padding: '0.35rem',
+                    boxSizing: 'border-box',
+                    overflowX: 'auto',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  }}>
+                    <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                    }}>
+                      <thead>
+                        <tr style={{
+                          borderBottom: `1px solid ${theme.border}`,
+                          backgroundColor: theme.tableHeaderBg,
                         }}>
-                          {item.day}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Order ID
+                          </th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Customer
+                          </th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Items
+                          </th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Amount
+                          </th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Time
+                          </th>
+                          <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentOrders.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: theme.textSecondary }}>
+                              No orders recorded today yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          recentOrders.map((order, i) => (
+                            <tr
+                              key={order.id}
+                              style={{
+                                borderBottom: i < recentOrders.length - 1 ? `1px solid ${theme.border}` : 'none',
+                                transition: 'background-color 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                            >
+                              <td style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace, inherit' }}>
+                                {order.id}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: theme.textPrimary }}>
+                                {order.customer}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', color: theme.textSecondary }}>
+                                {order.items} items
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textPrimary }}>
+                                {order.amount}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', color: theme.textSecondary, fontSize: '12px' }}>
+                                {order.time}
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: '#DCFCE7',
+                                  color: '#166534',
+                                  fontSize: '10.5px',
+                                  fontWeight: 800,
+                                  letterSpacing: '0.03em',
+                                }}>
+                                  {order.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Recent Orders Section */}
-            <div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1rem',
-              }}>
-                <h2 style={{
-                  fontSize: '19px',
-                  fontWeight: 800,
-                  color: theme.textPrimary,
-                  letterSpacing: '-0.03em',
-                  margin: 0,
-                }}>
-                  Recent Orders
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setActiveTabId('orders')}
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: theme.textPrimary,
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                  }}
-                >
-                  View all orders &gt;&gt;
-                </button>
-              </div>
-
-              {/* Table Container Card */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.borderCard}`,
-                borderRadius: '1.25rem',
-                padding: '0.5rem',
-                boxSizing: 'border-box',
-                overflowX: 'auto',
-              }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  textAlign: 'left',
-                  fontSize: '14px',
-                }}>
-                  <thead>
-                    <tr style={{
-                      borderBottom: `1px solid ${theme.border}`,
-                      backgroundColor: theme.tableHeaderBg,
-                      borderRadius: '0.75rem',
-                    }}>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                        Order
-                      </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                        Customer
-                      </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                        Amount
-                      </th>
-                      <th style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11.5px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.length === 0 && (
-                      <tr>
-                        <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary, fontSize: '14px' }}>
-                          No orders yet.
-                        </td>
-                      </tr>
-                    )}
-                    {recentOrders.map((order, i) => (
-                      <tr
-                        key={order.id}
-                        style={{
-                          borderBottom: i < recentOrders.length - 1 ? `1px solid ${theme.border}` : 'none',
-                          transition: 'background-color 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                      >
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary, fontFamily: 'monospace, inherit' }}>
-                          {order.id}
-                        </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 600, color: theme.textPrimary }}>
-                          {order.customer}
-                        </td>
-                        <td style={{ padding: '0.9rem 1.25rem', fontWeight: 800, color: theme.textPrimary }}>
-                          {order.amount}
-                        </td>
-                        <td style={{ padding: '0.9rem 1.25rem' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '3px 10px',
-                            borderRadius: '9999px',
-                            backgroundColor: theme.badgeBg,
-                            color: theme.badgeText,
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            letterSpacing: '0.04em',
-                          }}>
-                            {order.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
 
       {/* Shift Details Modal */}
@@ -1213,6 +1319,7 @@ export default function ManagerDashboardPage() {
           position: 'fixed',
           inset: 0,
           backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(3px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1222,58 +1329,58 @@ export default function ManagerDashboardPage() {
           <div style={{
             width: '100%',
             maxWidth: '440px',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
             border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            padding: '1.75rem',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.18)',
+            borderRadius: '1.15rem',
+            padding: '1.5rem',
+            boxShadow: '0 20px 48px rgba(0,0,0,0.22)',
+            boxSizing: 'border-box',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <ScheduleRoundedIcon sx={{ fontSize: 22, color: theme.textPrimary }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
                   Active Shift Summary
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowShiftModal(false)}
-                style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer', display: 'flex' }}
               >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+                <CloseRoundedIcon sx={{ fontSize: 18 }} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Manager on Duty</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Store Manager</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgPage, borderRadius: '0.55rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>Store Manager</span>
+                <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>Amit Patel (Store Mgr)</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Shift Started</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Today, 08:00 AM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgPage, borderRadius: '0.55rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>Shift Started</span>
+                <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>Today, 08:00 AM</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Opening Cash Float</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>₹0</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgPage, borderRadius: '0.55rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>Opening Float</span>
+                <span style={{ fontSize: '12.5px', fontWeight: 700, color: theme.textPrimary }}>₹0</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCard, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Current Cash in Drawer</span>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>₹0</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgPage, borderRadius: '0.55rem', border: `1px solid ${theme.border}` }}>
+                <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>Total Shift Tender</span>
+                <span style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>₹0</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.65rem' }}>
               <Link
                 href="/start-shift"
+                className="button-20"
                 style={{
                   flex: 1,
-                  height: '42px',
-                  borderRadius: '0.75rem',
-                  fontSize: '13px',
+                  height: '38px',
+                  borderRadius: '0.65rem',
+                  fontSize: '12.5px',
                   fontWeight: 700,
-                  backgroundColor: theme.activeBg,
-                  color: theme.activeText,
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -1285,16 +1392,15 @@ export default function ManagerDashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowShiftModal(false)}
+                className="button-20-secondary"
                 style={{
-                  padding: '0 1rem',
-                  height: '42px',
-                  borderRadius: '0.75rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: theme.bgCard,
-                  color: theme.textPrimary,
-                  fontSize: '13px',
+                  padding: '0 1.15rem',
+                  height: '38px',
+                  borderRadius: '0.65rem',
+                  fontSize: '12.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  fontFamily: 'inherit',
                 }}
               >
                 Close

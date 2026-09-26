@@ -148,6 +148,25 @@ export default function ProductManagement({
   const [categories, setCategories] = useState<CategoryItem[]>(INITIAL_CATEGORIES);
   const [brands, setBrands] = useState<BrandItem[]>(INITIAL_BRANDS);
 
+  // Sync products with localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nuradesk_products');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProducts(parsed);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('nuradesk_products', JSON.stringify(products));
+    } catch (e) {}
+  }, [products]);
+
   // Search & Filtering
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -2062,62 +2081,101 @@ export default function ProductManagement({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#1E293B',
-              color: '#FFFFFF',
-              borderRadius: '0.75rem',
-              padding: '0.65rem 1rem',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+              backgroundColor: theme.bgCard,
+              border: `1px solid ${theme.border}`,
+              color: theme.textPrimary,
+              borderRadius: '0.85rem',
+              padding: '0.55rem 1rem',
               marginBottom: '1rem',
-              fontSize: '13px',
-              fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             }}>
-              <span>{selectedProductIds.length} product(s) selected</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span style={{
+                  backgroundColor: theme.activeBg,
+                  color: theme.activeText,
+                  borderRadius: '9999px',
+                  padding: '2px 8px',
+                  fontSize: '11.5px',
+                  fontWeight: 800,
+                  letterSpacing: '0.02em',
+                }}>
+                  {selectedProductIds.length}
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
+                  {selectedProductIds.length === 1 ? 'product selected' : 'products selected'}
+                </span>
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={handleBulkActivate}
+                  className="button-20"
+                  role="button"
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: '0.45rem',
-                    border: '1px solid #10B981',
-                    backgroundColor: '#064E3B',
-                    color: '#A7F3D0',
+                    height: '32px',
+                    padding: '0 0.85rem',
                     fontSize: '12px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
                   }}
                 >
-                  Set Active
+                  <CheckCircleRoundedIcon sx={{ fontSize: 14, color: '#10B981' }} />
+                  <span>Set Active</span>
                 </button>
+
                 <button
                   type="button"
                   onClick={handleBulkDeactivate}
+                  className="button-20-secondary"
+                  role="button"
                   style={{
-                    padding: '4px 10px',
-                    borderRadius: '0.45rem',
-                    border: '1px solid #64748B',
-                    backgroundColor: '#334155',
-                    color: '#F1F5F9',
+                    height: '32px',
+                    padding: '0 0.85rem',
                     fontSize: '12px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
                   }}
                 >
                   Set Inactive
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setSelectedProductIds([])}
+                  title="Deselect all"
                   style={{
-                    padding: '4px 8px',
-                    borderRadius: '0.45rem',
+                    height: '32px',
+                    padding: '0 0.65rem',
+                    borderRadius: '0.5rem',
                     border: 'none',
                     backgroundColor: 'transparent',
-                    color: '#94A3B8',
+                    color: theme.textSecondary,
                     fontSize: '12px',
+                    fontWeight: 600,
+                    fontFamily: 'inherit',
                     cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.hoverBg;
+                    e.currentTarget.style.color = theme.textPrimary;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = theme.textSecondary;
                   }}
                 >
-                  Clear
+                  <CloseRoundedIcon sx={{ fontSize: 14 }} />
+                  <span>Clear</span>
                 </button>
               </div>
             </div>
@@ -2886,20 +2944,15 @@ export default function ProductManagement({
               </button>
               <button
                 type="button"
+                className="button-20-danger"
+                role="button"
                 onClick={handleConfirmDelete}
                 style={{
                   height: '38px',
                   padding: '0 1.25rem',
-                  borderRadius: '1rem',
-                  border: '1px solid #DC2626',
-                  backgroundColor: '#DC2626',
-                  color: '#FFFFFF',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
               >
                 Yes, Delete
