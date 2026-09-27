@@ -692,23 +692,32 @@ export default function PosMainScreen() {
       backgroundColor: theme.bgPage,
       color: theme.textPrimary,
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
       boxSizing: 'border-box',
     }}>
-      {/* 1. TOP HEADER BAR */}
-      <header style={{
-        height: '62px',
-        backgroundColor: theme.bgHeader,
-        borderBottom: `1px solid ${theme.headerBorder}`,
-        padding: '0 1.5rem',
+      {/* LEFT COLUMN: TOP HEADER + PRODUCT CATALOG */}
+      <div style={{
+        flex: 1,
+        minWidth: 0,
+        height: '100%',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-        zIndex: 30,
-        color: theme.headerTextPrimary,
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}>
+        {/* 1. TOP HEADER BAR */}
+        <header style={{
+          height: '62px',
+          backgroundColor: theme.bgHeader,
+          borderBottom: `1px solid ${theme.headerBorder}`,
+          padding: '0 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          zIndex: 30,
+          color: theme.headerTextPrimary,
+        }}>
         {/* Left: 9-Dot Quick Launcher + Nuradesk Logo + Store Logo Pill Badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {/* 9-Dot Quick Launcher Button & Anchored Popup */}
@@ -764,15 +773,19 @@ export default function PosMainScreen() {
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
                   left: 0,
-                  width: '240px',
+                  width: '280px',
                   backgroundColor: theme.bgCard,
                   border: `1px solid ${theme.border}`,
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  borderRadius: '14px',
+                  boxShadow: themeMode === 'dark'
+                    ? '0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 4px 12px -2px rgba(0, 0, 0, 0.4)'
+                    : '0 12px 32px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05)',
                   padding: '10px',
                   zIndex: 9999,
                   display: 'flex',
                   flexDirection: 'column',
+                  animation: 'posPopupEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                  transformOrigin: 'top left',
                 }}
               >
                 <ActionMenu
@@ -828,7 +841,7 @@ export default function PosMainScreen() {
                     {
                       id: 'dark_mode',
                       label: themeMode === 'light' ? 'Dark mode' : 'Light mode',
-                      icon: <ActionDarkModeIcon size={24} primaryColor="#007DCC" secondaryColor="#FFB900" isDarkMode={themeMode === 'dark'} />,
+                      icon: <ActionDarkModeIcon size={26} primaryColor="#007DCC" secondaryColor="#FFB900" isDarkMode={themeMode === 'dark'} />,
                       onClick: handleToggleTheme,
                     },
                   ]}
@@ -958,20 +971,10 @@ export default function PosMainScreen() {
           </span>
         </div>
 
-        {/* Right Header Area: Active status removed, Name moved to popup */}
-        <div style={{ display: 'flex', alignItems: 'center', minWidth: '40px' }} />
       </header>
 
-      {/* 2. MAIN BODY: 2-COLUMN LAYOUT (Product Catalog + Current Sale Ticket) */}
-      <div style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        overflow: 'hidden',
-      }}>
-
-        {/* CENTER COLUMN: PRODUCT CATALOG & SEARCH */}
-        <section style={{
+      {/* CENTER COLUMN: PRODUCT CATALOG & SEARCH */}
+      <section style={{
           flex: 1,
           minWidth: 0,
           height: '100%',
@@ -1061,34 +1064,18 @@ export default function PosMainScreen() {
             </button>
           </div>
 
-          {/* Categories Section Heading */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '0.45rem',
-            padding: '0 2px',
-          }}>
-            <h2 style={{
-              fontSize: '15px',
-              fontWeight: 800,
-              color: theme.textPrimary,
-              letterSpacing: '-0.02em',
-              margin: 0,
-            }}>
-              Categories
-            </h2>
-          </div>
-
-          {/* Category Filter Cards: Responsive Grid */}
+          {/* Category Filter: Horizontal Scrollable Pill Tabs */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 175px))',
-              gap: '0.65rem',
-              marginBottom: '1.25rem',
-              boxSizing: 'border-box',
-            }}
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              overflowX: 'auto',
+              marginBottom: '1.1rem',
+              paddingBottom: '4px',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            } as React.CSSProperties}
           >
             {categoriesList.map((cat) => {
               const isSelected = selectedCategory === cat.id;
@@ -1098,73 +1085,40 @@ export default function PosMainScreen() {
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
                   style={{
-                    height: '50px',
-                    padding: '0.35rem 0.65rem 0.35rem 0.45rem',
-                    borderRadius: '12px',
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0 14px',
+                    height: '36px',
+                    borderRadius: '999px',
                     border: isSelected
                       ? `1.5px solid ${theme.sidebarIsDark ? '#FFFFFF' : '#191a19'}`
                       : `1px solid ${theme.border}`,
                     backgroundColor: isSelected
                       ? (theme.sidebarIsDark ? '#272827' : '#191a19')
-                      : (theme.sidebarIsDark ? theme.bgCard : '#FFFFFF'),
+                      : 'transparent',
                     color: isSelected ? '#FFFFFF' : theme.textPrimary,
                     cursor: 'pointer',
                     fontFamily: 'inherit',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.65rem',
-                    boxSizing: 'border-box',
+                    fontSize: '13px',
+                    fontWeight: isSelected ? 700 : 500,
+                    letterSpacing: '-0.01em',
+                    whiteSpace: 'nowrap',
                     boxShadow: 'none',
-                    textAlign: 'left',
-                    width: '100%',
+                    transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                   }}
                 >
-                  {/* Left soft-tinted icon box */}
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '9px',
-                    backgroundColor: isSelected
-                      ? 'rgba(255,255,255,0.18)'
-                      : (theme.sidebarIsDark ? 'rgba(59, 130, 246, 0.14)' : '#EFF6FF'),
-                    color: isSelected ? '#FFFFFF' : '#3B82F6',
+                  <span style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    color: isSelected ? '#FFFFFF' : theme.textSecondary,
+                    fontSize: '16px',
+                    lineHeight: 1,
                   }}>
                     {cat.icon}
-                  </div>
-
-                  {/* Right label + item count */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    textAlign: 'left',
-                    lineHeight: 1.2,
-                    overflow: 'hidden',
-                  }}>
-                    <span style={{
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      whiteSpace: 'nowrap',
-                      color: isSelected ? '#FFFFFF' : theme.textPrimary,
-                      letterSpacing: '-0.01em',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {cat.name}
-                    </span>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      color: isSelected ? 'rgba(255,255,255,0.75)' : theme.textSecondary,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {cat.count} Items
-                    </span>
-                  </div>
+                  </span>
+                  {cat.name}
                 </button>
               );
             })}
@@ -1210,9 +1164,8 @@ export default function PosMainScreen() {
               <div style={{
                 padding: '3.5rem 1.5rem',
                 textAlign: 'center',
-                backgroundColor: theme.bgCardSubtle,
-                borderRadius: '1rem',
-                border: `1px dashed ${theme.border}`,
+                backgroundColor: 'transparent',
+                border: 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -1480,36 +1433,40 @@ export default function PosMainScreen() {
             </div>
           )}
         </section>
+      </div>
 
-        {/* RIGHT COLUMN: CURRENT SALE TICKET / CHECKOUT */}
-        <aside style={{
-          width: '360px',
-          backgroundColor: theme.bgCard,
-          borderLeft: `1px solid ${theme.border}`,
+      {/* RIGHT COLUMN: CURRENT SALE TICKET / CHECKOUT (FULL HEIGHT TO TOP) */}
+      <aside style={{
+        width: '360px',
+        height: '100%',
+        backgroundColor: theme.bgCard,
+        borderLeft: `1px solid ${theme.border}`,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        boxSizing: 'border-box',
+      }}>
+        {/* Ticket Header (Aligned with left header height of 62px) */}
+        <div style={{
+          height: '62px',
+          padding: '0 1rem',
+          borderBottom: `1px solid ${theme.border}`,
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'space-between',
+          backgroundColor: theme.bgCard,
           flexShrink: 0,
           boxSizing: 'border-box',
         }}>
-          {/* Ticket Header */}
-          {/* Ticket Header (Compact 40px) */}
-          <div style={{
-            padding: '0.65rem 0.95rem',
-            borderBottom: `1px solid ${theme.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: theme.bgCard,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <h2 style={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: theme.textPrimary,
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <h2 style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: theme.textPrimary,
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}>
                 Current Sale
               </h2>
               <span style={{
@@ -1600,33 +1557,33 @@ export default function PosMainScreen() {
             </div>
           </div>
 
-          {/* Order Type Buttons & Context Bar (No swap, No shadow, Simple selection with icons) */}
+          {/* Order Type Buttons & Context Bar */}
           <div style={{
-            padding: '0.4rem 0.85rem',
-            backgroundColor: theme.bgCardSubtle,
+            padding: '0.65rem 0.95rem 0.55rem',
+            backgroundColor: theme.bgCard,
             borderBottom: `1px solid ${theme.border}`,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '0.45rem',
+            flexDirection: 'column',
+            gap: '0.5rem',
           }}>
-            {/* Simple Selection Buttons (No Shadow, Clean Borders, Distinct Buttons) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {/* Simple Selection Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', width: '100%' }}>
               {/* Dine In Button */}
               <button
                 type="button"
                 onClick={() => setOrderType('dine_in')}
                 style={{
+                  flex: 1,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.3rem 0.55rem',
-                  borderRadius: '0.45rem',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.48rem 0.65rem',
+                  borderRadius: '0.55rem',
                   border: orderType === 'dine_in' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
                   backgroundColor: orderType === 'dine_in' ? theme.activeBg : theme.bgCard,
                   color: orderType === 'dine_in' ? theme.activeText : theme.textSecondary,
-                  fontSize: '11px',
+                  fontSize: '12.5px',
                   fontWeight: orderType === 'dine_in' ? 800 : 600,
                   cursor: 'pointer',
                   outline: 'none',
@@ -1636,7 +1593,7 @@ export default function PosMainScreen() {
                   userSelect: 'none',
                 }}
               >
-                <RestaurantRoundedIcon sx={{ fontSize: 13 }} />
+                <RestaurantRoundedIcon sx={{ fontSize: 16 }} />
                 <span>Dine In</span>
               </button>
 
@@ -1645,15 +1602,17 @@ export default function PosMainScreen() {
                 type="button"
                 onClick={() => setOrderType('takeaway')}
                 style={{
+                  flex: 1,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.3rem 0.55rem',
-                  borderRadius: '0.45rem',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.48rem 0.65rem',
+                  borderRadius: '0.55rem',
                   border: orderType === 'takeaway' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
                   backgroundColor: orderType === 'takeaway' ? theme.activeBg : theme.bgCard,
                   color: orderType === 'takeaway' ? theme.activeText : theme.textSecondary,
-                  fontSize: '11px',
+                  fontSize: '12.5px',
                   fontWeight: orderType === 'takeaway' ? 800 : 600,
                   cursor: 'pointer',
                   outline: 'none',
@@ -1663,7 +1622,7 @@ export default function PosMainScreen() {
                   userSelect: 'none',
                 }}
               >
-                <TakeoutDiningRoundedIcon sx={{ fontSize: 13 }} />
+                <TakeoutDiningRoundedIcon sx={{ fontSize: 16 }} />
                 <span>Takeaway</span>
               </button>
 
@@ -1672,15 +1631,17 @@ export default function PosMainScreen() {
                 type="button"
                 onClick={() => setOrderType('delivery')}
                 style={{
+                  flex: 1,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.3rem 0.55rem',
-                  borderRadius: '0.45rem',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.48rem 0.65rem',
+                  borderRadius: '0.55rem',
                   border: orderType === 'delivery' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
                   backgroundColor: orderType === 'delivery' ? theme.activeBg : theme.bgCard,
                   color: orderType === 'delivery' ? theme.activeText : theme.textSecondary,
-                  fontSize: '11px',
+                  fontSize: '12.5px',
                   fontWeight: orderType === 'delivery' ? 800 : 600,
                   cursor: 'pointer',
                   outline: 'none',
@@ -1690,15 +1651,15 @@ export default function PosMainScreen() {
                   userSelect: 'none',
                 }}
               >
-                <DeliveryDiningRoundedIcon sx={{ fontSize: 13 }} />
+                <DeliveryDiningRoundedIcon sx={{ fontSize: 16 }} />
                 <span>Delivery</span>
               </button>
             </div>
 
             {/* Context Section (Table with Section / Takeaway Ticket Number System / Delivery Mode) */}
             {orderType === 'dine_in' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <TableBarRoundedIcon sx={{ fontSize: 13, color: theme.activeBg }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <TableBarRoundedIcon sx={{ fontSize: 14, color: theme.activeBg }} />
                 
                 {/* Table Section Dropdown */}
                 <select
@@ -1713,13 +1674,13 @@ export default function PosMainScreen() {
                   }}
                   title="Table Section"
                   style={{
-                    height: '24px',
-                    padding: '0 4px',
+                    height: '26px',
+                    padding: '0 6px',
                     borderRadius: '5px',
                     border: `1px solid ${theme.border}`,
                     backgroundColor: theme.bgCard,
                     color: theme.textPrimary,
-                    fontSize: '11px',
+                    fontSize: '11.5px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     outline: 'none',
@@ -1738,13 +1699,13 @@ export default function PosMainScreen() {
                   onChange={(e) => setTableNumber(e.target.value)}
                   title="Table Number"
                   style={{
-                    height: '24px',
-                    padding: '0 4px',
+                    height: '26px',
+                    padding: '0 6px',
                     borderRadius: '5px',
                     border: `1px solid ${theme.border}`,
                     backgroundColor: theme.bgCard,
                     color: theme.activeBg,
-                    fontSize: '11px',
+                    fontSize: '11.5px',
                     fontWeight: 800,
                     cursor: 'pointer',
                     outline: 'none',
@@ -2035,7 +1996,7 @@ export default function PosMainScreen() {
             padding: '0.5rem 0.85rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.45rem',
+            gap: '0.35rem',
           }}>
             {cart.length === 0 ? (
               <div style={{
@@ -2053,59 +2014,73 @@ export default function PosMainScreen() {
                 <span style={{ fontSize: '12px', maxWidth: '200px', color: theme.textMuted }}>Tap any product from the catalog to add items.</span>
               </div>
             ) : (
-              cart.map((item) => {
-                const hasCustomPrice = item.customPrice !== undefined && item.customPrice !== item.product.price;
-                const discAmt = getItemDiscountAmount(item);
-                const lineTotal = getItemLineTotal(item);
+              <>
+                {cart.map((item) => {
+                  const hasCustomPrice = item.customPrice !== undefined && item.customPrice !== item.product.price;
+                  const discAmt = getItemDiscountAmount(item);
+                  const lineTotal = getItemLineTotal(item);
 
-                return (
-                  <div
-                    key={item.product.id}
-                    onClick={() => openItemEditor(item)}
-                    role="button"
-                    tabIndex={0}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.45rem 0.65rem',
-                      backgroundColor: theme.bgCardSubtle,
-                      borderRadius: '0.6rem',
-                      border: `1px solid ${theme.border}`,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.borderHover; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.border; }}
-                  >
-                    <div style={{ minWidth: 0, flex: 1, paddingRight: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span style={{
-                          fontSize: '13.5px',
-                          fontWeight: 800,
+                  return (
+                    <div
+                      key={item.product.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        padding: '0.4rem 0.5rem',
+                        borderRadius: '0.6rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgCardSubtle,
+                      }}
+                    >
+                      {/* Product Thumbnail */}
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                      }}>
+                        {item.product.image ? (
+                          <img
+                            src={item.product.image}
+                            alt={item.product.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '18px',
+                          }}>🍽️</div>
+                        )}
+                      </div>
+
+                      {/* Name + Variant */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
                           color: theme.textPrimary,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}>
                           {item.product.name}
-                        </span>
-                        <EditRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary, opacity: 0.6 }} />
-                      </div>
-
-                      {/* Pricing & Discount Badges */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '2px', flexWrap: 'wrap' }}>
-                        {hasCustomPrice ? (
-                          <span style={{ fontSize: '11px', color: theme.textSecondary }}>
-                            <s style={{ opacity: 0.5 }}>₹{item.product.price}</s>{' '}
-                            <strong style={{ color: theme.activeBg }}>₹{item.customPrice}</strong> each
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '11px', color: theme.textSecondary }}>
-                            ₹{item.product.price} each
-                          </span>
-                        )}
-
+                        </div>
+                        <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
+                          {hasCustomPrice ? (
+                            <><s style={{ opacity: 0.5 }}>₹{item.product.price}</s> <strong style={{ color: theme.activeBg }}>₹{item.customPrice}</strong></>
+                          ) : (
+                            item.product.variant || `₹${item.product.price}`
+                          )}
+                        </div>
                         {discAmt > 0 && (
                           <span style={{
                             fontSize: '9.5px',
@@ -2118,60 +2093,40 @@ export default function PosMainScreen() {
                             {item.discountPct ? `${item.discountPct}% OFF` : `-₹${item.discountAmount}`}
                           </span>
                         )}
+                        {item.itemNote && (
+                          <div style={{ fontSize: '10px', color: theme.activeBg, marginTop: '2px' }}>📝 {item.itemNote}</div>
+                        )}
                       </div>
 
-                      {/* Item Note */}
-                      {item.itemNote && (
-                        <div style={{
-                          marginTop: '3px',
-                          fontSize: '10.5px',
-                          color: theme.activeBg,
-                          fontWeight: 600,
-                          display: 'flex',
+                      {/* Qty Stepper */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '3px',
-                        }}>
-                          <span>📝 {item.itemNote}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Quantity Stepper & Line Total */}
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        backgroundColor: theme.bgCard,
-                        borderRadius: '0.45rem',
-                        border: `1px solid ${theme.border}`,
-                        padding: '2px',
-                      }}>
+                          gap: '2px',
+                          backgroundColor: theme.bgCard,
+                          border: `1px solid ${theme.border}`,
+                          borderRadius: '7px',
+                          padding: '1px 2px',
+                          flexShrink: 0,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.product.id, -1)}
                           style={{
-                            width: '22px',
-                            height: '22px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'none',
-                            border: 'none',
-                            color: theme.textPrimary,
-                            cursor: 'pointer',
+                            width: '20px', height: '20px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'none', border: 'none',
+                            color: theme.textSecondary, cursor: 'pointer', padding: 0,
                           }}
                         >
-                          <RemoveRoundedIcon sx={{ fontSize: 13 }} />
+                          <RemoveRoundedIcon sx={{ fontSize: 12 }} />
                         </button>
                         <span style={{
-                          width: '22px',
-                          textAlign: 'center',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          color: theme.textPrimary,
+                          width: '20px', textAlign: 'center',
+                          fontSize: '12px', fontWeight: 800, color: theme.textPrimary,
                         }}>
                           {item.quantity}
                         </span>
@@ -2179,34 +2134,94 @@ export default function PosMainScreen() {
                           type="button"
                           onClick={() => updateQuantity(item.product.id, 1)}
                           style={{
-                            width: '22px',
-                            height: '22px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            background: 'none',
-                            border: 'none',
-                            color: theme.textPrimary,
-                            cursor: 'pointer',
+                            width: '20px', height: '20px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'none', border: 'none',
+                            color: theme.textSecondary, cursor: 'pointer', padding: 0,
                           }}
                         >
-                          <AddRoundedIcon sx={{ fontSize: 13 }} />
+                          <AddRoundedIcon sx={{ fontSize: 12 }} />
                         </button>
                       </div>
 
+                      {/* Line Total */}
                       <div style={{
-                        width: '60px',
+                        width: '48px',
                         textAlign: 'right',
-                        fontSize: '14px',
+                        fontSize: '13px',
                         fontWeight: 800,
                         color: theme.textPrimary,
+                        flexShrink: 0,
                       }}>
                         ₹{lineTotal}
                       </div>
+
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.product.id, -item.quantity); }}
+                        style={{
+                          background: 'none', border: 'none',
+                          color: '#EF4444', cursor: 'pointer',
+                          padding: '2px', display: 'flex', alignItems: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                      </button>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+
+                {/* Action Bar: Add Note / Item Discount / Clear All */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.3rem 0.25rem 0',
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowSaleNoteModal(true)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: '11.5px', fontWeight: 600,
+                      color: theme.textSecondary, fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
+                    }}
+                  >
+                    <NoteAltRoundedIcon sx={{ fontSize: 14 }} />
+                    Add Note
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountPct(discountPct === 0 ? 10 : 0)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: '11.5px', fontWeight: 600,
+                      color: discountPct > 0 ? '#16A34A' : theme.textSecondary,
+                      fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
+                    }}
+                  >
+                    <LocalOfferRoundedIcon sx={{ fontSize: 13 }} />
+                    {discountPct > 0 ? `Discount (${discountPct}%)` : 'Item Discount'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearCart}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: '11.5px', fontWeight: 600,
+                      color: '#EF4444', fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
+                    }}
+                  >
+                    <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
+                    Clear All
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
@@ -2221,36 +2236,45 @@ export default function PosMainScreen() {
           }}>
             {/* Subtotal, Tax, Discount */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: theme.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
                 <span>Subtotal</span>
                 <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{subtotal}</span>
               </div>
-              {discountPct > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#22C55E' }}>
-                  <span>Discount ({discountPct}%)</span>
-                  <span style={{ fontWeight: 700 }}>-₹{manualDiscount}</span>
-                </div>
-              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary, alignItems: 'center' }}>
+                <span>
+                  Discount{' '}
+                  {discountPct > 0 ? (
+                    <span style={{ color: '#16A34A', fontWeight: 700 }}>({discountPct}%)</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDiscountPct(10)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: theme.activeBg, fontSize: '11px', fontWeight: 700,
+                        fontFamily: 'inherit', padding: 0,
+                      }}
+                    >Add Discount</button>
+                  )}
+                </span>
+                <span style={{ color: discountPct > 0 ? '#16A34A' : theme.textSecondary, fontWeight: 600 }}>
+                  {discountPct > 0 ? `-₹${manualDiscount}` : '₹0'}
+                </span>
+              </div>
               {promoDiscountAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: '#059669' }}>
-                  <span>Promo Offer ({appliedPromoCode})</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#059669' }}>
+                  <span>Promo ({appliedPromoCode})</span>
                   <span style={{ fontWeight: 700 }}>-₹{promoDiscountAmount}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: theme.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
                 <span>Tax (GST 5%)</span>
                 <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{tax}</span>
               </div>
               <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                fontSize: '16px',
-                fontWeight: 800,
-                color: theme.textPrimary,
-                paddingTop: '0.3rem',
-                borderTop: `1px dashed ${theme.border}`,
-                marginTop: '0.1rem',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                fontSize: '16px', fontWeight: 800, color: theme.textPrimary,
+                paddingTop: '0.3rem', borderTop: `1px dashed ${theme.border}`, marginTop: '0.1rem',
               }}>
                 <span>Total Amount</span>
                 <span style={{ fontSize: '19px', fontWeight: 900, color: theme.textPrimary }}>₹{total}</span>
@@ -2339,25 +2363,22 @@ export default function PosMainScreen() {
               </div>
             )}
 
-            {/* Action Buttons: Hold Sale + 10% Discount */}
+            {/* Action Buttons: Hold Sale + Save Order */}
             <div style={{ display: 'flex', gap: '0.45rem' }}>
               <button
                 type="button"
                 disabled={cart.length === 0}
                 onClick={handleHoldSale}
                 style={{
-                  flex: 1,
-                  height: '31px',
+                  flex: 1, height: '31px',
                   borderRadius: '0.5rem',
                   border: `1px solid ${theme.border}`,
                   backgroundColor: theme.bgCardSubtle,
                   color: theme.textPrimary,
-                  fontSize: '11px',
-                  fontWeight: 700,
+                  fontSize: '11px', fontWeight: 700,
                   cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: cart.length === 0 ? 0.45 : 1,
-                  transition: 'all 0.15s ease',
-                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease', fontFamily: 'inherit',
                 }}
               >
                 Hold Sale
@@ -2365,23 +2386,20 @@ export default function PosMainScreen() {
               <button
                 type="button"
                 disabled={cart.length === 0}
-                onClick={() => setDiscountPct(discountPct === 0 ? 10 : 0)}
+                onClick={() => { /* Save Order handler */ }}
                 style={{
-                  flex: 1,
-                  height: '31px',
+                  flex: 1, height: '31px',
                   borderRadius: '0.5rem',
-                  border: discountPct > 0 ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                  backgroundColor: discountPct > 0 ? theme.activeBg : theme.bgCardSubtle,
-                  color: discountPct > 0 ? theme.activeText : theme.textPrimary,
-                  fontSize: '11px',
-                  fontWeight: 700,
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCardSubtle,
+                  color: theme.textPrimary,
+                  fontSize: '11px', fontWeight: 700,
                   cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: cart.length === 0 ? 0.45 : 1,
-                  transition: 'all 0.15s ease',
-                  fontFamily: 'inherit',
+                  transition: 'all 0.15s ease', fontFamily: 'inherit',
                 }}
               >
-                {discountPct > 0 ? '10% Applied' : 'Add 10% Off'}
+                Save Order
               </button>
             </div>
 
@@ -2407,7 +2425,6 @@ export default function PosMainScreen() {
             </button>
           </div>
         </aside>
-      </div>
 
       {/* PAYMENT MODAL */}
       {showPaymentModal && (

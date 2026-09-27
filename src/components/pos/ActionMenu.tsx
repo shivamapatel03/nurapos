@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import PauseCircleRoundedIcon from '@mui/icons-material/PauseCircleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -211,8 +211,11 @@ export function AppAction({
   className,
   style,
 }: AppActionProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   // Clean neutral tokens without colors
-  const selectedBg = isDarkMode ? 'rgba(255, 255, 255, 0.09)' : 'rgba(0, 0, 0, 0.05)';
+  const selectedBg = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+  const hoverBg = isDarkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)';
   const textColor = isDarkMode ? '#A1A1AA' : '#52525B';
   const activeTextColor = isDarkMode ? '#FFFFFF' : '#18181B';
 
@@ -223,6 +226,8 @@ export function AppAction({
       aria-label={ariaLabel || label}
       aria-pressed={active}
       disabled={disabled}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
         if (!disabled && onClick) {
           onClick();
@@ -234,11 +239,13 @@ export function AppAction({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '10px 8px 8px',
+        padding: '9px 4px 7px',
         borderRadius: '10px',
         border: 'none',
-        backgroundColor: active ? (isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') : 'transparent',
-        color: active ? activeTextColor : textColor,
+        backgroundColor: active
+          ? selectedBg
+          : (isHovered && !disabled ? hoverBg : 'transparent'),
+        color: active || isHovered ? activeTextColor : textColor,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.45 : 1,
         fontFamily: "var(--font-heading, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif)",
@@ -247,6 +254,7 @@ export function AppAction({
         width: '100%',
         boxSizing: 'border-box',
         position: 'relative',
+        transition: 'background-color 0.15s ease, color 0.15s ease',
         ...style,
       }}
     >
@@ -257,8 +265,8 @@ export function AppAction({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '26px',
-          height: '26px',
+          width: '32px',
+          height: '32px',
           color: 'currentColor',
         }}
       >
@@ -267,8 +275,8 @@ export function AppAction({
           <span
             style={{
               position: 'absolute',
-              top: '-4px',
-              right: '-8px',
+              top: '-3px',
+              right: '-6px',
               minWidth: '16px',
               height: '16px',
               borderRadius: '9999px',
@@ -292,14 +300,17 @@ export function AppAction({
       {/* Label directly below icon */}
       <span
         style={{
-          marginTop: '8px',
-          fontSize: '13px',
+          marginTop: '6px',
+          fontSize: '12px',
           fontWeight: active ? 700 : 500,
           color: 'inherit',
           letterSpacing: '-0.01em',
           textAlign: 'center',
           whiteSpace: 'nowrap',
-          lineHeight: 1.25,
+          lineHeight: 1.2,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: '100%',
         }}
       >
         {label}
@@ -368,9 +379,9 @@ export function ActionMenu({
       className={className}
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        columnGap: '8px',
-        rowGap: '10px',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        columnGap: '4px',
+        rowGap: '6px',
         width: '100%',
         boxSizing: 'border-box',
         alignItems: 'stretch',
