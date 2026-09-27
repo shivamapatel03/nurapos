@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@duo-icons/react": "^1.0.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^6.1.6",

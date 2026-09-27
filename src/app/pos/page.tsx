@@ -25,16 +25,23 @@ import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import AppsRoundedIcon from '@mui/icons-material/AppsRounded';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import { AppTheme, ThemeMode, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
+import ActionMenu, {
+  ActionCashRegisterIcon,
+  ActionHeldSalesIcon,
+  ActionInvoicesIcon,
+  ActionCustomersIcon,
+  ActionEndShiftIcon,
+  ActionDarkModeIcon,
+} from '@/components/pos/ActionMenu';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
@@ -50,6 +57,15 @@ import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import TableBarRoundedIcon from '@mui/icons-material/TableBarRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
+import DeliveryDiningRoundedIcon from '@mui/icons-material/DeliveryDiningRounded';
+import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+
+const TABLE_SECTIONS: Record<string, string[]> = {
+  'Main Hall': ['T-01', 'T-02', 'T-03', 'T-04', 'T-05', 'T-06'],
+  'AC Hall': ['AC-01', 'AC-02', 'AC-03', 'AC-04'],
+  'Garden': ['G-01', 'G-02', 'G-03', 'G-04'],
+  'Rooftop': ['R-01', 'R-02', 'R-03'],
+};
 
 interface Product {
   id: string;
@@ -96,8 +112,11 @@ interface HeldSale {
   total: number;
   saleNote?: string;
   paymentNote?: string;
-  orderType?: 'dine_in' | 'takeaway';
+  orderType?: 'dine_in' | 'takeaway' | 'delivery';
   tableNumber?: string;
+  tableSection?: string;
+  ticketNumber?: string;
+  deliveryPlatform?: string;
   customerName?: string;
   customerPhone?: string;
 }
@@ -109,9 +128,33 @@ interface HeldSale {
 export default function PosMainScreen() {
   const router = useRouter();
 
-  // Navigation and Sidebar state
+  // Navigation state
   const [activeNav, setActiveNav] = useState<'new_sale' | 'held_sales' | 'invoices' | 'customers'>('new_sale');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // 9-Dot Quick Launcher Popup state & ref
+  const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const appsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (appsMenuRef.current && !appsMenuRef.current.contains(event.target as Node)) {
+        setIsAppsMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsAppsMenuOpen(false);
+      }
+    };
+    if (isAppsMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isAppsMenuOpen]);
 
   // Real-time Live Clock
   const [liveTime, setLiveTime] = useState<string>('');
@@ -150,8 +193,11 @@ export default function PosMainScreen() {
   // Customer state & Order Type state
   const [customerName, setCustomerName] = useState('Guest Customer');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [orderType, setOrderType] = useState<'dine_in' | 'takeaway'>('dine_in');
+  const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  const [tableSection, setTableSection] = useState('Main Hall');
   const [tableNumber, setTableNumber] = useState('T-01');
+  const [ticketNumber, setTicketNumber] = useState('#TK-01');
+  const [deliveryPlatform, setDeliveryPlatform] = useState('Direct');
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [discountPct, setDiscountPct] = useState(0);
 
@@ -185,9 +231,11 @@ export default function PosMainScreen() {
       if (savedOffers) {
         const parsedOffers = JSON.parse(savedOffers);
         if (Array.isArray(parsedOffers)) {
-          loadedOffers = parsedOffers.filter(
-            (o: any) => o.isActive && o.startDate <= today && o.endDate >= today
-          );
+          loadedOffers = parsedOffers
+            .filter((o: any) => !['offer-1', 'offer-2', 'offer-3'].includes(o.id))
+            .filter(
+              (o: any) => o.isActive && o.startDate <= today && o.endDate >= today
+            );
           setStoreOffers(loadedOffers);
         }
       }
@@ -475,6 +523,9 @@ export default function PosMainScreen() {
       paymentNote: paymentNote.trim() || undefined,
       orderType,
       tableNumber: orderType === 'dine_in' ? tableNumber : undefined,
+      tableSection: orderType === 'dine_in' ? tableSection : undefined,
+      ticketNumber: orderType === 'takeaway' ? ticketNumber : undefined,
+      deliveryPlatform: orderType === 'delivery' ? deliveryPlatform : undefined,
       customerName,
       customerPhone: customerPhone.trim() || undefined,
     };
@@ -492,6 +543,9 @@ export default function PosMainScreen() {
     if (hold.paymentNote) setPaymentNote(hold.paymentNote);
     if (hold.orderType) setOrderType(hold.orderType);
     if (hold.tableNumber) setTableNumber(hold.tableNumber);
+    if (hold.tableSection) setTableSection(hold.tableSection);
+    if (hold.ticketNumber) setTicketNumber(hold.ticketNumber);
+    if (hold.deliveryPlatform) setDeliveryPlatform(hold.deliveryPlatform);
     if (hold.customerName) setCustomerName(hold.customerName);
     if (hold.customerPhone) setCustomerPhone(hold.customerPhone);
     setHeldSales((prev) => prev.filter((h) => h.id !== hold.id));
@@ -573,13 +627,22 @@ export default function PosMainScreen() {
         total,
         paymentMethod,
         orderType,
-        tableNumber: orderType === 'dine_in' ? tableNumber : undefined,
+        tableNumber: orderType === 'dine_in' ? `${tableSection} - ${tableNumber}` : undefined,
+        tableSection: orderType === 'dine_in' ? tableSection : undefined,
+        ticketNumber: orderType === 'takeaway' ? ticketNumber : undefined,
+        deliveryPlatform: orderType === 'delivery' ? deliveryPlatform : undefined,
         status: 'Completed',
       };
       const existing = JSON.parse(localStorage.getItem('nuradesk_orders') || '[]');
       const updatedOrders = [newOrder, ...existing];
       localStorage.setItem('nuradesk_orders', JSON.stringify(updatedOrders));
       setOrderNumber(`#ORD-${1000 + updatedOrders.length + 1}`);
+
+      // Auto-increment takeaway ticket number for the next takeaway customer
+      if (orderType === 'takeaway') {
+        const nextNum = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
+        setTicketNumber(`TK-${String(nextNum).padStart(2, '0')}`);
+      }
     } catch (e) {}
 
     setTimeout(() => {
@@ -591,6 +654,7 @@ export default function PosMainScreen() {
       setCustomerName('Guest Customer');
       setCustomerPhone('');
       setOrderType('dine_in');
+      setTableSection('Main Hall');
       setTableNumber('T-01');
     }, 1600);
   };
@@ -645,41 +709,175 @@ export default function PosMainScreen() {
         zIndex: 30,
         color: theme.headerTextPrimary,
       }}>
-        {/* Left: Sidebar Toggle + Nuradesk Logo + Store Logo Pill Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {/* Sidebar Open/Close Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen((prev) => !prev)}
-            title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            aria-label="Toggle sidebar"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '0.55rem',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: theme.headerTextPrimary,
-              transition: 'all 0.15s ease',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = theme.hoverBg;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            {isSidebarOpen ? (
-              <MenuOpenRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary }} />
-            ) : (
-              <MenuRoundedIcon sx={{ fontSize: 21, color: theme.headerTextPrimary }} />
+        {/* Left: 9-Dot Quick Launcher + Nuradesk Logo + Store Logo Pill Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* 9-Dot Quick Launcher Button & Anchored Popup */}
+          <div ref={appsMenuRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setIsAppsMenuOpen((prev) => !prev)}
+              title="Quick Menu (Held orders, Invoices, Customers, End shift, Dark mode)"
+              aria-label="Nine dot quick menu"
+              aria-expanded={isAppsMenuOpen}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '0.55rem',
+                backgroundColor: isAppsMenuOpen ? theme.hoverBg : 'transparent',
+                border: isAppsMenuOpen ? `1px solid ${theme.border}` : '1px solid transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: theme.headerTextPrimary,
+                transition: 'all 0.15s ease',
+                flexShrink: 0,
+                position: 'relative',
+              }}
+              onMouseEnter={(e) => {
+                if (!isAppsMenuOpen) e.currentTarget.style.backgroundColor = theme.hoverBg;
+              }}
+              onMouseLeave={(e) => {
+                if (!isAppsMenuOpen) e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <AppsRoundedIcon sx={{ fontSize: 22 }} />
+              {heldSales.length > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '4px',
+                    right: '4px',
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: theme.textSecondary,
+                  }}
+                />
+              )}
+            </button>
+
+            {/* Anchored Popup: Action Menu Container */}
+            {isAppsMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  width: '240px',
+                  backgroundColor: theme.bgCard,
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  padding: '10px',
+                  zIndex: 9999,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <ActionMenu
+                  primaryColor="#007DCC"
+                  secondaryColor="#FFB900"
+                  items={[
+                    {
+                      id: 'new_sale',
+                      label: 'New sale',
+                      icon: <img src="/icons/newsale.png" alt="New sale" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      onClick: () => {
+                        setActiveNav('new_sale');
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
+                      id: 'held_sales',
+                      label: 'Held sales',
+                      badge: heldSales.length > 0 ? heldSales.length : undefined,
+                      icon: <img src="/icons/4dot.png" alt="Held sales" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      onClick: () => {
+                        setActiveNav('held_sales');
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
+                      id: 'invoices',
+                      label: 'Invoices',
+                      icon: <img src="/icons/invoice.png" alt="Invoices" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      onClick: () => {
+                        setActiveNav('invoices');
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
+                      id: 'customers',
+                      label: 'Customers',
+                      icon: <img src="/icons/customers.png" alt="Customers" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      onClick: () => {
+                        setActiveNav('customers');
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
+                      id: 'end_shift',
+                      label: 'End shift',
+                      icon: <img src="/icons/shifts.png" alt="End shift" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      onClick: () => {
+                        setShowEndShiftModal(true);
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
+                      id: 'dark_mode',
+                      label: themeMode === 'light' ? 'Dark mode' : 'Light mode',
+                      icon: <ActionDarkModeIcon size={24} primaryColor="#007DCC" secondaryColor="#FFB900" isDarkMode={themeMode === 'dark'} />,
+                      onClick: handleToggleTheme,
+                    },
+                  ]}
+                  activeItem={activeNav}
+                  isDarkMode={themeMode === 'dark'}
+                />
+
+                {/* Divider & Logout */}
+                <div
+                  style={{
+                    marginTop: '8px',
+                    paddingTop: '8px',
+                    borderTop: `1px solid ${theme.border}`,
+                  }}
+                >
+                  <Link
+                    href="/pos-login"
+                    onClick={() => setIsAppsMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      padding: '7px 10px',
+                      borderRadius: '10px',
+                      backgroundColor: 'transparent',
+                      color: theme.textSecondary,
+                      textDecoration: 'none',
+                      fontFamily: 'inherit',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = theme.hoverBg;
+                      e.currentTarget.style.color = theme.textPrimary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = theme.textSecondary;
+                    }}
+                  >
+                    <img src="/icons/logout.png" alt="Logout" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', opacity: 0.75 }} />
+                    <span>Logout</span>
+                  </Link>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
 
           <Link
             href="/dashboard"
@@ -760,379 +958,17 @@ export default function PosMainScreen() {
           </span>
         </div>
 
-        {/* Right: Cashier Name + Active Status Indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {/* Active Live Indicator */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            padding: '4px 10px',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            border: '1px solid rgba(34, 197, 94, 0.25)',
-            borderRadius: '9999px',
-          }}>
-            <span style={{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              backgroundColor: '#22C55E',
-              boxShadow: '0 0 8px #22C55E',
-            }} />
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#22C55E' }}>
-              Active
-            </span>
-          </div>
-
-          {/* Cashier Name Only */}
-          <span style={{
-            fontSize: '13px',
-            fontWeight: 700,
-            color: theme.headerTextPrimary,
-            letterSpacing: '-0.01em',
-          }}>
-            Amit Patel
-          </span>
-        </div>
+        {/* Right Header Area: Active status removed, Name moved to popup */}
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: '40px' }} />
       </header>
 
-      {/* 2. MAIN BODY: 3-COLUMN LAYOUT (Sidebar + Product Catalog + Current Sale Ticket) */}
+      {/* 2. MAIN BODY: 2-COLUMN LAYOUT (Product Catalog + Current Sale Ticket) */}
       <div style={{
         flex: 1,
         minHeight: 0,
         display: 'flex',
         overflow: 'hidden',
       }}>
-        {/* LEFT COLUMN: POS NAVIGATION SIDEBAR */}
-        <aside style={{
-          width: isSidebarOpen ? '200px' : '68px',
-          minWidth: isSidebarOpen ? '200px' : '68px',
-          backgroundColor: theme.bgSidebar,
-          borderRight: `1px solid ${theme.sidebarBorder}`,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: isSidebarOpen ? '1.25rem 0.75rem' : '1.25rem 0.5rem',
-          flexShrink: 0,
-          boxSizing: 'border-box',
-          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'visible',
-          zIndex: 40,
-          position: 'relative',
-        }}>
-          {/* Top Nav Items */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {/* New sale button */}
-            <button
-              type="button"
-              onClick={() => setActiveNav('new_sale')}
-              title={!isSidebarOpen ? 'New sale' : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: activeNav === 'new_sale' ? theme.sidebarActiveBg : 'transparent',
-                color: activeNav === 'new_sale' ? theme.sidebarActiveText : theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: activeNav === 'new_sale' ? 800 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (activeNav !== 'new_sale') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <PointOfSaleRoundedIcon sx={{ fontSize: 20, color: 'inherit', flexShrink: 0 }} />
-              {isSidebarOpen && (
-                <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>New sale</span>
-              )}
-            </button>
-
-            {/* Held sales button */}
-            <button
-              type="button"
-              onClick={() => setActiveNav('held_sales')}
-              title={!isSidebarOpen ? `Held sales (${heldSales.length})` : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'space-between' : 'center',
-                padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: activeNav === 'held_sales' ? theme.sidebarActiveBg : 'transparent',
-                color: activeNav === 'held_sales' ? theme.sidebarActiveText : theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: activeNav === 'held_sales' ? 800 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (activeNav !== 'held_sales') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
-                <PauseCircleOutlineRoundedIcon sx={{ fontSize: 20, color: 'inherit', flexShrink: 0 }} />
-                {isSidebarOpen && (
-                  <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Held sales</span>
-                )}
-                {!isSidebarOpen && heldSales.length > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-3px',
-                    right: '-4px',
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    backgroundColor: activeNav === 'held_sales' ? theme.sidebarActiveText : theme.activeBg,
-                  }} />
-                )}
-              </div>
-              {isSidebarOpen && heldSales.length > 0 && (
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  backgroundColor: activeNav === 'held_sales' ? (theme.sidebarIsDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.08)') : theme.secondaryBadgeBg,
-                  color: activeNav === 'held_sales' ? theme.sidebarActiveText : theme.secondaryBadgeText,
-                  padding: '1px 6px',
-                  borderRadius: '9999px',
-                }}>
-                  {heldSales.length}
-                </span>
-              )}
-            </button>
-
-            {/* Invoices list */}
-            <button
-              type="button"
-              onClick={() => setActiveNav('invoices')}
-              title={!isSidebarOpen ? 'Invoices list' : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: activeNav === 'invoices' ? theme.sidebarActiveBg : 'transparent',
-                color: activeNav === 'invoices' ? theme.sidebarActiveText : theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: activeNav === 'invoices' ? 800 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (activeNav !== 'invoices') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <ReceiptLongRoundedIcon sx={{ fontSize: 20, color: 'inherit', flexShrink: 0 }} />
-              {isSidebarOpen && (
-                <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Invoices list</span>
-              )}
-            </button>
-
-            {/* Customer List */}
-            <button
-              type="button"
-              onClick={() => setActiveNav('customers')}
-              title={!isSidebarOpen ? 'Customer List' : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.7rem 0.9rem' : '0.7rem 0',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: activeNav === 'customers' ? theme.sidebarActiveBg : 'transparent',
-                color: activeNav === 'customers' ? theme.sidebarActiveText : theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: activeNav === 'customers' ? 800 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
-              }}
-              onMouseLeave={(e) => {
-                if (activeNav !== 'customers') e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-            >
-              <PeopleAltRoundedIcon sx={{ fontSize: 20, color: 'inherit', flexShrink: 0 }} />
-              {isSidebarOpen && (
-                <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Customer List</span>
-              )}
-            </button>
-          </nav>
-
-          {/* Bottom Nav Items: End shift, Logout & Theme */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.4rem',
-            borderTop: `1px solid ${theme.sidebarBorder}`,
-            paddingTop: '0.85rem',
-          }}>
-            {/* End shift button */}
-            <button
-              type="button"
-              onClick={() => setShowEndShiftModal(true)}
-              title={!isSidebarOpen ? 'End shift' : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
-                borderRadius: '0.65rem',
-                border: 'none',
-                backgroundColor: 'transparent',
-                color: theme.sidebarTextPrimary,
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                textAlign: 'left',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.sidebarHoverBg; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
-              <ScheduleRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
-              {isSidebarOpen && (
-                <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>End shift</span>
-              )}
-            </button>
-
-            {/* Logout link */}
-            <Link
-              href="/pos-login"
-              title={!isSidebarOpen ? 'Logout' : undefined}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: isSidebarOpen ? 'flex-start' : 'center',
-                padding: isSidebarOpen ? '0.65rem 0.9rem' : '0.65rem 0',
-                borderRadius: '0.65rem',
-                color: theme.sidebarTextSecondary,
-                fontSize: '14px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                transition: 'all 0.15s ease',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = theme.sidebarHoverBg;
-                e.currentTarget.style.color = theme.sidebarTextPrimary;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = theme.sidebarTextSecondary;
-              }}
-            >
-              <LogoutRoundedIcon sx={{ fontSize: 18, color: 'inherit', flexShrink: 0 }} />
-              {isSidebarOpen && (
-                <span style={{ marginLeft: '0.65rem', whiteSpace: 'nowrap' }}>Logout</span>
-              )}
-            </Link>
-
-            {/* Dark / Light Mode Toggle in POS Sidebar */}
-            <div style={{ position: 'relative', width: '100%' }}>
-              <button
-                type="button"
-                onClick={handleToggleTheme}
-                title={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                aria-label={themeMode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: isSidebarOpen ? 'space-between' : 'center',
-                  padding: isSidebarOpen ? '0.65rem 0.85rem' : '0.65rem 0',
-                  borderRadius: '0.65rem',
-                  border: 'none',
-                  backgroundColor: theme.hoverBg,
-                  color: theme.sidebarTextPrimary,
-                  fontSize: '13.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  transition: 'all 0.15s ease',
-                  boxSizing: 'border-box',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? '#27272a' : '#e8e8e8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = theme.hoverBg;
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  {themeMode === 'light' ? (
-                    <DarkModeRoundedIcon sx={{ fontSize: 18, color: theme.sidebarTextPrimary, flexShrink: 0 }} />
-                  ) : (
-                    <LightModeRoundedIcon sx={{ fontSize: 18, color: '#FACC15', flexShrink: 0 }} />
-                  )}
-                  {isSidebarOpen && (
-                    <span style={{ whiteSpace: 'nowrap', fontWeight: 700, fontSize: '13px' }}>
-                      {themeMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Animated Switch Toggle Slider when sidebar is expanded */}
-                {isSidebarOpen && (
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '20px',
-                      borderRadius: '9999px',
-                      backgroundColor: themeMode === 'dark' ? '#22C55E' : (theme.sidebarIsDark ? '#3F3F46' : '#D1D5DB'),
-                      position: 'relative',
-                      transition: 'background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '14px',
-                        height: '14px',
-                        borderRadius: '50%',
-                        backgroundColor: '#FFFFFF',
-                        position: 'absolute',
-                        top: '3px',
-                        left: themeMode === 'dark' ? '19px' : '3px',
-                        transition: 'left 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
-                      }}
-                    />
-                  </div>
-                )}
-              </button>
-            </div>
-          </div>
-        </aside>
 
         {/* CENTER COLUMN: PRODUCT CATALOG & SEARCH */}
         <section style={{
@@ -1573,7 +1409,11 @@ export default function PosMainScreen() {
                             border: `1px solid ${theme.border}`,
                             color: theme.activeBg,
                           }}>
-                            {h.orderType === 'dine_in' ? `Dine In (${h.tableNumber || 'Table'})` : 'Takeaway'}
+                            {h.orderType === 'dine_in'
+                              ? `Dine In (${h.tableSection ? h.tableSection + ' • ' : ''}${h.tableNumber || 'Table'})`
+                              : h.orderType === 'takeaway'
+                              ? `Takeaway (${h.ticketNumber || 'Ticket'})`
+                              : `Delivery (${h.deliveryPlatform || 'Direct'})`}
                           </span>
                         )}
                       </div>
@@ -1760,121 +1600,143 @@ export default function PosMainScreen() {
             </div>
           </div>
 
-          {/* Order Type & Table Row (Compact 32px) */}
+          {/* Order Type Buttons & Context Bar (No swap, No shadow, Simple selection with icons) */}
           <div style={{
-            padding: '0.35rem 0.85rem',
+            padding: '0.4rem 0.85rem',
             backgroundColor: theme.bgCardSubtle,
             borderBottom: `1px solid ${theme.border}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.5rem',
+            flexWrap: 'wrap',
+            gap: '0.45rem',
           }}>
-            {/* Segmented Pill for Dine In / Takeaway with Smooth Swap Animation */}
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              backgroundColor: theme.bgCard,
-              padding: '2px',
-              borderRadius: '9999px',
-              border: `1px solid ${theme.border}`,
-              flex: 1,
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-            }}>
-              {/* Smooth Animated Sliding Indicator */}
-              <div
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  bottom: '2px',
-                  left: '2px',
-                  width: 'calc(50% - 2px)',
-                  backgroundColor: theme.activeBg,
-                  borderRadius: '9999px',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.16)',
-                  transform: orderType === 'dine_in' ? 'translateX(0%)' : 'translateX(100%)',
-                  transition: 'transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.1)',
-                  zIndex: 1,
-                  pointerEvents: 'none',
-                }}
-              />
-
+            {/* Simple Selection Buttons (No Shadow, Clean Borders, Distinct Buttons) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              {/* Dine In Button */}
               <button
                 type="button"
                 onClick={() => setOrderType('dine_in')}
                 style={{
-                  position: 'relative',
-                  zIndex: 2,
-                  flex: 1,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.28rem 0.45rem',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
+                  gap: '0.3rem',
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '0.45rem',
+                  border: orderType === 'dine_in' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                  backgroundColor: orderType === 'dine_in' ? theme.activeBg : theme.bgCard,
                   color: orderType === 'dine_in' ? theme.activeText : theme.textSecondary,
                   fontSize: '11px',
                   fontWeight: orderType === 'dine_in' ? 800 : 600,
                   cursor: 'pointer',
-                  transition: 'color 0.22s ease',
-                  fontFamily: 'inherit',
                   outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                  fontFamily: 'inherit',
                   userSelect: 'none',
                 }}
               >
-                <RestaurantRoundedIcon sx={{
-                  fontSize: 13,
-                  transition: 'transform 0.22s ease',
-                  transform: orderType === 'dine_in' ? 'scale(1.08)' : 'scale(1)',
-                }} />
+                <RestaurantRoundedIcon sx={{ fontSize: 13 }} />
                 <span>Dine In</span>
               </button>
 
+              {/* Takeaway Button */}
               <button
                 type="button"
                 onClick={() => setOrderType('takeaway')}
                 style={{
-                  position: 'relative',
-                  zIndex: 2,
-                  flex: 1,
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.28rem 0.45rem',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
+                  gap: '0.3rem',
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '0.45rem',
+                  border: orderType === 'takeaway' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                  backgroundColor: orderType === 'takeaway' ? theme.activeBg : theme.bgCard,
                   color: orderType === 'takeaway' ? theme.activeText : theme.textSecondary,
                   fontSize: '11px',
                   fontWeight: orderType === 'takeaway' ? 800 : 600,
                   cursor: 'pointer',
-                  transition: 'color 0.22s ease',
-                  fontFamily: 'inherit',
                   outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                  fontFamily: 'inherit',
                   userSelect: 'none',
                 }}
               >
-                <TakeoutDiningRoundedIcon sx={{
-                  fontSize: 13,
-                  transition: 'transform 0.22s ease',
-                  transform: orderType === 'takeaway' ? 'scale(1.08)' : 'scale(1)',
-                }} />
+                <TakeoutDiningRoundedIcon sx={{ fontSize: 13 }} />
                 <span>Takeaway</span>
+              </button>
+
+              {/* Delivery Button */}
+              <button
+                type="button"
+                onClick={() => setOrderType('delivery')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  padding: '0.3rem 0.55rem',
+                  borderRadius: '0.45rem',
+                  border: orderType === 'delivery' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                  backgroundColor: orderType === 'delivery' ? theme.activeBg : theme.bgCard,
+                  color: orderType === 'delivery' ? theme.activeText : theme.textSecondary,
+                  fontSize: '11px',
+                  fontWeight: orderType === 'delivery' ? 800 : 600,
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: 'none',
+                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                  fontFamily: 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                <DeliveryDiningRoundedIcon sx={{ fontSize: 13 }} />
+                <span>Delivery</span>
               </button>
             </div>
 
-            {/* Table Dropdown for Dine-In / Token for Takeaway */}
-            {orderType === 'dine_in' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+            {/* Context Section (Table with Section / Takeaway Ticket Number System / Delivery Mode) */}
+            {orderType === 'dine_in' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <TableBarRoundedIcon sx={{ fontSize: 13, color: theme.activeBg }} />
+                
+                {/* Table Section Dropdown */}
+                <select
+                  value={tableSection}
+                  onChange={(e) => {
+                    const newSec = e.target.value;
+                    setTableSection(newSec);
+                    const tables = TABLE_SECTIONS[newSec] || ['T-01'];
+                    if (!tables.includes(tableNumber)) {
+                      setTableNumber(tables[0]);
+                    }
+                  }}
+                  title="Table Section"
+                  style={{
+                    height: '24px',
+                    padding: '0 4px',
+                    borderRadius: '5px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.textPrimary,
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {Object.keys(TABLE_SECTIONS).map((sec) => (
+                    <option key={sec} value={sec}>{sec}</option>
+                  ))}
+                </select>
+
+                {/* Table Number Dropdown */}
                 <select
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
+                  title="Table Number"
                   style={{
                     height: '24px',
                     padding: '0 4px',
@@ -1886,32 +1748,95 @@ export default function PosMainScreen() {
                     fontWeight: 800,
                     cursor: 'pointer',
                     outline: 'none',
+                    boxShadow: 'none',
                     fontFamily: 'inherit',
                   }}
                 >
-                  <option value="T-01">T-01</option>
-                  <option value="T-02">T-02</option>
-                  <option value="T-03">T-03</option>
-                  <option value="T-04">T-04</option>
-                  <option value="T-05">T-05</option>
-                  <option value="T-06">T-06</option>
-                  <option value="T-07">T-07</option>
-                  <option value="T-08">T-08</option>
+                  {(TABLE_SECTIONS[tableSection] || ['T-01', 'T-02']).map((tbl) => (
+                    <option key={tbl} value={tbl}>{tbl}</option>
+                  ))}
                 </select>
               </div>
-            ) : (
-              <span style={{
-                fontSize: '10.5px',
-                fontWeight: 800,
-                color: theme.activeBg,
-                backgroundColor: theme.hoverBg,
-                padding: '2px 7px',
-                borderRadius: '5px',
-                border: `1px solid ${theme.border}`,
-                whiteSpace: 'nowrap',
-              }}>
-                #TK-28
-              </span>
+            )}
+
+            {orderType === 'takeaway' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <ConfirmationNumberRoundedIcon sx={{ fontSize: 13, color: theme.activeBg }} />
+                <span style={{ fontSize: '10.5px', fontWeight: 700, color: theme.textSecondary }}>Ticket:</span>
+                <input
+                  type="text"
+                  value={ticketNumber}
+                  onChange={(e) => setTicketNumber(e.target.value)}
+                  title="Takeaway Ticket / Token Number"
+                  style={{
+                    width: '60px',
+                    height: '24px',
+                    padding: '0 4px',
+                    borderRadius: '5px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.activeBg,
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    fontFamily: 'monospace',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const num = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
+                    setTicketNumber(`TK-${String(num).padStart(2, '0')}`);
+                  }}
+                  title="Next Ticket Number (+1)"
+                  style={{
+                    height: '24px',
+                    padding: '0 5px',
+                    borderRadius: '5px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.textSecondary,
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    boxShadow: 'none',
+                  }}
+                >
+                  +1
+                </button>
+              </div>
+            )}
+
+            {orderType === 'delivery' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <DeliveryDiningRoundedIcon sx={{ fontSize: 14, color: theme.activeBg }} />
+                <select
+                  value={deliveryPlatform}
+                  onChange={(e) => setDeliveryPlatform(e.target.value)}
+                  title="Delivery Partner / Platform"
+                  style={{
+                    height: '24px',
+                    padding: '0 6px',
+                    borderRadius: '5px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCard,
+                    color: theme.activeBg,
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <option value="Direct">Direct Delivery</option>
+                  <option value="Zomato">Zomato</option>
+                  <option value="Swiggy">Swiggy</option>
+                  <option value="UberEats">UberEats</option>
+                </select>
+              </div>
             )}
           </div>
 
@@ -2526,7 +2451,14 @@ export default function PosMainScreen() {
                   fontSize: '12px',
                   marginTop: '0.5rem',
                 }}>
-                  <div><strong>Order Type:</strong> {orderType === 'dine_in' ? `Dine In (${tableNumber})` : 'Takeaway'}</div>
+                  <div>
+                    <strong>Order Type:</strong>{' '}
+                    {orderType === 'dine_in'
+                      ? `Dine In (${tableSection} • ${tableNumber})`
+                      : orderType === 'takeaway'
+                      ? `Takeaway (${ticketNumber})`
+                      : `Delivery (${deliveryPlatform})`}
+                  </div>
                   <div><strong>Customer:</strong> {customerName} {customerPhone ? `(${customerPhone})` : ''}</div>
                   {saleNote && <div><strong>Sale Note:</strong> {saleNote}</div>}
                   {paymentNote && <div><strong>Pay Ref:</strong> {paymentNote}</div>}
@@ -2540,7 +2472,14 @@ export default function PosMainScreen() {
                       Complete Payment
                     </h3>
                     <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0.2rem 0 0 0' }}>
-                      Total Due: ₹{total} • <strong style={{ color: theme.activeBg }}>{orderType === 'dine_in' ? `Dine In (${tableNumber})` : 'Takeaway'}</strong>
+                      Total Due: ₹{total} •{' '}
+                      <strong style={{ color: theme.activeBg }}>
+                        {orderType === 'dine_in'
+                          ? `Dine In (${tableSection} • ${tableNumber})`
+                          : orderType === 'takeaway'
+                          ? `Takeaway (${ticketNumber})`
+                          : `Delivery (${deliveryPlatform})`}
+                      </strong>
                     </p>
                     <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0.15rem 0 0 0' }}>
                       Customer: <strong style={{ color: theme.textPrimary }}>{customerName}</strong> {customerPhone ? `(${customerPhone})` : ''}

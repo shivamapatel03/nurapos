@@ -43,56 +43,6 @@ export interface StoreOffer {
   createdAt: string;
 }
 
-// Initial default offers for immediate POS demonstration
-const DEFAULT_OFFERS: StoreOffer[] = [
-  {
-    id: 'offer-1',
-    title: 'Weekend Mega Discount',
-    code: 'WEEKEND20',
-    description: 'Flat 20% off on all items across the store this weekend.',
-    badgeText: '20% OFF',
-    discountType: 'percentage',
-    discountValue: 20,
-    appliesTo: 'all',
-    minSubtotal: 150,
-    startDate: '2026-09-01',
-    endDate: '2026-10-31',
-    isActive: true,
-    usageCount: 42,
-    createdAt: '2026-09-01T10:00:00.000Z',
-  },
-  {
-    id: 'offer-2',
-    title: 'Beverages Happy Hour',
-    description: 'Get ₹30 flat deduction on all fresh beverages and coffee drinks.',
-    badgeText: 'SAVE ₹30',
-    discountType: 'fixed_amount',
-    discountValue: 30,
-    appliesTo: 'category',
-    targetCategories: ['Beverages', 'Coffee', 'Drinks'],
-    minSubtotal: 100,
-    startDate: '2026-09-15',
-    endDate: '2026-10-15',
-    isActive: true,
-    usageCount: 19,
-    createdAt: '2026-09-15T09:30:00.000Z',
-  },
-  {
-    id: 'offer-3',
-    title: 'Special Meal Deal',
-    description: 'Combo special deal pricing for participating signature lunch items.',
-    badgeText: 'DEAL ₹99',
-    discountType: 'promo_price',
-    discountValue: 99,
-    appliesTo: 'all',
-    startDate: '2026-08-01',
-    endDate: '2026-09-20',
-    isActive: false,
-    usageCount: 88,
-    createdAt: '2026-08-01T08:00:00.000Z',
-  },
-];
-
 export default function OffersManagement({ theme }: { theme: any }) {
   // Store Offers State
   const [offers, setOffers] = useState<StoreOffer[]>([]);
@@ -149,15 +99,20 @@ export default function OffersManagement({ theme }: { theme: any }) {
       const saved = localStorage.getItem('nuradesk_offers');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setOffers(parsed);
+        if (Array.isArray(parsed)) {
+          // Filter out legacy mock offers ('offer-1', 'offer-2', 'offer-3')
+          const realOffers = parsed.filter(
+            (o: any) => !['offer-1', 'offer-2', 'offer-3'].includes(o.id)
+          );
+          setOffers(realOffers);
+          localStorage.setItem('nuradesk_offers', JSON.stringify(realOffers));
         } else {
-          setOffers(DEFAULT_OFFERS);
-          localStorage.setItem('nuradesk_offers', JSON.stringify(DEFAULT_OFFERS));
+          setOffers([]);
+          localStorage.setItem('nuradesk_offers', JSON.stringify([]));
         }
       } else {
-        setOffers(DEFAULT_OFFERS);
-        localStorage.setItem('nuradesk_offers', JSON.stringify(DEFAULT_OFFERS));
+        setOffers([]);
+        localStorage.setItem('nuradesk_offers', JSON.stringify([]));
       }
 
       // Load Categories from store catalog
@@ -186,7 +141,7 @@ export default function OffersManagement({ theme }: { theme: any }) {
         }
       }
     } catch (e) {
-      setOffers(DEFAULT_OFFERS);
+      setOffers([]);
     } finally {
       setIsLoaded(true);
     }
