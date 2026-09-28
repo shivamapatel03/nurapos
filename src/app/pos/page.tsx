@@ -18,7 +18,6 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded';
@@ -934,24 +933,6 @@ export default function PosMainScreen() {
             </span>
           </Link>
 
-          {/* Store Logo Pill Badge */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            backgroundColor: theme.bgCardSubtle,
-            border: `1px solid ${theme.border}`,
-            borderRadius: '9999px',
-            padding: '4px 12px',
-            marginLeft: '0.25rem',
-          }}>
-            <StoreRoundedIcon sx={{ fontSize: 16, color: theme.headerTextPrimary }} />
-            <span style={{ fontSize: '12px', fontWeight: 800, color: theme.headerTextPrimary, letterSpacing: '-0.01em' }}>
-              SP CAFE
-            </span>
-            <span style={{ fontSize: '11px', color: theme.border }}>•</span>
-            <span style={{ fontSize: '11.5px', color: theme.textSecondary }}>Ahmedabad</span>
-          </div>
         </div>
 
         {/* Center: Live Time Digital Clock */}
@@ -1437,7 +1418,7 @@ export default function PosMainScreen() {
 
       {/* RIGHT COLUMN: CURRENT SALE TICKET / CHECKOUT (FULL HEIGHT TO TOP) */}
       <aside style={{
-        width: '360px',
+        width: '420px',
         height: '100%',
         backgroundColor: theme.bgCard,
         borderLeft: `1px solid ${theme.border}`,

@@ -30,6 +30,13 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined';
 
 // Management Views
 import ManagerInventoryScreen from '@/components/manager/ManagerInventoryScreen';
@@ -149,12 +156,12 @@ export default function ManagerDashboardPage() {
     {
       id: 'dashboard',
       label: 'Home',
-      icon: <HomeRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <HomeOutlinedIcon sx={{ fontSize: 18 }} />,
     },
     {
       id: 'orders',
       label: 'Orders',
-      icon: <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'orders_all', label: 'All Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'orders_returns', label: 'Returns', icon: <AssignmentReturnRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -164,12 +171,12 @@ export default function ManagerDashboardPage() {
     {
       id: 'inventory',
       label: 'Inventory',
-      icon: <WarehouseRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <WarehouseOutlinedIcon sx={{ fontSize: 18 }} />,
     },
     {
       id: 'customers',
       label: 'Customers',
-      icon: <PeopleAltRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <PeopleAltOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -178,7 +185,7 @@ export default function ManagerDashboardPage() {
     {
       id: 'employees',
       label: 'Employees',
-      icon: <BadgeRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <BadgeOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'emp_staff', label: 'Staff', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'emp_shifts', label: 'Shifts', icon: <ScheduleRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -189,7 +196,7 @@ export default function ManagerDashboardPage() {
     {
       id: 'reports',
       label: 'Reports',
-      icon: <AssessmentRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <AssessmentOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'rep_sales', label: 'Sales', icon: <BarChartRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'rep_inventory', label: 'Inventory', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -199,7 +206,7 @@ export default function ManagerDashboardPage() {
     {
       id: 'terminal',
       label: 'Go to terminal',
-      icon: <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <PointOfSaleOutlinedIcon sx={{ fontSize: 18 }} />,
       href: '/pos',
     },
   ];
@@ -302,9 +309,9 @@ export default function ManagerDashboardPage() {
       }}>
         {/* Fixed Compact Sidebar matching Dashboard Screen exactly */}
         <aside style={{
-          width: '200px',
-          minWidth: '200px',
-          maxWidth: '200px',
+          width: '240px',
+          minWidth: '240px',
+          maxWidth: '240px',
           backgroundColor: theme.bgSidebar,
           borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
           height: '100%',

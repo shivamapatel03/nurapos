@@ -22,7 +22,6 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
@@ -32,6 +31,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import PercentRoundedIcon from '@mui/icons-material/PercentRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 
 export interface ProductVariant {
   id: string;
@@ -639,7 +639,6 @@ export default function ProductManagement({
             backgroundColor: theme.bgCard,
             borderBottom: `1px solid ${theme.border}`,
             padding: '0.85rem clamp(1.5rem, 3vw, 2.5rem)',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             width: '100%',
             boxSizing: 'border-box',
           }}>
@@ -685,9 +684,9 @@ export default function ProductManagement({
 
                 <div>
                   <h1 style={{
-                    fontSize: '20px',
-                    fontWeight: 800,
-                    letterSpacing: '-0.035em',
+                      fontSize: '22px',
+                      fontWeight: 750,
+                      letterSpacing: '-0.02em',
                     color: theme.textPrimary,
                     margin: '0 0 2px 0',
                   }}>
@@ -753,28 +752,29 @@ export default function ProductManagement({
             padding: '1.75rem clamp(1.5rem, 3vw, 2.5rem) 3.5rem',
             boxSizing: 'border-box',
           }}>
+            <style>{`
+              .product-details-summary:focus { outline: none; }
+              .product-details-summary::-webkit-details-marker { display: none; }
+            `}</style>
             {/* Two-Column Responsive Layout */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gridTemplateColumns: 'minmax(0, 1fr)',
               gap: '1.5rem',
               alignItems: 'flex-start',
             }}>
               {/* LEFT COLUMN: Main Form Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
-              {/* Card 1: Product Information */}
+              {/* Product Information */}
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                backgroundColor: 'transparent',
+                padding: '0 0 1.75rem',
               }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 0.25rem 0', color: theme.textPrimary }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 0.3rem 0', color: theme.textPrimary }}>
                   Product Information
                 </h3>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0 0 1.25rem 0' }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
                   Basic identification details visible to customers and cashiers.
                 </p>
 
@@ -895,24 +895,80 @@ export default function ProductManagement({
                       }}
                     />
                   </div>
+
+                  {/* Product Image */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', paddingTop: '0.15rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.2rem' }}>
+                        Product Image
+                      </label>
+                      <span style={{ fontSize: '12px', color: theme.textSecondary }}>Add a simple image for the catalog.</span>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      style={{ display: 'none' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                      {formImage && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={formImage}
+                          alt="Product preview"
+                          style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '0.45rem', border: `1px solid ${theme.border}` }}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          height: '36px',
+                          padding: '0 0.85rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          borderRadius: '9999px',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: theme.bgCard,
+                          color: theme.textPrimary,
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          fontFamily: 'inherit',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <CloudUploadRoundedIcon sx={{ fontSize: 16 }} />
+                        <span>{formImage ? 'Change image' : 'Add image'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Card 2: Pricing, Cost & Tax */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 0.25rem 0', color: theme.textPrimary }}>
-                  Pricing, Cost & Taxation
-                </h3>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0 0 1.25rem 0' }}>
-                  Manage item costs, retail selling price, tax rate, and calculate unit gross margins.
-                </p>
+              <details style={{ marginTop: '-0.25rem', borderBottom: `1px solid ${theme.border}` }}>
+                <summary className="product-details-summary" style={{
+                  cursor: 'pointer',
+                  listStyle: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.25rem 0 0.9rem',
+                  color: theme.textPrimary,
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  lineHeight: 1.3,
+                }}>
+                  <span>Pricing, Cost & Taxation</span>
+                  <KeyboardArrowDownRoundedIcon sx={{ fontSize: 26, color: theme.textSecondary }} />
+                </summary>
 
+              {/* Pricing, Cost & Tax */}
+              <div style={{
+                backgroundColor: 'transparent',
+                padding: '0 0 1.75rem',
+              }}>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
@@ -1060,18 +1116,35 @@ export default function ProductManagement({
                 </div>
               </div>
 
-              {/* Card 3: SKU & Barcode */}
+              </details>
+
+              <details style={{ marginTop: '-0.25rem' }}>
+                <summary className="product-details-summary" style={{
+                  cursor: 'pointer',
+                  listStyle: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.25rem 0 0.75rem',
+                  color: theme.textPrimary,
+                  fontSize: '16px',
+                  fontWeight: 800,
+                  lineHeight: 1.3,
+                }}>
+                  <span>Advanced details</span>
+                  <KeyboardArrowDownRoundedIcon sx={{ fontSize: 26, color: theme.textSecondary }} />
+                </summary>
+
+              {/* SKU & Barcode */}
               <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                backgroundColor: 'transparent',
+                borderBottom: `1px solid ${theme.border}`,
+                padding: '0 0 1.75rem',
               }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 0.25rem 0', color: theme.textPrimary }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 0.3rem 0', color: theme.textPrimary }}>
                   SKU & Barcode Identification
                 </h3>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0 0 1.25rem 0' }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
                   Unique product identifiers used for barcode scanner recognition and inventory tracking.
                 </p>
 
@@ -1171,25 +1244,24 @@ export default function ProductManagement({
                 </div>
               </div>
 
-              {/* Card 4: Product Variants */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              {/* Product Variants */}
+              <details style={{
+                backgroundColor: 'transparent',
+                padding: '0 0 1.75rem',
               }}>
-                <div style={{
+                <summary className="product-details-summary" style={{
+                  cursor: 'pointer',
+                  listStyle: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   marginBottom: '0.75rem',
                 }}>
                   <div>
-                    <h3 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 0.25rem 0', color: theme.textPrimary }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: '0 0 0.3rem 0', color: theme.textPrimary }}>
                       Product Variants
                     </h3>
-                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0 }}>
+                    <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0, lineHeight: 1.5 }}>
                       Multiple sizes, flavors, or specifications for this item.
                     </p>
                   </div>
@@ -1205,7 +1277,7 @@ export default function ProductManagement({
                       This product has variants
                     </span>
                   </label>
-                </div>
+                </summary>
 
                 {formHasVariants && (
                   <div style={{
@@ -1365,237 +1437,12 @@ export default function ProductManagement({
                     </div>
                   </div>
                 )}
-              </div>
+              </details>
+
+              </details>
 
             </div>
 
-            {/* RIGHT COLUMN: Media & Live Register Preview */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              
-              {/* Card 5: Product Media / Image */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              }}>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 0.25rem 0', color: theme.textPrimary }}>
-                  Product Photo
-                </h3>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0 0 1rem 0' }}>
-                  Upload an image for registers and menus.
-                </p>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageFileChange}
-                  style={{ display: 'none' }}
-                />
-
-                {formImage ? (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                  }}>
-                    <div style={{
-                      width: '100%',
-                      height: '180px',
-                      position: 'relative',
-                      borderRadius: '0.75rem',
-                      overflow: 'hidden',
-                      backgroundColor: '#E5E7EB',
-                      border: `1px solid ${theme.border}`,
-                    }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={formImage}
-                        alt="Product preview"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <button
-                        type="button"
-                        className="button-20"
-                        role="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          flex: 1,
-                          height: '34px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.35rem',
-                        }}
-                      >
-                        <CloudUploadRoundedIcon sx={{ fontSize: 16 }} />
-                        <span>Change</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="button-20-secondary"
-                        role="button"
-                        onClick={() => {
-                          setFormImage('');
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
-                        style={{
-                          height: '34px',
-                          padding: '0 12px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          color: '#DC2626',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                        }}
-                      >
-                        <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                        <span>Remove</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setIsDraggingImage(true);
-                    }}
-                    onDragLeave={() => setIsDraggingImage(false)}
-                    onDrop={handleImageDrop}
-                    style={{
-                      border: `2px dashed ${isDraggingImage ? '#2563EB' : theme.border}`,
-                      backgroundColor: isDraggingImage ? theme.hoverBg : theme.bgPage,
-                      borderRadius: '0.85rem',
-                      padding: '2rem 1.25rem',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      backgroundColor: theme.hoverBg,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 0.75rem auto',
-                      color: isDraggingImage ? '#2563EB' : theme.textSecondary,
-                    }}>
-                      <CloudUploadRoundedIcon sx={{ fontSize: 26 }} />
-                    </div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary, marginBottom: '0.25rem' }}>
-                      Click to upload photo
-                    </div>
-                    <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                      or drag & drop (max 5MB)
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Card 6: Live POS Tile Preview */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '1rem',
-                padding: '1.5rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.25rem' }}>
-                  <PointOfSaleRoundedIcon sx={{ fontSize: 16, color: '#2563EB' }} />
-                  <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                    POS Terminal Preview
-                  </h3>
-                </div>
-                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '0 0 1rem 0' }}>
-                  Live preview of how this product card looks on cashier terminals.
-                </p>
-
-                {/* Simulated POS Card */}
-                <div style={{
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.85rem',
-                  overflow: 'hidden',
-                  backgroundColor: theme.bgPage,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                }}>
-                  <div style={{
-                    width: '100%',
-                    height: '130px',
-                    position: 'relative',
-                    backgroundColor: '#E5E7EB',
-                    overflow: 'hidden',
-                  }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={formImage || DEFAULT_PRODUCT_IMAGE}
-                      alt="POS Preview"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      top: '8px',
-                      left: '8px',
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      backgroundColor: 'rgba(0,0,0,0.65)',
-                      color: '#FFFFFF',
-                      padding: '2px 7px',
-                      borderRadius: '9999px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}>
-                      {formCategory || 'General'}
-                    </span>
-                  </div>
-
-                  <div style={{ padding: '0.85rem' }}>
-                    <div style={{
-                      fontSize: '13.5px',
-                      fontWeight: 800,
-                      color: theme.textPrimary,
-                      marginBottom: '0.35rem',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {formName.trim() || 'Untitled Product'}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#16A34A' }}>
-                        ₹{formSellingPrice === '' ? 0 : formSellingPrice}
-                      </span>
-                      <span style={{
-                        fontSize: '10.5px',
-                        fontWeight: 700,
-                        color: theme.textSecondary,
-                        backgroundColor: theme.hoverBg,
-                        padding: '2px 6px',
-                        borderRadius: '0.35rem',
-                      }}>
-                        {formTaxRate}% GST
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
-            </div>
           </div>
           </div>
         </form>

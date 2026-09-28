@@ -3,18 +3,16 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 
 export default function Navbar() {
   return (
     <header style={{
-      position: 'sticky',
+      position: 'absolute',
       top: 0,
       zIndex: 50,
-      backgroundColor: '#FFFFFF',
-      borderBottom: '1px solid #E5E5E5',
+      backgroundColor: 'transparent',
+      borderBottom: '1px solid rgba(255,255,255,0.08)',
       width: '100%',
     }}>
       <div style={{
@@ -43,19 +41,16 @@ export default function Navbar() {
               width={38}
               height={38}
               priority
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
             />
           </div>
           <span style={{
             fontSize: '1.35rem',
             fontWeight: 700,
             letterSpacing: '-0.03em',
-            color: '#000000',
+            color: '#F7FAFC',
           }}>
             Nuradesk
-          </span>
-          <span className="badge-rounded-outline" style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem' }}>
-            POS
           </span>
         </Link>
 
@@ -68,7 +63,7 @@ export default function Navbar() {
           <a href="#features" style={{
             fontSize: '0.9rem',
             fontWeight: 500,
-            color: '#525252',
+            color: '#D4E0E6',
             transition: 'color 0.15s',
           }}>
             Features
@@ -76,7 +71,7 @@ export default function Navbar() {
           <a href="#pos-demo" style={{
             fontSize: '0.9rem',
             fontWeight: 500,
-            color: '#525252',
+            color: '#D4E0E6',
             transition: 'color 0.15s',
           }}>
             Terminal Demo
@@ -84,7 +79,7 @@ export default function Navbar() {
           <a href="#inventory" style={{
             fontSize: '0.9rem',
             fontWeight: 500,
-            color: '#525252',
+            color: '#D4E0E6',
             transition: 'color 0.15s',
           }}>
             Inventory
@@ -92,7 +87,7 @@ export default function Navbar() {
           <a href="#architecture" style={{
             fontSize: '0.9rem',
             fontWeight: 500,
-            color: '#525252',
+            color: '#D4E0E6',
             transition: 'color 0.15s',
           }}>
             .NET Backend Ready
@@ -105,6 +100,7 @@ export default function Navbar() {
             href="/signin"
             className="button-20-secondary button-20-sm"
             role="button"
+            style={{ backgroundColor: 'transparent', borderColor: 'rgba(255,255,255,0.45)', color: '#F7FAFC' }}
           >
             Sign In
           </Link>
@@ -112,8 +108,9 @@ export default function Navbar() {
             href="/signup"
             className="button-20 button-20-sm button-20-3d"
             role="button"
+            style={{ backgroundColor: '#F4F7F8', borderColor: '#F4F7F8', color: '#12222B' }}
           >
-            <span>Sign Up</span>
+            <span>Get started</span>
             <ArrowForwardRoundedIcon sx={{ fontSize: 15 }} />
           </Link>
         </div>

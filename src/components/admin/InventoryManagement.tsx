@@ -345,25 +345,6 @@ export default function InventoryManagement({
         marginBottom: '1.75rem',
       }}>
         <div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '12px',
-            fontWeight: 700,
-            color: theme.textSecondary,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            marginBottom: '0.35rem',
-          }}>
-            <span>Admin</span>
-            <span>/</span>
-            <span>Inventory</span>
-            <span>/</span>
-            <span style={{ color: theme.textPrimary }}>
-              {activeSubTab === 'stock' ? 'Stock Levels' : activeSubTab === 'adjustment' ? 'Stock Adjustments' : 'Purchase Orders'}
-            </span>
-          </div>
           <h1 style={{
             fontSize: '26px',
             fontWeight: 800,

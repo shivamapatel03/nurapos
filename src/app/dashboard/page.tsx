@@ -31,6 +31,15 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import WarehouseOutlinedIcon from '@mui/icons-material/WarehouseOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 
 // Submenu Rounded Icons
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -97,6 +106,8 @@ export default function AdminDashboardPage() {
   });
 
   const [activeTabId, setActiveTabId] = useState('dashboard');
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [dateRange, setDateRange] = useState<'today' | 'week' | 'month'>('today');
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWhatsNewModal, setShowWhatsNewModal] = useState(false);
@@ -218,11 +229,11 @@ export default function AdminDashboardPage() {
   };
 
   const navItems: NavItem[] = [
-    { id: 'dashboard', label: 'Home', icon: <HomeRoundedIcon sx={{ fontSize: 18 }} /> },
+    { id: 'dashboard', label: 'Home', icon: <HomeOutlinedIcon sx={{ fontSize: 18 }} /> },
     {
       id: 'sales',
       label: 'Sales',
-      icon: <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <PointOfSaleOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'orders', label: 'Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'returns', label: 'Returns', icon: <AssignmentReturnRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -232,7 +243,7 @@ export default function AdminDashboardPage() {
     {
       id: 'catalog',
       label: 'Catalog',
-      icon: <CategoryRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <CategoryOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'products', label: 'Products', icon: <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'add_product', label: 'Add Product', icon: <AddRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -244,7 +255,7 @@ export default function AdminDashboardPage() {
     {
       id: 'inventory',
       label: 'Inventory',
-      icon: <WarehouseRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <WarehouseOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'stock', label: 'Stock', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'adjustment', label: 'Stock Adjustment', icon: <TuneRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -254,7 +265,7 @@ export default function AdminDashboardPage() {
     {
       id: 'reports',
       label: 'Reports',
-      icon: <AssessmentRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <AssessmentOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'rep_sales', label: 'Sales', icon: <BarChartRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'rep_inventory', label: 'Inventory', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -265,7 +276,7 @@ export default function AdminDashboardPage() {
     {
       id: 'employees',
       label: 'Employees',
-      icon: <PeopleAltRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <PeopleAltOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'emp_all', label: 'All Employees', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'emp_cashiers', label: 'Cashiers', icon: <PointOfSaleRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -289,13 +300,13 @@ export default function AdminDashboardPage() {
     {
       id: 'terminal',
       label: 'Go to terminal',
-      icon: <PointOfSaleRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <PointOfSaleOutlinedIcon sx={{ fontSize: 18 }} />,
       href: '/pos',
     },
     {
       id: 'settings',
       label: 'Settings',
-      icon: <SettingsRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'set_store', label: 'Store Profile', icon: <StoreRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_business', label: 'Business Settings', icon: <TuneRoundedIcon sx={{ fontSize: 14 }} /> },
@@ -314,9 +325,22 @@ export default function AdminDashboardPage() {
     {
       id: 'announcements',
       label: 'announcements',
-      icon: <CampaignRoundedIcon sx={{ fontSize: 18 }} />,
+      icon: <CampaignOutlinedIcon sx={{ fontSize: 18 }} />,
     },
   ];
+
+  const normalizedSidebarSearch = sidebarSearch.trim().toLowerCase();
+  const filteredNavItems = normalizedSidebarSearch
+    ? navItems
+        .map((item) => {
+          const itemMatches = item.label.toLowerCase().includes(normalizedSidebarSearch);
+          const matchingSubItems = item.subItems?.filter((subItem) => subItem.label.toLowerCase().includes(normalizedSidebarSearch));
+          if (itemMatches) return item;
+          if (matchingSubItems && matchingSubItems.length > 0) return { ...item, subItems: matchingSubItems };
+          return null;
+        })
+        .filter((item): item is NavItem => item !== null)
+    : navItems;
 
 
   // Dynamic greeting based on current local hour
@@ -396,7 +420,7 @@ export default function AdminDashboardPage() {
       maxHeight: '100vh',
       width: '100vw',
       overflow: 'hidden',
-      backgroundColor: theme.bgPage,
+      backgroundColor: '#FFFFFF',
       color: theme.textPrimary,
       display: 'flex',
       flexDirection: 'column',
@@ -436,9 +460,9 @@ export default function AdminDashboardPage() {
       }}>
         {/* Fixed Compact Sidebar */}
         <aside style={{
-          width: '200px',
-          minWidth: '200px',
-          maxWidth: '200px',
+          width: '240px',
+          minWidth: '240px',
+          maxWidth: '240px',
           backgroundColor: theme.bgSidebar,
           borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
           height: '100%',
@@ -488,17 +512,51 @@ export default function AdminDashboardPage() {
             </div>
             <span style={{
               fontSize: '17px',
-              fontWeight: 800,
-              letterSpacing: '-0.035em',
+              fontWeight: 750,
+              letterSpacing: '-0.02em',
               color: theme.sidebarTextPrimary || theme.textPrimary,
             }}>
               Nuradesk
             </span>
           </Link>
 
+          {/* Universal Sidebar Search */}
+          <div style={{ position: 'relative', margin: '0.9rem 0 0.75rem' }}>
+            <SearchRoundedIcon sx={{
+              position: 'absolute',
+              left: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: 17,
+              color: theme.sidebarTextSecondary || theme.textSecondary,
+              pointerEvents: 'none',
+            }} />
+            <input
+              type="search"
+              value={sidebarSearch}
+              onChange={(event) => setSidebarSearch(event.target.value)}
+              placeholder="Search menu"
+              aria-label="Search dashboard menu"
+              style={{
+                width: '100%',
+                height: '34px',
+                padding: '0 0.65rem 0 2.1rem',
+                borderRadius: '9999px',
+                border: `1px solid ${theme.sidebarBorder || theme.border}`,
+                backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F8FAFC',
+                color: theme.sidebarTextPrimary || theme.textPrimary,
+                fontSize: '12px',
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
           {/* Navigation Links List — scrollable area */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const hasSubItems = item.subItems && item.subItems.length > 0;
               const isExpanded = expandedMenus[item.id] ?? false;
               // Only leaf navigation items (without sub-items) can be selected as a parent tab
@@ -561,9 +619,9 @@ export default function AdminDashboardPage() {
                         {item.icon}
                       </span>
                       <span style={{
-                        fontSize: '13px',
-                        fontWeight: isActive ? 800 : 600,
-                        letterSpacing: '-0.015em',
+                        fontSize: '13.5px',
+                        fontWeight: isActive ? 750 : 600,
+                        letterSpacing: '0',
                         color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
@@ -863,7 +921,7 @@ export default function AdminDashboardPage() {
           height: '100%',
           overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'auto' : 'hidden',
           padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
-          backgroundColor: theme.bgPage,
+          backgroundColor: '#FFFFFF',
           boxSizing: 'border-box',
         }}>
           {isAnnouncementsActive ? (
@@ -1079,13 +1137,16 @@ export default function AdminDashboardPage() {
               display: 'flex',
               height: '100%',
               width: '100%',
-              overflow: 'hidden',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              flexDirection: 'column',
             }}>
               {/* Middle Main Content Area (Scrollable) */}
               <div style={{
-                flex: 1,
-                height: '100%',
-                overflowY: 'auto',
+                width: '100%',
+                flex: 'none',
+                height: 'auto',
+                overflow: 'visible',
                 padding: 'clamp(1.25rem, 2.5vw, 2.25rem)',
                 boxSizing: 'border-box',
               }}>
@@ -1135,7 +1196,7 @@ export default function AdminDashboardPage() {
                       gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                       gap: '0.85rem',
                     }}>
-                      {/* Card 1: Add your first product (UP NEXT) */}
+                      {/* Card 1: Add your first product */}
                       <div
                         style={{
                           backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
@@ -1151,19 +1212,18 @@ export default function AdminDashboardPage() {
                         }}
                       >
                         <div>
-                          {/* Top Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.75rem' }}>
+                          {/* Top Icon & Status Badge */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
+                            <Inventory2RoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
                             <span style={{
-                              fontSize: '10px',
-                              fontWeight: 800,
-                              color: '#16A34A',
-                              backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                              padding: '2px 7px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: theme.textSecondary,
+                              backgroundColor: theme.hoverBg,
+                              padding: '2px 8px',
                               borderRadius: '9999px',
-                              letterSpacing: '0.05em',
-                              textTransform: 'uppercase',
                             }}>
-                              UP NEXT
+                              Step 1
                             </span>
                           </div>
 
@@ -1509,19 +1569,54 @@ export default function AdminDashboardPage() {
                   RIGHT-SIDE FIXED PANEL: SALES, ORDERS, PRODUCTS
                   ======================================================== */}
               <aside style={{
-                width: '320px',
-                minWidth: '320px',
-                maxWidth: '340px',
-                height: '100%',
-                overflowY: 'auto',
+                width: '100%',
+                minWidth: 0,
+                maxWidth: 'none',
+                height: 'auto',
+                overflow: 'visible',
                 backgroundColor: theme.sidebarIsDark ? theme.bgSidebar : '#FAFAFA',
                 padding: '1.5rem 1.25rem',
                 display: 'flex',
-                flexDirection: 'column',
+                flexDirection: 'row',
+                flexWrap: 'wrap',
                 gap: '1rem',
                 boxSizing: 'border-box',
                 flexShrink: 0,
               }}>
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                  <h2 style={{ margin: 0, color: theme.textPrimary, fontSize: '16px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                    Today&apos;s overview
+                  </h2>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', padding: '0.2rem', border: `1px solid ${theme.border}`, borderRadius: '9999px', backgroundColor: theme.bgCard }}>
+                    {[
+                      ['today', 'Today'],
+                      ['week', 'This week'],
+                      ['month', 'This month'],
+                    ].map(([value, label]) => {
+                      const isSelected = dateRange === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setDateRange(value as 'today' | 'week' | 'month')}
+                          style={{
+                            border: 'none',
+                            borderRadius: '9999px',
+                            padding: '0.35rem 0.7rem',
+                            backgroundColor: isSelected ? theme.activeBg : 'transparent',
+                            color: isSelected ? theme.activeText : theme.textSecondary,
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            fontFamily: 'inherit',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Card 1: Sales */}
                 <div
@@ -1533,6 +1628,7 @@ export default function AdminDashboardPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
+                    flex: 1,
                     minHeight: '110px',
                     boxSizing: 'border-box',
                     cursor: 'pointer',
@@ -1575,6 +1671,7 @@ export default function AdminDashboardPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
+                    flex: 1,
                     minHeight: '110px',
                     boxSizing: 'border-box',
                     cursor: 'pointer',
@@ -1617,6 +1714,7 @@ export default function AdminDashboardPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
+                    flex: 1,
                     minHeight: '110px',
                     boxSizing: 'border-box',
                     cursor: 'pointer',
@@ -1649,6 +1747,75 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </aside>
+
+              {/* ========================================================
+                  BENTO GRID: ORDERS, TOP PRODUCTS, LOW STOCK
+                  ======================================================== */}
+              <section style={{
+                width: '100%',
+                padding: '0 1.25rem 1.5rem',
+                display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1.6fr) minmax(260px, 1fr)',
+                gap: '1rem',
+                boxSizing: 'border-box',
+              }}>
+                {/* Orders trend */}
+                <div style={{
+                  minHeight: '250px',
+                  padding: '1.25rem',
+                  backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                  border: `1px solid ${theme.borderCard}`,
+                  borderRadius: '0.9rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  boxSizing: 'border-box',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>Orders trend</h2>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '12px', color: theme.textSecondary }}>
+                        {dateRange === 'today' ? 'Orders for today' : dateRange === 'week' ? 'Orders over the last 7 days' : 'Orders over the last 30 days'}
+                      </p>
+                    </div>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#16A34A', backgroundColor: 'rgba(22, 163, 74, 0.1)', borderRadius: '9999px', padding: '0.25rem 0.55rem' }}>+12.5%</span>
+                  </div>
+                  <div style={{ height: '145px', display: 'flex', alignItems: 'flex-end', gap: '0.7rem', borderBottom: `1px solid ${theme.border}`, padding: '0 0.35rem' }}>
+                    {[38, 55, 42, 72, 64, 88, 76].map((height, index) => (
+                      <div key={index} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: '0.45rem' }}>
+                        <div style={{ width: '100%', maxWidth: '32px', height: `${height}%`, backgroundColor: index === 5 ? theme.activeBg : theme.border, borderRadius: '0.35rem 0.35rem 0 0' }} />
+                        <span style={{ fontSize: '10px', color: theme.textMuted }}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Top-selling products */}
+                <div style={{
+                  minHeight: '250px',
+                  padding: '1.25rem',
+                  backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
+                  border: `1px solid ${theme.borderCard}`,
+                  borderRadius: '0.9rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  boxSizing: 'border-box',
+                }}>
+                  <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: theme.textPrimary }}>Top-selling products</h2>
+                  <p style={{ margin: '0.25rem 0 1rem', fontSize: '12px', color: theme.textSecondary }}>
+                    Best performers {dateRange === 'today' ? 'today' : dateRange === 'week' ? 'this week' : 'this month'}
+                  </p>
+                  {[
+                    ['Classic Burger', '84 sold'],
+                    ['Cold Coffee', '67 sold'],
+                    ['French Fries', '51 sold'],
+                  ].map(([product, sales], index) => (
+                    <div key={product} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.65rem 0', borderTop: index === 0 ? 'none' : `1px solid ${theme.border}` }}>
+                      <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.45rem', backgroundColor: theme.hoverBg, color: theme.textSecondary, fontSize: '11px', fontWeight: 800 }}>{index + 1}</span>
+                      <span style={{ flex: 1, fontSize: '12px', fontWeight: 700, color: theme.textPrimary }}>{product}</span>
+                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>{sales}</span>
+                    </div>
+                  ))}
+                </div>
+
+              </section>
             </div>
           )}
         </main>

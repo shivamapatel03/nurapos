@@ -1,146 +1,53 @@
 'use client';
 
-import React from 'react';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import TerminalRoundedIcon from '@mui/icons-material/TerminalRounded';
-import StorageRoundedIcon from '@mui/icons-material/StorageRounded';
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import React, { useEffect, useState } from 'react';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 
 export default function Hero() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <section style={{
-      padding: '4.5rem 1.5rem 3rem 1.5rem',
-      maxWidth: '1200px',
-      margin: '0 auto',
+      minHeight: '100svh',
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0B2636',
+      color: '#FFFFFF',
       textAlign: 'center',
     }}>
-      {/* Top Pill / Badge */}
-      <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <span className="badge-rounded-outline" style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.4rem',
-          padding: '0.35rem 0.9rem',
-          fontSize: '0.8rem',
-          borderRadius: '9999px',
-        }}>
-          <BoltRoundedIcon sx={{ fontSize: 16 }} />
-          <span>Nuradesk v1.0 • Modern POS Architecture</span>
-        </span>
-      </div>
+      <video autoPlay loop muted playsInline aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: `translateY(${scrollY * 0.12}px) scale(1.08)` }}>
+        <source src="/video/hero.mp4" type="video/mp4" />
+      </video>
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(6, 24, 36, 0.58)' }} />
 
-      {/* Main Headline */}
-      <h1 style={{
-        fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
-        fontWeight: 800,
-        lineHeight: 1.1,
-        letterSpacing: '-0.04em',
-        color: '#000000',
-        maxWidth: '900px',
-        margin: '0 auto 1.25rem auto',
-      }}>
-        Next-Generation Point of Sale for Seamless Transactions
-      </h1>
-
-      {/* Subheadline */}
-      <p style={{
-        fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
-        color: '#525252',
-        maxWidth: '680px',
-        margin: '0 auto 2.25rem auto',
-        lineHeight: 1.6,
-        fontWeight: 400,
-      }}>
-        Nuradesk is built for lightning-fast register operations, live stock tracking, and clean checkout workflows. Built on Next.js and ready to scale with a robust .NET backend.
-      </p>
-
-      {/* Action Buttons using .button-20 */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '1rem',
-        flexWrap: 'wrap',
-        marginBottom: '3rem',
-      }}>
-        <a href="#pos-demo" className="button-20" role="button">
-          <TerminalRoundedIcon sx={{ fontSize: 20 }} />
-          <span>Launch POS Terminal</span>
-        </a>
-
-        <a href="#features" className="button-20-secondary" role="button">
-          <StorageRoundedIcon sx={{ fontSize: 20 }} />
-          <span>Explore Capabilities</span>
-        </a>
-      </div>
-
-      {/* Quick Value Metrics (Flat, rounded, no shadows, no gradients) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem',
-        maxWidth: '960px',
-        margin: '0 auto',
-      }}>
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E5E5E5',
-          borderRadius: '1rem',
-          padding: '1.25rem 1rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#000000', letterSpacing: '-0.03em' }}>
-            &lt; 150ms
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#737373', marginTop: '0.25rem' }}>
-            Barcode Scan & Cart Add
-          </div>
+      <div className="landing-hero-content landing-reveal" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '920px', padding: '7rem 1.5rem 4rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.35rem 0.75rem', marginBottom: '1.25rem', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.16)', color: '#E7F1F6', fontSize: '11px', fontWeight: 700 }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#B9E4D0' }} />
+          Built for busy stores
         </div>
-
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E5E5E5',
-          borderRadius: '1rem',
-          padding: '1.25rem 1rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#000000', letterSpacing: '-0.03em' }}>
-            .NET Ready
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#737373', marginTop: '0.25rem' }}>
-            C# Web API Architecture
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E5E5E5',
-          borderRadius: '1rem',
-          padding: '1.25rem 1rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#000000', letterSpacing: '-0.03em' }}>
-            100% Offline
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#737373', marginTop: '0.25rem' }}>
-            Local Cache & Sync Queue
-          </div>
-        </div>
-
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E5E5E5',
-          borderRadius: '1rem',
-          padding: '1.25rem 1rem',
-          textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#000000', letterSpacing: '-0.03em' }}>
-            Pure B&W
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#737373', marginTop: '0.25rem' }}>
-            Minimal, High Contrast UI
-          </div>
+        <h1 style={{ maxWidth: '820px', margin: '0 auto 1.25rem', color: '#F7FAFC', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 'clamp(3rem, 8vw, 6.5rem)', fontWeight: 400, lineHeight: 0.98, letterSpacing: '-0.045em' }}>
+          Run every sale with clarity
+        </h1>
+        <p style={{ maxWidth: '520px', margin: '0 auto 2rem', color: '#D4E0E6', fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)', lineHeight: 1.55 }}>
+          Nuradesk brings checkout, inventory, staff, and store insights into one calm workspace.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <a href="/signup" className="button-20" role="button" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.75rem 1.15rem', borderRadius: '9999px', backgroundColor: '#F4F7F8', color: '#12222B', fontSize: '13px', fontWeight: 800 }}>
+            Start free trial
+            <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />
+          </a>
+          <a href="#features" className="button-20-secondary" role="button" style={{ display: 'inline-flex', alignItems: 'center', padding: '0.75rem 1.15rem', borderRadius: '9999px', backgroundColor: 'rgba(205,225,235,0.25)', border: '1px solid rgba(235,246,250,0.3)', color: '#F4F7F8', fontSize: '13px', fontWeight: 700 }}>
+            See the POS in action
+          </a>
         </div>
       </div>
     </section>
