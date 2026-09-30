@@ -1069,9 +1069,11 @@ export default function PosMainScreen() {
                     flexShrink: 0,
                     display: 'inline-flex',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '0.4rem',
-                    padding: '0 14px',
-                    height: '36px',
+                    padding: '0.52rem 0.9rem',
+                    minHeight: '36px',
+                    height: 'auto',
                     borderRadius: '999px',
                     border: isSelected
                       ? `1.5px solid ${theme.sidebarIsDark ? '#FFFFFF' : '#191a19'}`
@@ -1085,9 +1087,13 @@ export default function PosMainScreen() {
                     fontSize: '13px',
                     fontWeight: isSelected ? 700 : 500,
                     letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
                     whiteSpace: 'nowrap',
                     boxShadow: 'none',
                     transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
                   }}
                 >
                   <span style={{
@@ -1214,7 +1220,12 @@ export default function PosMainScreen() {
                           fill
                           unoptimized
                           sizes="(max-width: 768px) 100vw, 240px"
-                          style={{ objectFit: 'cover' }}
+                          style={{
+                            objectFit: 'contain',
+                            objectPosition: 'center',
+                            padding: '0.65rem',
+                            backgroundColor: theme.bgCardSubtle,
+                          }}
                         />
                         {/* Quantity in Cart Badge */}
                         {countInCart > 0 && (
@@ -2028,7 +2039,7 @@ export default function PosMainScreen() {
                           <img
                             src={item.product.image}
                             alt={item.product.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '4px', backgroundColor: theme.bgCard }}
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         ) : (
@@ -2154,54 +2165,7 @@ export default function PosMainScreen() {
                   );
                 })}
 
-                {/* Action Bar: Add Note / Item Discount / Clear All */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.3rem 0.25rem 0',
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowSaleNoteModal(true)}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '11.5px', fontWeight: 600,
-                      color: theme.textSecondary, fontFamily: 'inherit',
-                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
-                    }}
-                  >
-                    <NoteAltRoundedIcon sx={{ fontSize: 14 }} />
-                    Add Note
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDiscountPct(discountPct === 0 ? 10 : 0)}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '11.5px', fontWeight: 600,
-                      color: discountPct > 0 ? '#16A34A' : theme.textSecondary,
-                      fontFamily: 'inherit',
-                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
-                    }}
-                  >
-                    <LocalOfferRoundedIcon sx={{ fontSize: 13 }} />
-                    {discountPct > 0 ? `Discount (${discountPct}%)` : 'Item Discount'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearCart}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '11.5px', fontWeight: 600,
-                      color: '#EF4444', fontFamily: 'inherit',
-                      display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 4px',
-                    }}
-                  >
-                    <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
-                    Clear All
-                  </button>
-                </div>
+
               </>
             )}
           </div>
@@ -2222,10 +2186,33 @@ export default function PosMainScreen() {
                 <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{subtotal}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary, alignItems: 'center' }}>
-                <span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                   Discount{' '}
                   {discountPct > 0 ? (
-                    <span style={{ color: '#16A34A', fontWeight: 700 }}>({discountPct}%)</span>
+                    <>
+                      <span style={{ color: '#16A34A', fontWeight: 700 }}>({discountPct}%)</span>
+                      <button
+                        type="button"
+                        aria-label="Remove discount"
+                        onClick={() => setDiscountPct(0)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '15px',
+                          height: '15px',
+                          borderRadius: '50%',
+                          border: '1px solid rgba(22, 163, 74, 0.45)',
+                          background: 'rgba(22, 163, 74, 0.08)',
+                          color: '#16A34A',
+                          cursor: 'pointer',
+                          padding: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        <CloseRoundedIcon sx={{ fontSize: 11 }} />
+                      </button>
+                    </>
                   ) : (
                     <button
                       type="button"
@@ -2344,7 +2331,7 @@ export default function PosMainScreen() {
               </div>
             )}
 
-            {/* Action Buttons: Hold Sale + Save Order */}
+            {/* Action Buttons: Hold Sale */}
             <div style={{ display: 'flex', gap: '0.45rem' }}>
               <button
                 type="button"
@@ -2363,24 +2350,6 @@ export default function PosMainScreen() {
                 }}
               >
                 Hold Sale
-              </button>
-              <button
-                type="button"
-                disabled={cart.length === 0}
-                onClick={() => { /* Save Order handler */ }}
-                style={{
-                  flex: 1, height: '31px',
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: theme.bgCardSubtle,
-                  color: theme.textPrimary,
-                  fontSize: '11px', fontWeight: 700,
-                  cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                  opacity: cart.length === 0 ? 0.45 : 1,
-                  transition: 'all 0.15s ease', fontFamily: 'inherit',
-                }}
-              >
-                Save Order
               </button>
             </div>
 

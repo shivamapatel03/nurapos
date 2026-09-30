@@ -1,55 +1,203 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function Hero() {
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   return (
-    <section style={{
-      minHeight: '100svh',
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#0B2636',
-      color: '#FFFFFF',
-      textAlign: 'center',
-    }}>
-      <video autoPlay loop muted playsInline aria-hidden="true" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: `translateY(${scrollY * 0.12}px) scale(1.08)` }}>
-        <source src="/video/hero.mp4" type="video/mp4" />
-      </video>
-      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(6, 24, 36, 0.58)' }} />
-
-      <div className="landing-hero-content landing-reveal" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '920px', padding: '7rem 1.5rem 4rem' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.35rem 0.75rem', marginBottom: '1.25rem', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.16)', color: '#E7F1F6', fontSize: '11px', fontWeight: 700 }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#B9E4D0' }} />
-          Built for busy stores
-        </div>
-        <h1 style={{ maxWidth: '820px', margin: '0 auto 1.25rem', color: '#F7FAFC', fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 'clamp(3rem, 8vw, 6.5rem)', fontWeight: 400, lineHeight: 0.98, letterSpacing: '-0.045em' }}>
-          Run every sale with clarity
+    <section
+      style={{
+        position: 'relative',
+        backgroundColor: '#FFFFFF',
+        color: '#000000',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        paddingTop: 'clamp(7rem, 13vw, 9.5rem)',
+        paddingBottom: 'clamp(1rem, 2vw, 1.5rem)',
+        paddingLeft: '1.5rem',
+        paddingRight: '1.5rem',
+        boxSizing: 'border-box',
+        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: '920px',
+          margin: '0 auto',
+        }}
+      >
+        {/* Main Headline */}
+        <h1
+          style={{
+            margin: '0 auto 2.5rem auto',
+            maxWidth: '880px',
+            fontSize: 'clamp(3rem, 7vw, 5.8rem)',
+            fontWeight: 800,
+            lineHeight: 1.06,
+            letterSpacing: '-0.045em',
+            color: '#000000',
+            textTransform: 'none',
+          }}
+        >
+          Run Your Business.
+          <br />
+          Not Your Busywork.
         </h1>
-        <p style={{ maxWidth: '520px', margin: '0 auto 2rem', color: '#D4E0E6', fontSize: 'clamp(0.95rem, 1.8vw, 1.1rem)', lineHeight: 1.55 }}>
-          Nuradesk brings checkout, inventory, staff, and store insights into one calm workspace.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-          <a href="/signup" className="button-20" role="button" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.75rem 1.15rem', borderRadius: '9999px', backgroundColor: '#F4F7F8', color: '#12222B', fontSize: '13px', fontWeight: 800 }}>
-            Start free trial
-            <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />
-          </a>
-          <a href="#features" className="button-20-secondary" role="button" style={{ display: 'inline-flex', alignItems: 'center', padding: '0.75rem 1.15rem', borderRadius: '9999px', backgroundColor: 'rgba(205,225,235,0.25)', border: '1px solid rgba(235,246,250,0.3)', color: '#F4F7F8', fontSize: '13px', fontWeight: 700 }}>
-            See the POS in action
-          </a>
+
+        {/* Call to Action Buttons */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.85rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Link
+            href="/signup"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.9rem 2.4rem',
+              borderRadius: '9999px',
+              backgroundColor: '#191a19',
+              backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0))',
+              border: '1px solid #2a2a2a',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+              color: '#FFFFFF',
+              fontSize: '15px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Get Started — It&apos;s Free
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => setShowDemoModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0.9rem 2rem',
+              borderRadius: '9999px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+              color: '#111827',
+              fontSize: '15px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              letterSpacing: '-0.01em',
+              cursor: 'pointer',
+              gap: '0.5rem',
+              outline: 'none',
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Watch Demo
+          </button>
         </div>
       </div>
+
+      {/* Video Demo Modal */}
+      {showDemoModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowDemoModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: '920px',
+              backgroundColor: '#000000',
+              borderRadius: '1.25rem',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.75rem 1.25rem',
+                backgroundColor: 'rgba(20, 20, 20, 0.95)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+            >
+              <span style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 600 }}>
+                Nuradesk Product Walkthrough
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowDemoModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9CA3AF',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  lineHeight: 1,
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                }}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+            <video
+              src="/video/hero.mp4"
+              controls
+              autoPlay
+              playsInline
+              style={{
+                width: '100%',
+                display: 'block',
+                maxHeight: '75vh',
+                backgroundColor: '#000000',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

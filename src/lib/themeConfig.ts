@@ -210,6 +210,23 @@ export const APP_THEMES: Record<string, AppTheme> = {
 
 export const THEME_STORAGE_KEY = 'nuradesk_theme_mode';
 
+export function applyThemeToDOM(mode: ThemeMode): void {
+  if (typeof document === 'undefined') return;
+  const theme = APP_THEMES[mode] || LIGHT_THEME;
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  document.documentElement.style.backgroundColor = theme.bgPage;
+  if (document.body) {
+    document.body.style.backgroundColor = theme.bgPage;
+    document.body.style.color = theme.textPrimary;
+  }
+}
+
 export function getStoredThemeMode(): ThemeMode {
   if (typeof window === 'undefined') return 'light';
   try {
@@ -217,10 +234,9 @@ export function getStoredThemeMode(): ThemeMode {
       localStorage.getItem(THEME_STORAGE_KEY) ||
       localStorage.getItem('nuradesk_admin_theme') ||
       localStorage.getItem('nuradesk_pos_theme');
-    if (saved === 'dark' || saved === 'bw_dark' || saved === 'classic_pos') {
-      return 'dark';
-    }
-    return 'light';
+    const mode = (saved === 'dark' || saved === 'bw_dark' || saved === 'classic_pos') ? 'dark' : 'light';
+    applyThemeToDOM(mode);
+    return mode;
   } catch {
     return 'light';
   }
@@ -232,8 +248,10 @@ export function setStoredThemeMode(mode: ThemeMode): void {
     localStorage.setItem(THEME_STORAGE_KEY, mode);
     localStorage.setItem('nuradesk_admin_theme', mode);
     localStorage.setItem('nuradesk_pos_theme', mode);
+    applyThemeToDOM(mode);
     window.dispatchEvent(new Event('nuradesk_theme_change'));
   } catch {
     // Ignore localStorage errors
   }
 }
+

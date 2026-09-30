@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
       maxHeight: '100vh',
       width: '100vw',
       overflow: 'hidden',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.bgPage,
       color: theme.textPrimary,
       display: 'flex',
       flexDirection: 'column',
@@ -921,7 +921,7 @@ export default function AdminDashboardPage() {
           height: '100%',
           overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'auto' : 'hidden',
           padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
           {isAnnouncementsActive ? (
@@ -1140,6 +1140,7 @@ export default function AdminDashboardPage() {
               overflowY: 'auto',
               overflowX: 'hidden',
               flexDirection: 'column',
+              backgroundColor: theme.bgPage,
             }}>
               {/* Middle Main Content Area (Scrollable) */}
               <div style={{
@@ -1149,6 +1150,7 @@ export default function AdminDashboardPage() {
                 overflow: 'visible',
                 padding: 'clamp(1.25rem, 2.5vw, 2.25rem)',
                 boxSizing: 'border-box',
+                backgroundColor: theme.bgPage,
               }}>
                 <div style={{ maxWidth: '960px', margin: '0 auto' }}>
                   {/* Header Greeting */}
@@ -1269,7 +1271,6 @@ export default function AdminDashboardPage() {
                               maxHeight: '130px',
                               width: 'auto',
                               borderRadius: '0.6rem',
-                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
                             }}
                             priority
                           />
@@ -1372,7 +1373,6 @@ export default function AdminDashboardPage() {
                               maxHeight: '130px',
                               width: 'auto',
                               borderRadius: '0.6rem',
-                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
                             }}
                             priority
                           />
@@ -1508,7 +1508,6 @@ export default function AdminDashboardPage() {
                               maxHeight: '130px',
                               width: 'auto',
                               borderRadius: '0.6rem',
-                              mixBlendMode: theme.sidebarIsDark ? 'normal' : 'multiply',
                             }}
                             priority
                           />
