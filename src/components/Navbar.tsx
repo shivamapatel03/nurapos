@@ -6,13 +6,29 @@ import Link from 'next/link';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSolutionsExpanded, setIsSolutionsExpanded] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+
+      // Check when the hero section ends (product-preview tablet image or hero container)
+      const heroPreview = document.getElementById('product-preview');
+      const hero = document.getElementById('hero');
+      const targetElement = heroPreview || hero;
+
+      if (targetElement) {
+        const rect = targetElement.getBoundingClientRect();
+        // The navbar is approx 75px tall. Trigger when the bottom of hero scrolls past the navbar
+        setHasScrolledPastHero(rect.bottom <= 80);
+      } else {
+        setHasScrolledPastHero(window.scrollY > 500);
+      }
     };
+
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -53,15 +69,14 @@ export default function Navbar() {
           left: 0,
           right: 0,
           zIndex: 1000,
-          backgroundColor: isMenuOpen
-            ? 'transparent'
-            : isScrolled
-            ? 'rgba(255, 255, 255, 0.96)'
-            : '#FFFFFF',
-          backdropFilter: isMenuOpen ? 'none' : 'blur(12px)',
-          WebkitBackdropFilter: isMenuOpen ? 'none' : 'blur(12px)',
-          borderBottom: isScrolled && !isMenuOpen ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid transparent',
-          transition: 'background-color 0.3s ease, border-color 0.3s ease',
+          backgroundColor: isMenuOpen ? 'transparent' : '#FFFFFF',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          borderBottom: 'none',
+          boxShadow: isMenuOpen || !hasScrolledPastHero
+            ? 'none'
+            : '0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.03)',
+          transition: 'background-color 0.3s ease, box-shadow 0.35s ease',
           width: '100%',
         }}
       >

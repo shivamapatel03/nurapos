@@ -29,13 +29,13 @@ export default function WorkflowSection() {
       }}
     >
       {/* Centered Main Section Heading */}
-      <div style={{ textAlign: 'center', marginBottom: '3.75rem' }}>
+      <div style={{ textAlign: 'center', marginBottom: '2.75rem' }}>
         <h2
           style={{
-            fontSize: 'clamp(2.1rem, 4.5vw, 3.25rem)',
+            fontSize: 'clamp(1.6rem, 3.2vw, 2.35rem)',
             fontWeight: 800,
-            letterSpacing: '-0.04em',
-            lineHeight: 1.15,
+            letterSpacing: '-0.035em',
+            lineHeight: 1.2,
             color: '#09090B',
             margin: 0,
             fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",

@@ -7,6 +7,8 @@ import HeroPreview from '../components/HeroPreview';
 import EditorialStatement from '../components/EditorialStatement';
 import CurvedMarquee from '../components/CurvedMarquee';
 import WorkflowSection from '../components/WorkflowSection';
+import FeatureAccordion from '../components/FeatureAccordion';
+import PricingSection from '../components/PricingSection';
 import BentoGrid from '../components/BentoGrid';
 import Footer from '../components/Footer';
 
@@ -26,6 +28,8 @@ export default function HomePage() {
       <EditorialStatement />
       <CurvedMarquee />
       <WorkflowSection />
+      <FeatureAccordion />
+      <PricingSection />
       <BentoGrid />
       <Footer />
     </main>
