@@ -29,26 +29,24 @@ export default function Hero() {
         style={{
           position: 'relative',
           zIndex: 1,
-          maxWidth: '920px',
+          maxWidth: '1180px',
           margin: '0 auto',
         }}
       >
         {/* Main Headline */}
         <h1
           style={{
-            margin: '0 auto 2.5rem auto',
-            maxWidth: '880px',
-            fontSize: 'clamp(3rem, 7vw, 5.8rem)',
+            margin: '0 auto 1.85rem auto',
+            maxWidth: '100%',
+            fontSize: 'clamp(1.65rem, 3.5vw, 3.15rem)',
             fontWeight: 800,
-            lineHeight: 1.06,
-            letterSpacing: '-0.045em',
+            lineHeight: 1.15,
+            letterSpacing: '-0.04em',
             color: '#000000',
             textTransform: 'none',
           }}
         >
-          Run Your Business.
-          <br />
-          Not Your Busywork.
+          Run Your Business. Not Your Busywork.
         </h1>
 
         {/* Call to Action Buttons */}

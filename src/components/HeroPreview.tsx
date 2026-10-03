@@ -11,51 +11,40 @@ export default function HeroPreview() {
         position: 'relative',
         backgroundColor: '#FFFFFF',
         width: '100%',
-        paddingLeft: '1.5rem',
-        paddingRight: '1.5rem',
+        paddingLeft: 0,
+        paddingRight: 0,
         paddingTop: 0,
-        paddingBottom: 'clamp(4.5rem, 6vw, 6rem)',
+        paddingBottom: 'clamp(4rem, 6vw, 5.5rem)',
         boxSizing: 'border-box',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '1180px',
           position: 'relative',
           display: 'flex',
           justifyContent: 'center',
-          marginTop: '-1.5rem',
         }}
       >
-        <div
+        <Image
+          src="/hero/hero.png"
+          alt="Nuradesk Point of Sale System on modern tablet display"
+          width={1536}
+          height={1024}
+          priority
+          quality={100}
           style={{
-            position: 'relative',
             width: '100%',
-            maxWidth: '1100px',
-            transition: 'transform 0.4s ease, filter 0.4s ease',
+            height: 'auto',
+            display: 'block',
+            userSelect: 'none',
+            pointerEvents: 'none',
           }}
-        >
-          <Image
-            src="/hero/hero.png"
-            alt="Nuradesk Point of Sale System on modern desktop display"
-            width={1536}
-            height={1024}
-            priority
-            quality={95}
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              objectFit: 'contain',
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}
-          />
-        </div>
+        />
       </div>
     </section>
   );
