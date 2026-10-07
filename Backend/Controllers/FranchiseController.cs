@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nurapos.DTOs.Franchise;
 using Nurapos.Services.Interfaces;
@@ -21,6 +22,7 @@ public class FranchiseController : ControllerBase
     // POST: api/franchises
     // =========================================================
     [HttpPost]
+    [Authorize(Roles = "FRANCHISE_OWNER")]
     public async Task<IActionResult> Create(
         [FromForm] CreateFranchiseRequest request)
     {
@@ -105,6 +107,7 @@ public class FranchiseController : ControllerBase
     // PUT: api/franchises/{id}
     // =========================================================
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "FRANCHISE_OWNER")]
     public async Task<IActionResult> Update(
         int id,
         [FromBody] UpdateFranchiseRequest request)
@@ -149,6 +152,7 @@ public class FranchiseController : ControllerBase
     // DELETE: api/franchises/{id}
     // =========================================================
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "FRANCHISE_OWNER")]
     public async Task<IActionResult> Delete(int id)
     {
         try

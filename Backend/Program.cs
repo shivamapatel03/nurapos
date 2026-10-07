@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Text;
@@ -7,8 +8,34 @@ using Nurapos.Repositories;
 using Nurapos.Repositories.Interfaces;
 using Nurapos.Services;
 using Nurapos.Services.Interfaces;
+using Nurapos.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.Value!.Errors
+                        .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
+                            ? "Invalid value."
+                            : e.ErrorMessage)
+                        .ToArray()
+                );
+
+            return new BadRequestObjectResult(new
+            {
+                message = "Validation failed.",
+                errors
+            });
+        };
+    });
 
 builder.Services.AddControllers();
 
@@ -33,6 +60,8 @@ builder.Services.AddScoped<NpgsqlConnection>(sp =>
 
 // Franchise Repository
 builder.Services.AddScoped<IFranchiseRepository,FranchiseRepository>();
+// Auth Repository
+builder.Services.AddScoped<Nurapos.Repositories.Interfaces.IAuthRepository, Nurapos.Repositories.AuthRepository>();
 
 
 // ==================================================
@@ -41,6 +70,11 @@ builder.Services.AddScoped<IFranchiseRepository,FranchiseRepository>();
 
 // Franchise Service
 builder.Services.AddScoped<IFranchiseService,FranchiseService>();
+// Auth Service
+builder.Services.AddScoped<IAuthService,AuthService>();
+
+// Jwt helper
+builder.Services.AddSingleton<IJwtHelper,JwtHelper>();
 
 
 // CORS

@@ -1,0 +1,18 @@
+namespace Nurapos.Models;
+
+public class User
+{
+    public int UserId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public string PasswordHash { get; set; } = string.Empty;
+
+    public string Role { get; set; } = "FRANCHISE_OWNER";
+
+    public int? FranchiseId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+}
