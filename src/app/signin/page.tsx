@@ -11,11 +11,17 @@ export default function SigninPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    if (isLoading) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsSubmitted(true);
+    }, 1000);
   };
 
   // Direct Unsplash image link for modern retail / cafe POS checkout
@@ -333,10 +339,11 @@ export default function SigninPage() {
                   </Link>
                 </div>
 
-                {/* Login Button using Button-20 with 3D tactile look */}
+                {/* Login Button using Button-20 with 3D tactile look & buffer loading */}
                 <div style={{ marginTop: '0.5rem' }}>
                   <button
                     type="submit"
+                    disabled={isLoading}
                     className="button-20-3d"
                     role="button"
                     style={{
@@ -345,9 +352,48 @@ export default function SigninPage() {
                       fontSize: '1.05rem',
                       fontWeight: 600,
                       borderRadius: '1rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.55rem',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? 0.85 : 1,
+                      outline: 'none',
                     }}
                   >
-                    Login
+                    {isLoading ? (
+                      <>
+                        <svg
+                          style={{
+                            width: '18px',
+                            height: '18px',
+                            animation: 'spin 0.75s linear infinite',
+                            flexShrink: 0,
+                          }}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeDasharray="31.4 31.4"
+                          />
+                          <path
+                            d="M12 2a10 10 0 0 1 10 10"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span>Logging in...</span>
+                      </>
+                    ) : (
+                      <span>Login</span>
+                    )}
                   </button>
                 </div>
 

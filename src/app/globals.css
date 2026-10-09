@@ -91,9 +91,16 @@ a {
   vertical-align: middle;
 }
 
-.button-20:focus:not(:focus-visible),
-.button-20:focus {
+.button-20:focus:not(:focus-visible) {
   outline: 0;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, rgba(46, 54, 80, 0.075) 0 1px 1px;
+}
+
+.button-20:focus-visible {
+  outline: 0;
+  background-color: #1645e0;
+  border-color: #1B4EF5;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, rgba(46, 54, 80, 0.075) 0 1px 1px, rgba(27, 78, 245, 0.4) 0 0 0 .2rem;
 }
 
 .button-20:hover {
@@ -102,21 +109,13 @@ a {
   color: #FFFFFF;
 }
 
-.button-20:focus {
-  background-color: #1645e0;
-  border-color: #1B4EF5;
-  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, rgba(46, 54, 80, 0.075) 0 1px 1px, rgba(27, 78, 245, 0.4) 0 0 0 .2rem;
-}
-
-.button-20:active {
+.button-20:active,
+.button-20:active:focus {
   background-color: #0d38c0;
   background-image: none;
   border-color: #0c33b0;
   box-shadow: rgba(46, 54, 80, 0.125) 0 3px 5px inset;
-}
-
-.button-20:active:focus {
-  box-shadow: rgba(46, 54, 80, 0.125) 0 3px 5px inset, rgba(27, 78, 245, 0.4) 0 0 0 .2rem;
+  outline: 0;
 }
 
 .button-20:disabled {
@@ -260,8 +259,7 @@ a {
   padding: .5rem 1rem;
   text-align: center;
   text-decoration: none;
-  transform: translateY(0);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -275,17 +273,19 @@ a {
   color: #FFFFFF;
 }
 
-.button-20-3d:active {
-  transform: translateY(2px);
-  box-shadow: rgba(0, 0, 0, 0.35) 0 2px 4px inset, 0 1px 0 #0d0e0d;
+.button-20-3d:active,
+.button-20-3d:active:focus {
+  transform: none;
+  outline: none;
+  box-shadow: rgba(0, 0, 0, 0.35) 0 2px 4px inset, 0 3px 0 #0d0e0d;
   background-color: #0f100f;
   background-image: none;
 }
 
 .button-20-3d:focus:not(:focus-visible),
 .button-20-3d:focus {
-  outline: 0;
-  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, 0 3px 0 #0d0e0d, rgba(25, 26, 25, 0.4) 0 0 0 .2rem;
+  outline: none;
+  box-shadow: rgba(255, 255, 255, 0.15) 0 1px 0 inset, 0 3px 0 #0d0e0d;
 }
 
 .button-20-3d:disabled {
@@ -319,8 +319,7 @@ a {
   text-align: center;
   text-decoration: none;
   text-transform: none;
-  transform: translateY(0);
-  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -335,11 +334,13 @@ a {
   box-shadow: rgba(255, 255, 255, 0.9) 0 1px 0 inset, 0 3px 0 #A1A1AA, rgba(0, 0, 0, 0.22) 0 3px 7px;
 }
 
-.button-20-white:active {
-  transform: translateY(2px);
+.button-20-white:active,
+.button-20-white:active:focus {
+  transform: none;
+  outline: none;
   background-color: #E4E4E7;
   background-image: none;
-  box-shadow: rgba(0, 0, 0, 0.12) 0 2px 4px inset, 0 1px 0 #D4D4D8;
+  box-shadow: rgba(0, 0, 0, 0.12) 0 2px 4px inset, 0 3px 0 #D4D4D8;
 }
 
 .button-20-white:focus:not(:focus-visible),
@@ -539,5 +540,14 @@ textarea::placeholder {
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

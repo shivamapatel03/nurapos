@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +23,11 @@ export default function SignupPage() {
       alert('Please agree to the Terms & Privacy Policy to continue.');
       return;
     }
-    router.push('/verify-email');
+    if (isLoading) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      router.push('/verify-email');
+    }, 1000);
   };
 
   const unsplashImageUrl = 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1200&auto=format&fit=crop';
@@ -381,10 +386,11 @@ export default function SignupPage() {
                 </label>
               </div>
 
-              {/* Submit Button using user .button-20 with 3D tactile look */}
+              {/* Submit Button using user .button-20 with 3D tactile look & buffer loading */}
               <div style={{ marginTop: '0.35rem' }}>
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="button-20-3d"
                   role="button"
                   style={{
@@ -393,9 +399,47 @@ export default function SignupPage() {
                     fontSize: '1rem',
                     fontWeight: 600,
                     borderRadius: '1rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.55rem',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.85 : 1,
+                    outline: 'none',
                   }}
                 >
-                  Create Account
+                  {isLoading ? (
+                    <>
+                      <svg
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          animation: 'spin 0.75s linear infinite',
+                          flexShrink: 0,
+                        }}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeOpacity="0.25"
+                        />
+                        <path
+                          d="M12 2a10 10 0 0 1 10 10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span>Creating account...</span>
+                    </>
+                  ) : (
+                    <span>Create Account</span>
+                  )}
                 </button>
               </div>
 

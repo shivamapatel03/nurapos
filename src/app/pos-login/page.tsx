@@ -14,10 +14,15 @@ export default function PosLoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/pos-login-3');
+    if (isLoading) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      router.push('/pos-login-3');
+    }, 1000);
   };
 
   return (
@@ -306,10 +311,11 @@ export default function PosLoginPage() {
                 </Link>
               </div>
 
-              {/* Signin Button: user button-20 with 3D tactile press */}
+              {/* Signin Button: user button-20 with 3D tactile press & buffer loading */}
               <div style={{ marginTop: '0.5rem' }}>
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="button-20-3d"
                   role="button"
                   style={{
@@ -318,9 +324,47 @@ export default function PosLoginPage() {
                     fontSize: '1rem',
                     fontWeight: 600,
                     borderRadius: '1rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.55rem',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.85 : 1,
                   }}
                 >
-                  Continue
+                  {isLoading ? (
+                    <>
+                      <svg
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          animation: 'spin 0.75s linear infinite',
+                          flexShrink: 0,
+                        }}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray="31.4 31.4"
+                        />
+                        <path
+                          d="M12 2a10 10 0 0 1 10 10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span>Connecting...</span>
+                    </>
+                  ) : (
+                    <span>Continue</span>
+                  )}
                 </button>
               </div>
             </form>

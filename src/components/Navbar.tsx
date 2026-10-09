@@ -21,8 +21,8 @@ export default function Navbar() {
 
       if (targetElement) {
         const rect = targetElement.getBoundingClientRect();
-        // The navbar is approx 75px tall. Trigger when the bottom of hero scrolls past the navbar
-        setHasScrolledPastHero(rect.bottom <= 80);
+        // The navbar is 60px tall. Trigger when the bottom of hero scrolls past the navbar
+        setHasScrolledPastHero(rect.bottom <= 60);
       } else {
         setHasScrolledPastHero(window.scrollY > 500);
       }
@@ -68,6 +68,7 @@ export default function Navbar() {
           top: 0,
           left: 0,
           right: 0,
+          height: '60px',
           zIndex: 1000,
           backgroundColor: isMenuOpen ? 'transparent' : '#FFFFFF',
           backdropFilter: 'none',
@@ -78,16 +79,22 @@ export default function Navbar() {
             : '0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.03)',
           transition: 'background-color 0.3s ease, box-shadow 0.35s ease',
           width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          boxSizing: 'border-box',
         }}
       >
         <div
           style={{
             maxWidth: '1240px',
+            width: '100%',
+            height: '100%',
             margin: '0 auto',
-            padding: '1.15rem 1.5rem',
+            padding: '0 1.5rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            boxSizing: 'border-box',
           }}
         >
           {/* Brand Logo & Name */}
@@ -153,8 +160,8 @@ export default function Navbar() {
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              width: '46px',
-              height: '46px',
+              width: '42px',
+              height: '42px',
               backgroundColor: isMenuOpen ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
               borderRadius: '9999px',
               border: 'none',
@@ -220,7 +227,7 @@ export default function Navbar() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          paddingTop: '6.5rem',
+          paddingTop: '5.25rem',
           paddingBottom: '3rem',
           paddingLeft: 'clamp(1.5rem, 5vw, 3rem)',
           paddingRight: 'clamp(1.5rem, 5vw, 3rem)',

@@ -38,13 +38,19 @@ export default function PosLoginScreen2() {
     setPin('');
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pin) {
       alert('Please enter your cashier PIN.');
       return;
     }
-    router.push('/start-shift');
+    if (isLoading) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      router.push('/start-shift');
+    }, 1000);
   };
 
   return (
@@ -415,10 +421,11 @@ export default function PosLoginScreen2() {
                 </div>
               )}
 
-              {/* Signin Button */}
+              {/* Signin Button with buffer loading */}
               <div style={{ marginTop: '4px' }}>
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="button-20-3d"
                   role="button"
                   style={{
@@ -428,9 +435,47 @@ export default function PosLoginScreen2() {
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
                     borderRadius: '1rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.55rem',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.85 : 1,
                   }}
                 >
-                  Signin
+                  {isLoading ? (
+                    <>
+                      <svg
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          animation: 'spin 0.75s linear infinite',
+                          flexShrink: 0,
+                        }}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray="31.4 31.4"
+                        />
+                        <path
+                          d="M12 2a10 10 0 0 1 10 10"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span>Authenticating...</span>
+                    </>
+                  ) : (
+                    <span>Signin</span>
+                  )}
                 </button>
               </div>
 
