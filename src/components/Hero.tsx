@@ -54,33 +54,53 @@ export default function Hero() {
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             gap: '0.85rem',
             flexWrap: 'wrap',
           }}
         >
-          <Link
-            href="/signup"
+          <div
             style={{
               display: 'inline-flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.9rem 2.4rem',
-              borderRadius: '9999px',
-              backgroundColor: '#191a19',
-              backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0))',
-              border: '1px solid #2a2a2a',
-              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-              color: '#FFFFFF',
-              fontSize: '15px',
-              fontWeight: 700,
-              textDecoration: 'none',
-              letterSpacing: '-0.01em',
             }}
           >
-            Get Started — It&apos;s Free
-          </Link>
+            <Link
+              href="/signup"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.9rem 2.4rem',
+                borderRadius: '9999px',
+                backgroundColor: '#191a19',
+                backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0))',
+                border: '1px solid #2a2a2a',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                fontSize: '15px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Get Started — It&apos;s Free
+            </Link>
+            <span
+              style={{
+                marginTop: '0.55rem',
+                fontSize: '0.82rem',
+                color: '#71717A',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
+                textAlign: 'center',
+              }}
+            >
+              *no credit card required
+            </span>
+          </div>
 
           <button
             type="button"
