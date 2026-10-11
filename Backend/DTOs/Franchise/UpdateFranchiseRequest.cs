@@ -24,13 +24,7 @@ public class UpdateFranchiseRequest
     )]
     public string? Contact { get; set; }
 
-    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-    [StringLength(
-        100,
-        ErrorMessage = "Email cannot exceed 100 characters."
-    )]
-    public string? Email { get; set; }
-
+    [StringLength(500, ErrorMessage = "Address cannot exceed 500 characters.")]
     public string? Address { get; set; }
 
     [StringLength(
@@ -41,8 +35,9 @@ public class UpdateFranchiseRequest
 
     [Required(ErrorMessage = "Status is required.")]
     [RegularExpression(
-        "^(ACTIVE|INACTIVE)$",
+        @"\A(ACTIVE|INACTIVE)\z",
         ErrorMessage = "Status must be ACTIVE or INACTIVE."
     )]
-    public string Status { get; set; } = "ACTIVE";
+    public string Status { get; set; } = string.Empty;
+
 }

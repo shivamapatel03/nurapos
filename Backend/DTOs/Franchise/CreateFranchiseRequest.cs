@@ -24,13 +24,7 @@ public class CreateFranchiseRequest
     )]
     public string? Contact { get; set; }
 
-    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-    [StringLength(
-        100,
-        ErrorMessage = "Email cannot exceed 100 characters."
-    )]
-    public string? Email { get; set; }
-
+    [StringLength(500, ErrorMessage = "Address cannot exceed 500 characters.")]
     public string? Address { get; set; }
 
     [StringLength(50, ErrorMessage = "City cannot exceed 50 characters.")]

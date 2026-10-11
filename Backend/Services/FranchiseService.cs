@@ -15,29 +15,14 @@ public class FranchiseService : IFranchiseService
     }
 
     public async Task<FranchiseResponse> CreateAsync(
-        CreateFranchiseRequest request)
+        CreateFranchiseRequest request,
+        int userId)
     {
         var franchiseName = request.FranchiseName.Trim();
 
-        string? email = string.IsNullOrWhiteSpace(request.Email)
-            ? null
-            : request.Email.Trim().ToLowerInvariant();
-
-        if (email != null)
-        {
-            var emailExists =
-                await _repository.EmailExistsAsync(email);
-
-            if (emailExists)
-            {
-                throw new InvalidOperationException(
-                    "A franchise with this email already exists."
-                );
-            }
-        }
-
         var franchise = new Franchise
         {
+            UserId = userId,
             FranchiseName = franchiseName,
 
             OwnerName = string.IsNullOrWhiteSpace(request.OwnerName)
@@ -47,8 +32,6 @@ public class FranchiseService : IFranchiseService
             Contact = string.IsNullOrWhiteSpace(request.Contact)
                 ? null
                 : request.Contact.Trim(),
-
-            Email = email,
 
             Address = string.IsNullOrWhiteSpace(request.Address)
                 ? null
@@ -65,7 +48,7 @@ public class FranchiseService : IFranchiseService
             await _repository.CreateAsync(franchise);
 
         var createdFranchise =
-            await _repository.GetByIdAsync(franchiseId);
+            await _repository.GetByIdAsync(franchiseId, userId);
 
         if (createdFranchise == null)
         {
@@ -77,10 +60,10 @@ public class FranchiseService : IFranchiseService
         return MapResponse(createdFranchise);
     }
 
-    public async Task<List<FranchiseResponse>> GetAllAsync()
+    public async Task<List<FranchiseResponse>> GetAllAsync(int userId)
     {
         var franchises =
-            await _repository.GetAllAsync();
+            await _repository.GetAllAsync(userId);
 
         return franchises
             .Select(MapResponse)
@@ -88,12 +71,13 @@ public class FranchiseService : IFranchiseService
     }
 
     public async Task<FranchiseResponse?> GetByIdAsync(
-        int franchiseId)
+        int franchiseId,
+        int userId)
     {
         ValidateId(franchiseId);
 
         var franchise =
-            await _repository.GetByIdAsync(franchiseId);
+            await _repository.GetByIdAsync(franchiseId, userId);
 
         return franchise == null
             ? null
@@ -102,38 +86,19 @@ public class FranchiseService : IFranchiseService
 
     public async Task<FranchiseResponse> UpdateAsync(
         int franchiseId,
-        UpdateFranchiseRequest request)
+        UpdateFranchiseRequest request,
+        int userId)
     {
         ValidateId(franchiseId);
 
         var existing =
-            await _repository.GetByIdAsync(franchiseId);
+            await _repository.GetByIdAsync(franchiseId, userId);
 
         if (existing == null)
         {
             throw new KeyNotFoundException(
                 "Franchise not found."
             );
-        }
-
-        string? email = string.IsNullOrWhiteSpace(request.Email)
-            ? null
-            : request.Email.Trim().ToLowerInvariant();
-
-        if (email != null)
-        {
-            var emailExists =
-                await _repository.EmailExistsAsync(
-                    email,
-                    franchiseId
-                );
-
-            if (emailExists)
-            {
-                throw new InvalidOperationException(
-                    "Another franchise with this email already exists."
-                );
-            }
         }
 
         existing.FranchiseName =
@@ -149,8 +114,6 @@ public class FranchiseService : IFranchiseService
                 ? null
                 : request.Contact.Trim();
 
-        existing.Email = email;
-
         existing.Address =
             string.IsNullOrWhiteSpace(request.Address)
                 ? null
@@ -161,11 +124,10 @@ public class FranchiseService : IFranchiseService
                 ? null
                 : request.City.Trim();
 
-        existing.Status =
-            request.Status.Trim().ToUpperInvariant();
+        existing.Status = request.Status.Trim().ToUpperInvariant();
 
         var updated =
-            await _repository.UpdateAsync(existing);
+            await _repository.UpdateAsync(existing, userId);
 
         if (!updated)
         {
@@ -175,7 +137,7 @@ public class FranchiseService : IFranchiseService
         }
 
         var updatedFranchise =
-            await _repository.GetByIdAsync(franchiseId);
+            await _repository.GetByIdAsync(franchiseId, userId);
 
         if (updatedFranchise == null)
         {
@@ -187,12 +149,12 @@ public class FranchiseService : IFranchiseService
         return MapResponse(updatedFranchise);
     }
 
-    public async Task DeleteAsync(int franchiseId)
+    public async Task DeleteAsync(int franchiseId, int userId)
     {
         ValidateId(franchiseId);
 
         var exists =
-            await _repository.ExistsAsync(franchiseId);
+            await _repository.ExistsAsync(franchiseId, userId);
 
         if (!exists)
         {
@@ -201,7 +163,7 @@ public class FranchiseService : IFranchiseService
             );
         }
 
-        await _repository.DeleteAsync(franchiseId);
+        await _repository.DeleteAsync(franchiseId, userId);
     }
 
     private static void ValidateId(int franchiseId)
@@ -223,7 +185,6 @@ public class FranchiseService : IFranchiseService
             FranchiseName = franchise.FranchiseName,
             OwnerName = franchise.OwnerName,
             Contact = franchise.Contact,
-            Email = franchise.Email,
             Address = franchise.Address,
             City = franchise.City,
             Status = franchise.Status,

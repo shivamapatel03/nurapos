@@ -15,8 +15,8 @@ public class SignupRequest
     [Required(ErrorMessage = "Email is required.")]
     [EmailAddress(ErrorMessage = "Invalid email address.")]
     [StringLength(
-        255,
-        ErrorMessage = "Email cannot exceed 255 characters."
+        100,
+        ErrorMessage = "Email cannot exceed 100 characters."
     )]
     public string Email { get; set; } = string.Empty;
 

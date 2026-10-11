@@ -5,19 +5,22 @@ namespace Nurapos.Services.Interfaces;
 public interface IFranchiseService
 {
     Task<FranchiseResponse> CreateAsync(
-        CreateFranchiseRequest request
+        CreateFranchiseRequest request,
+        int userId
     );
 
-    Task<List<FranchiseResponse>> GetAllAsync();
+    Task<List<FranchiseResponse>> GetAllAsync(int userId);
 
     Task<FranchiseResponse?> GetByIdAsync(
-        int franchiseId
+        int franchiseId,
+        int userId
     );
 
     Task<FranchiseResponse> UpdateAsync(
         int franchiseId,
-        UpdateFranchiseRequest request
+        UpdateFranchiseRequest request,
+        int userId
     );
 
-    Task DeleteAsync(int franchiseId);
+    Task DeleteAsync(int franchiseId, int userId);
 }

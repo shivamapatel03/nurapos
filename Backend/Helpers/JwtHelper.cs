@@ -7,8 +7,10 @@ namespace Nurapos.Helpers;
 
 public interface IJwtHelper
 {
-    string GenerateToken(int userId, string email, string role);
+    GeneratedAccessToken GenerateToken(int userId, string email, string role, bool posPinVerified = false);
 }
+
+public sealed record GeneratedAccessToken(string Token, DateTime ExpiresAtUtc);
 
 public class JwtHelper : IJwtHelper
 {
@@ -19,7 +21,7 @@ public class JwtHelper : IJwtHelper
         _config = config;
     }
 
-    public string GenerateToken(int userId, string email, string role)
+    public GeneratedAccessToken GenerateToken(int userId, string email, string role, bool posPinVerified = false)
     {
         var key = _config["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing.");
         var issuer = _config["Jwt:Issuer"];
@@ -28,21 +30,32 @@ public class JwtHelper : IJwtHelper
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(ClaimTypes.Role, role)
         };
 
+        if (posPinVerified)
+        {
+            claims.Add(new Claim("pos_pin_verified", "true"));
+        }
+
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var expiresAtUtc = DateTime.UtcNow.AddMinutes(
+            _config.GetValue("Jwt:ExpiryMinutes", 15));
 
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(7),
+            expires: expiresAtUtc,
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new GeneratedAccessToken(
+            new JwtSecurityTokenHandler().WriteToken(token),
+            expiresAtUtc);
     }
 }

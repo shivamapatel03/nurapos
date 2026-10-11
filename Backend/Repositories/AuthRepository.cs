@@ -22,7 +22,6 @@ public class AuthRepository : IAuthRepository
                 c_email TEXT UNIQUE NOT NULL,
                 c_password_hash TEXT NOT NULL,
                 c_role TEXT NOT NULL,
-                c_franchise_id INT,
                 c_created_at TIMESTAMP DEFAULT now()
             );
             """;
@@ -31,6 +30,27 @@ public class AuthRepository : IAuthRepository
 
         await using var command = new NpgsqlCommand(sql, _connection);
         await command.ExecuteNonQueryAsync();
+
+        await using (var pinColumnCommand = new NpgsqlCommand(
+            "ALTER TABLE t_user ADD COLUMN IF NOT EXISTS c_pos_pin_hash TEXT;", _connection))
+        {
+            await pinColumnCommand.ExecuteNonQueryAsync();
+        }
+
+        const string refreshTokensSql = """
+            CREATE TABLE IF NOT EXISTS t_refresh_token (
+                c_refresh_token_id BIGSERIAL PRIMARY KEY,
+                c_user_id INT NOT NULL REFERENCES t_user(c_user_id) ON DELETE CASCADE,
+                c_token_hash TEXT NOT NULL UNIQUE,
+                c_expires_at TIMESTAMPTZ NOT NULL,
+                c_created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS ix_refresh_token_user_id
+                ON t_refresh_token(c_user_id);
+            """;
+
+        await using var refreshCommand = new NpgsqlCommand(refreshTokensSql, _connection);
+        await refreshCommand.ExecuteNonQueryAsync();
     }
 
     public async Task<int> CreateUserAsync(User user)
@@ -41,16 +61,14 @@ public class AuthRepository : IAuthRepository
                 c_name,
                 c_email,
                 c_password_hash,
-                c_role,
-                c_franchise_id
+                c_role
             )
             VALUES
             (
                 @name,
                 @email,
                 @password_hash,
-                @role,
-                @franchise_id
+                @role
             )
             RETURNING c_user_id;
             """;
@@ -63,7 +81,6 @@ public class AuthRepository : IAuthRepository
         command.Parameters.AddWithValue("@email", user.Email);
         command.Parameters.AddWithValue("@password_hash", user.PasswordHash);
         command.Parameters.AddWithValue("@role", user.Role);
-        command.Parameters.AddWithValue("@franchise_id", (object?)user.FranchiseId ?? DBNull.Value);
 
         var result = await command.ExecuteScalarAsync();
 
@@ -79,7 +96,6 @@ public class AuthRepository : IAuthRepository
                 c_email,
                 c_password_hash,
                 c_role,
-                c_franchise_id,
                 c_created_at
             FROM t_user
             WHERE LOWER(c_email) = LOWER(@email)
@@ -105,7 +121,141 @@ public class AuthRepository : IAuthRepository
             Email = reader.GetString(reader.GetOrdinal("c_email")),
             PasswordHash = reader.GetString(reader.GetOrdinal("c_password_hash")),
             Role = reader.GetString(reader.GetOrdinal("c_role")),
-            FranchiseId = reader.IsDBNull(reader.GetOrdinal("c_franchise_id")) ? null : reader.GetInt32(reader.GetOrdinal("c_franchise_id")),
+            CreatedAt = reader.GetDateTime(reader.GetOrdinal("c_created_at"))
+        };
+    }
+
+    public async Task<User?> GetByIdAsync(int userId)
+    {
+        const string sql = """
+            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_created_at
+            FROM t_user
+            WHERE c_user_id = @user_id;
+            """;
+
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        await using var reader = await command.ExecuteReaderAsync();
+        return await reader.ReadAsync() ? MapUser(reader) : null;
+    }
+
+    public async Task<bool> HasPosPinAsync(int userId)
+    {
+        const string sql = "SELECT c_pos_pin_hash IS NOT NULL FROM t_user WHERE c_user_id = @user_id;";
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        return (bool?)await command.ExecuteScalarAsync() ?? false;
+    }
+
+    public async Task<bool> SetPosPinHashAsync(int userId, string pinHash)
+    {
+        const string sql = "UPDATE t_user SET c_pos_pin_hash = @pin_hash WHERE c_user_id = @user_id AND c_pos_pin_hash IS NULL;";
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        command.Parameters.AddWithValue("@pin_hash", pinHash);
+        return await command.ExecuteNonQueryAsync() == 1;
+    }
+
+    public async Task<string?> GetPosPinHashAsync(int userId)
+    {
+        const string sql = "SELECT c_pos_pin_hash FROM t_user WHERE c_user_id = @user_id;";
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        return await command.ExecuteScalarAsync() as string;
+    }
+
+    public async Task StoreRefreshTokenAsync(
+        int userId,
+        string tokenHash,
+        DateTime expiresAtUtc)
+    {
+        const string sql = """
+            INSERT INTO t_refresh_token (c_user_id, c_token_hash, c_expires_at)
+            VALUES (@user_id, @token_hash, @expires_at);
+            """;
+
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        command.Parameters.AddWithValue("@token_hash", tokenHash);
+        command.Parameters.AddWithValue("@expires_at", expiresAtUtc);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<User?> RotateRefreshTokenAsync(
+        string currentTokenHash,
+        string replacementTokenHash,
+        DateTime replacementExpiresAtUtc)
+    {
+        await OpenConnectionAsync();
+        await using var transaction = await _connection.BeginTransactionAsync();
+
+        const string updateSql = """
+            UPDATE t_refresh_token
+            SET c_token_hash = @replacement_hash,
+                c_expires_at = @replacement_expires_at,
+                c_created_at = now()
+            WHERE c_token_hash = @current_hash
+              AND c_expires_at > now()
+            RETURNING c_user_id;
+            """;
+
+        await using var updateCommand = new NpgsqlCommand(updateSql, _connection, transaction);
+        updateCommand.Parameters.AddWithValue("@replacement_hash", replacementTokenHash);
+        updateCommand.Parameters.AddWithValue("@replacement_expires_at", replacementExpiresAtUtc);
+        updateCommand.Parameters.AddWithValue("@current_hash", currentTokenHash);
+
+        var userIdValue = await updateCommand.ExecuteScalarAsync();
+        if (userIdValue == null || userIdValue == DBNull.Value)
+        {
+            await transaction.RollbackAsync();
+            return null;
+        }
+
+        const string userSql = """
+            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_created_at
+            FROM t_user
+            WHERE c_user_id = @user_id;
+            """;
+
+        await using var userCommand = new NpgsqlCommand(userSql, _connection, transaction);
+        userCommand.Parameters.AddWithValue("@user_id", Convert.ToInt32(userIdValue));
+        await using var reader = await userCommand.ExecuteReaderAsync();
+        var user = await reader.ReadAsync() ? MapUser(reader) : null;
+        await reader.DisposeAsync();
+
+        if (user == null)
+        {
+            await transaction.RollbackAsync();
+            return null;
+        }
+
+        await transaction.CommitAsync();
+        return user;
+    }
+
+    public async Task<bool> RevokeRefreshTokenAsync(string tokenHash)
+    {
+        const string sql = "DELETE FROM t_refresh_token WHERE c_token_hash = @token_hash;";
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@token_hash", tokenHash);
+        return await command.ExecuteNonQueryAsync() > 0;
+    }
+
+    private static User MapUser(NpgsqlDataReader reader)
+    {
+        return new User
+        {
+            UserId = reader.GetInt32(reader.GetOrdinal("c_user_id")),
+            Name = reader.GetString(reader.GetOrdinal("c_name")),
+            Email = reader.GetString(reader.GetOrdinal("c_email")),
+            PasswordHash = reader.GetString(reader.GetOrdinal("c_password_hash")),
+            Role = reader.GetString(reader.GetOrdinal("c_role")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("c_created_at"))
         };
     }

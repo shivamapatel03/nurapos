@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nurapos.DTOs.Franchise;
+using Nurapos.DTOs;
 using Nurapos.Services.Interfaces;
 using Npgsql;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace Nurapos.Controllers;
 
@@ -22,29 +25,34 @@ public class FranchiseController : ControllerBase
     // POST: api/franchises
     // =========================================================
     [HttpPost]
-    [Authorize(Roles = "FRANCHISE_OWNER")]
+    [Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
     public async Task<IActionResult> Create(
         [FromForm] CreateFranchiseRequest request)
     {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(UnauthorizedResponse());
+
         try
         {
-            var result = await _service.CreateAsync(request);
+            var result = await _service.CreateAsync(request, userId.Value);
 
             return CreatedAtAction(
                 nameof(GetById),
                 new { id = result.FranchiseId },
-                new
+                new ApiResponse<FranchiseResponse>
                 {
-                    message = "Franchise created successfully.",
-                    data = result
+                    StatusCode = StatusCodes.Status201Created,
+                    Message = "Franchise created successfully.",
+                    Data = result
                 }
             );
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new
+            return Conflict(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status409Conflict,
+                Message = ex.Message
             });
         }
     }
@@ -55,14 +63,18 @@ public class FranchiseController : ControllerBase
     // GET: api/franchises
     // =========================================================
     [HttpGet]
+    [Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _service.GetAllAsync();
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(UnauthorizedResponse());
+        var result = await _service.GetAllAsync(userId.Value);
 
-        return Ok(new
+        return Ok(new ApiResponse<List<FranchiseResponse>>
         {
-            message = "Franchises fetched successfully.",
-            data = result
+            StatusCode = StatusCodes.Status200OK,
+            Message = "Franchises fetched successfully.",
+            Data = result
         });
     }
 
@@ -72,31 +84,37 @@ public class FranchiseController : ControllerBase
     // GET: api/franchises/{id}
     // =========================================================
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id)
+    [Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
+    public async Task<IActionResult> GetById([Range(1, int.MaxValue)] int id)
     {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(UnauthorizedResponse());
         try
         {
-            var result = await _service.GetByIdAsync(id);
+            var result = await _service.GetByIdAsync(id, userId.Value);
 
             if (result == null)
             {
-                return NotFound(new
+                return NotFound(new ApiResponse<object?>
                 {
-                    message = "Franchise not found."
+                    StatusCode = StatusCodes.Status404NotFound,
+                    Message = "Franchise not found."
                 });
             }
 
-            return Ok(new
+            return Ok(new ApiResponse<FranchiseResponse>
             {
-                message = "Franchise fetched successfully.",
-                data = result
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Franchise fetched successfully.",
+                Data = result
             });
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new
+            return BadRequest(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ex.Message
             });
         }
     }
@@ -107,41 +125,47 @@ public class FranchiseController : ControllerBase
     // PUT: api/franchises/{id}
     // =========================================================
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "FRANCHISE_OWNER")]
+    [Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
     public async Task<IActionResult> Update(
-        int id,
+        [Range(1, int.MaxValue)] int id,
         [FromBody] UpdateFranchiseRequest request)
     {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(UnauthorizedResponse());
         try
         {
             var result =
-                await _service.UpdateAsync(id, request);
+                await _service.UpdateAsync(id, request, userId.Value);
 
-            return Ok(new
+            return Ok(new ApiResponse<FranchiseResponse>
             {
-                message = "Franchise updated successfully.",
-                data = result
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Franchise updated successfully.",
+                Data = result
             });
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new
+            return NotFound(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status404NotFound,
+                Message = ex.Message
             });
         }
         catch (InvalidOperationException ex)
         {
-            return Conflict(new
+            return Conflict(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status409Conflict,
+                Message = ex.Message
             });
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new
+            return BadRequest(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ex.Message
             });
         }
     }
@@ -152,40 +176,57 @@ public class FranchiseController : ControllerBase
     // DELETE: api/franchises/{id}
     // =========================================================
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "FRANCHISE_OWNER")]
-    public async Task<IActionResult> Delete(int id)
+    [Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
+    public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
     {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized(UnauthorizedResponse());
         try
         {
-            await _service.DeleteAsync(id);
+            await _service.DeleteAsync(id, userId.Value);
 
-            return Ok(new
+            return Ok(new ApiResponse<object?>
             {
-                message = "Franchise deleted successfully."
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Franchise deleted successfully."
             });
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new
+            return NotFound(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status404NotFound,
+                Message = ex.Message
             });
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(new
+            return BadRequest(new ApiResponse<object?>
             {
-                message = ex.Message
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = ex.Message
             });
         }
         catch (PostgresException ex)
             when (ex.SqlState == "23503")
         {
-            return Conflict(new
+            return Conflict(new ApiResponse<object?>
             {
-                message =
-                    "This franchise cannot be deleted because it is already being used by other records."
+                StatusCode = StatusCodes.Status409Conflict,
+                Message = "This franchise cannot be deleted because it is already being used by other records."
             });
         }
     }
+
+    private int? GetUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(userId, out var parsedUserId) ? parsedUserId : null;
+    }
+
+    private static ApiResponse<object?> UnauthorizedResponse() => new()
+    {
+        StatusCode = StatusCodes.Status401Unauthorized,
+        Message = "A valid authenticated owner is required."
+    };
 }
