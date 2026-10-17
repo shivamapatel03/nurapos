@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 
 interface FaqItem {
   question: string;
@@ -186,34 +185,6 @@ export default function FaqSection() {
             </div>
           );
         })}
-      </div>
-
-      {/* Helpful Support Footer Card (No shadow, no lines) */}
-      <div
-        style={{
-          marginTop: '2.5rem',
-          textAlign: 'center',
-          padding: '1.5rem',
-          backgroundColor: '#F9F9FA',
-          borderRadius: '1.25rem',
-          border: 'none',
-          boxShadow: 'none',
-        }}
-      >
-        <p style={{ margin: 0, fontSize: '0.95rem', color: '#52525B', fontWeight: 500 }}>
-          Still have questions?{' '}
-          <Link
-            href="/signup"
-            style={{
-              color: '#0A0A0A',
-              fontWeight: 700,
-              textDecoration: 'none',
-              marginLeft: '0.35rem',
-            }}
-          >
-            Chat with an onboarding specialist →
-          </Link>
-        </p>
       </div>
     </section>
   );

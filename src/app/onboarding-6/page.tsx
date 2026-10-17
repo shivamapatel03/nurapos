@@ -1,20 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import FullScreenBufferLoader from '@/components/FullScreenBufferLoader';
 
 export default function OnboardingScreen6() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoToDashboard = () => {
-    router.push('/dashboard');
+    setIsLoading(true);
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 2200);
   };
 
   return (
-    <div style={{
+    <>
+      {isLoading && (
+        <FullScreenBufferLoader
+          text="Loading your dashboard..."
+          subtext="Setting up your store workspace..."
+        />
+      )}
+      <div style={{
       height: '100vh',
       maxHeight: '100vh',
       width: '100vw',
@@ -205,6 +217,7 @@ export default function OnboardingScreen6() {
           <button
             type="button"
             onClick={handleGoToDashboard}
+            disabled={isLoading}
             className="button-20-3d"
             role="button"
             style={{
@@ -214,13 +227,15 @@ export default function OnboardingScreen6() {
               fontWeight: 700,
               letterSpacing: '-0.01em',
               borderRadius: '0.85rem',
-              cursor: 'pointer',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.75 : 1,
             }}
           >
-            Go to Dashboard
+            {isLoading ? 'Loading...' : 'Go to Dashboard'}
           </button>
         </div>
       </main>
     </div>
+    </>
   );
 }

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,12 +16,24 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleAcceptTerms = () => {
+    if (isAcceptingTerms) return;
+    setIsAcceptingTerms(true);
+    setTimeout(() => {
+      setIsAcceptingTerms(false);
+      setAgreeTerms(true);
+      setShowTermsModal(false);
+    }, 500);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreeTerms) {
-      alert('Please agree to the Terms & Privacy Policy to continue.');
+      setShowTermsModal(true);
       return;
     }
     if (isLoading) return;
@@ -364,7 +377,13 @@ export default function SignupPage() {
                   type="checkbox"
                   id="terms-checkbox"
                   checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setShowTermsModal(true);
+                    } else {
+                      setAgreeTerms(false);
+                    }
+                  }}
                   style={{
                     width: '17px',
                     height: '17px',
@@ -382,7 +401,22 @@ export default function SignupPage() {
                     userSelect: 'none',
                   }}
                 >
-                  I agree to <strong>Terms & Privacy Policy</strong>
+                  I agree to{' '}
+                  <span
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowTermsModal(true);
+                    }}
+                    style={{
+                      fontWeight: 800,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      color: '#000000',
+                    }}
+                  >
+                    Terms &amp; Privacy Policy
+                  </span>
                 </label>
               </div>
 
@@ -466,6 +500,238 @@ export default function SignupPage() {
           </div>
         </div>
       </main>
+
+      {/* Terms & Privacy Policy Popup Modal */}
+      {showTermsModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            boxSizing: 'border-box',
+          }}
+          onClick={() => setShowTermsModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1.25rem',
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              border: '1px solid #E5E7EB',
+              boxShadow: 'none',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid #F0F0F2',
+                backgroundColor: '#FFFFFF',
+              }}
+            >
+              <div>
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: '1.15rem',
+                    fontWeight: 800,
+                    color: '#000000',
+                    letterSpacing: '-0.025em',
+                  }}
+                >
+                  Terms &amp; Privacy Policy
+                </h3>
+                <p
+                  style={{
+                    margin: '0.2rem 0 0 0',
+                    fontSize: '0.82rem',
+                    color: '#666666',
+                    fontWeight: 500,
+                  }}
+                >
+                  Temporary terms and privacy policy for Nuradesk
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                aria-label="Close"
+                style={{
+                  background: '#F4F4F5',
+                  border: 'none',
+                  cursor: 'pointer',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#333333',
+                  transition: 'background 0.15s',
+                }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 18 }} />
+              </button>
+            </div>
+
+            {/* Modal Body / Scrollable Content */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                overflowY: 'auto',
+                fontSize: '0.86rem',
+                color: '#374151',
+                lineHeight: 1.6,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.1rem',
+              }}
+            >
+              <div>
+                <h4 style={{ margin: '0 0 0.35rem 0', color: '#000000', fontSize: '0.92rem', fontWeight: 700 }}>
+                  1. Acceptance of Terms
+                </h4>
+                <p style={{ margin: 0, color: '#4B5563' }}>
+                  By checking the agreement box or using the Nuradesk platform, you acknowledge and accept these terms governing access, billing, and system operations for your business.
+                </p>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 0.35rem 0', color: '#000000', fontSize: '0.92rem', fontWeight: 700 }}>
+                  2. Store &amp; Customer Data Privacy
+                </h4>
+                <p style={{ margin: 0, color: '#4B5563' }}>
+                  Your business data belongs to you. Nuradesk secures your catalog items, sales history, and customer details with enterprise encryption and never resells your commercial information to third-party advertisers.
+                </p>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 0.35rem 0', color: '#000000', fontSize: '0.92rem', fontWeight: 700 }}>
+                  3. Offline Mode &amp; Local Storage
+                </h4>
+                <p style={{ margin: 0, color: '#4B5563' }}>
+                  When working offline, transactions and register records are cached on your browser and hardware device. You agree to sync your local cache to the cloud periodically to maintain accurate fiscal records.
+                </p>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 0.35rem 0', color: '#000000', fontSize: '0.92rem', fontWeight: 700 }}>
+                  4. Free Trial &amp; Subscription Terms
+                </h4>
+                <p style={{ margin: 0, color: '#4B5563' }}>
+                  All new signups receive full platform capabilities during their 30-day trial without needing credit card verification. You may cancel, modify, or export your store data at any point without fees.
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer with Decline and Accept buttons using button-20 CSS */}
+            <div
+              style={{
+                padding: '1rem 1.5rem',
+                borderTop: '1px solid #F0F0F2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: '0.75rem',
+                backgroundColor: '#FAFAFB',
+              }}
+            >
+              <button
+                type="button"
+                disabled={isAcceptingTerms}
+                onClick={() => {
+                  setAgreeTerms(false);
+                  setShowTermsModal(false);
+                }}
+                className="button-20-secondary"
+                role="button"
+                style={{
+                  height: '42px',
+                  padding: '0 1.4rem',
+                  fontSize: '0.92rem',
+                  fontWeight: 600,
+                  borderRadius: '0.75rem',
+                  cursor: isAcceptingTerms ? 'not-allowed' : 'pointer',
+                  opacity: isAcceptingTerms ? 0.6 : 1,
+                }}
+              >
+                Decline
+              </button>
+              <button
+                type="button"
+                disabled={isAcceptingTerms}
+                onClick={handleAcceptTerms}
+                className="button-20"
+                role="button"
+                style={{
+                  height: '42px',
+                  minWidth: '96px',
+                  padding: '0 1.6rem',
+                  fontSize: '0.92rem',
+                  fontWeight: 600,
+                  borderRadius: '0.75rem',
+                  cursor: isAcceptingTerms ? 'not-allowed' : 'pointer',
+                  opacity: isAcceptingTerms ? 0.9 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                {isAcceptingTerms ? (
+                  <svg
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      animation: 'spin 0.75s linear infinite',
+                      flexShrink: 0,
+                    }}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="rgba(255, 255, 255, 0.3)"
+                      strokeWidth="2.5"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="9"
+                      stroke="#FFFFFF"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeDasharray="16 45"
+                    />
+                  </svg>
+                ) : (
+                  'Accept'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
