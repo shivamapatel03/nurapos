@@ -1,4 +1,6 @@
 using Npgsql;
+using System.Security.Cryptography;
+using System.Text;
 using Nurapos.DTOs.Operations;
 using Nurapos.Models;
 using Nurapos.Repositories.Interfaces;
@@ -102,18 +104,41 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
     {
         await OpenConnectionAsync();
         await using var transaction = await _connection.BeginTransactionAsync();
+        if (!string.IsNullOrWhiteSpace(request.IdempotencyKey))
+        {
+            var lockHash = SHA256.HashData(Encoding.UTF8.GetBytes($"{ownerId}:{request.IdempotencyKey}"));
+            var lockId = BitConverter.ToInt64(lockHash, 0);
+            await using (var lockCommand = new NpgsqlCommand("SELECT pg_advisory_xact_lock(@lock_id);", _connection, transaction))
+            {
+                lockCommand.Parameters.AddWithValue("@lock_id", lockId);
+                await lockCommand.ExecuteScalarAsync();
+            }
+            const string existingSql = "SELECT c_sale_id FROM t_sale WHERE c_user_id=@owner AND c_idempotency_key=@key;";
+            await using var existingCommand = new NpgsqlCommand(existingSql, _connection, transaction);
+            existingCommand.Parameters.AddWithValue("@owner", ownerId);
+            existingCommand.Parameters.AddWithValue("@key", request.IdempotencyKey);
+            var existing = await existingCommand.ExecuteScalarAsync();
+            if (existing is not null)
+            {
+                var existingSaleId = Convert.ToInt32(existing);
+                await transaction.CommitAsync();
+                return await GetBillByIdAsync("sale", existingSaleId, ownerId)
+                    ?? throw new InvalidOperationException("The idempotent sale could not be retrieved.");
+            }
+        }
         await EnsureOwnedFranchiseAsync(request.FranchiseId, ownerId, transaction);
         await EnsureActivePaymentModeAsync(request.PaymentMethod, ownerId, transaction);
 
         const string saleSql = """
-            INSERT INTO t_sale (c_franchise_id, c_user_id, c_sale_date, c_payment_method, c_total_amount, c_status)
-            VALUES (@franchise_id, @owner_id, CURRENT_DATE, @payment_method, 0, 'COMPLETED')
+            INSERT INTO t_sale (c_franchise_id, c_user_id, c_sale_date, c_payment_method, c_total_amount, c_status, c_idempotency_key)
+            VALUES (@franchise_id, @owner_id, CURRENT_DATE, @payment_method, 0, 'COMPLETED', @idempotency_key)
             RETURNING c_sale_id;
             """;
         await using var saleCommand = new NpgsqlCommand(saleSql, _connection, transaction);
         saleCommand.Parameters.AddWithValue("@franchise_id", request.FranchiseId);
         saleCommand.Parameters.AddWithValue("@owner_id", ownerId);
         saleCommand.Parameters.AddWithValue("@payment_method", request.PaymentMethod);
+        saleCommand.Parameters.AddWithValue("@idempotency_key", (object?)request.IdempotencyKey ?? DBNull.Value);
         var saleId = Convert.ToInt32(await saleCommand.ExecuteScalarAsync());
 
         decimal total = 0;
@@ -136,16 +161,30 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
             stockCommand.Parameters.AddWithValue("@franchise_id", request.FranchiseId);
             stockCommand.Parameters.AddWithValue("@product_id", line.ProductId);
             stockCommand.Parameters.AddWithValue("@owner_id", ownerId);
-            var priceValue = await stockCommand.ExecuteScalarAsync();
-            if (priceValue == null || priceValue == DBNull.Value)
+            await using var stockReader = await stockCommand.ExecuteReaderAsync();
+            if (!await stockReader.ReadAsync())
                 throw new InvalidOperationException("Product is not assigned to this franchise or stock is insufficient.");
-
-            var unitPrice = Convert.ToDecimal(priceValue);
-            var lineTotal = decimal.Round(unitPrice * line.Quantity, 2);
+            var unitPrice = stockReader.GetDecimal(0);
+            await stockReader.DisposeAsync();
+            const string saleTaxSql = "SELECT c_tax_rate,c_tax_type,c_cost_price FROM t_product WHERE c_product_id=@id AND c_user_id=@owner;";
+            await using var saleTaxCommand = new NpgsqlCommand(saleTaxSql, _connection, transaction);
+            saleTaxCommand.Parameters.AddWithValue("@id", line.ProductId);
+            saleTaxCommand.Parameters.AddWithValue("@owner", ownerId);
+            await using var saleTaxReader = await saleTaxCommand.ExecuteReaderAsync();
+            await saleTaxReader.ReadAsync();
+            var taxRate = saleTaxReader.GetDecimal(0);
+            var taxType = saleTaxReader.GetString(1);
+            var unitCost = saleTaxReader.IsDBNull(2) ? 0m : saleTaxReader.GetDecimal(2);
+            await saleTaxReader.DisposeAsync();
+            var lineBase = decimal.Round(unitPrice * line.Quantity, 2, MidpointRounding.AwayFromZero);
+            var taxAmount = taxType == "inclusive"
+                ? (taxRate == 0 ? 0 : decimal.Round(lineBase * taxRate / (100m + taxRate), 2, MidpointRounding.AwayFromZero))
+                : decimal.Round(lineBase * taxRate / 100m, 2, MidpointRounding.AwayFromZero);
+            var lineTotal = taxType == "inclusive" ? lineBase : lineBase + taxAmount;
             total += lineTotal;
             const string detailSql = """
-                INSERT INTO t_sale_detail (c_sale_id, c_product_id, c_quantity, c_unit_price, c_total_amount)
-                VALUES (@sale_id, @product_id, @quantity, @unit_price, @total);
+                INSERT INTO t_sale_detail (c_sale_id, c_product_id, c_quantity, c_unit_price, c_total_amount, c_tax_rate, c_tax_type, c_tax_amount, c_unit_cost)
+                VALUES (@sale_id, @product_id, @quantity, @unit_price, @total, @tax_rate, @tax_type, @tax_amount, @unit_cost);
                 """;
             await using var detailCommand = new NpgsqlCommand(detailSql, _connection, transaction);
             detailCommand.Parameters.AddWithValue("@sale_id", saleId);
@@ -153,10 +192,35 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
             detailCommand.Parameters.AddWithValue("@quantity", line.Quantity);
             detailCommand.Parameters.AddWithValue("@unit_price", unitPrice);
             detailCommand.Parameters.AddWithValue("@total", lineTotal);
+            detailCommand.Parameters.AddWithValue("@tax_rate", taxRate);
+            detailCommand.Parameters.AddWithValue("@tax_type", taxType);
+            detailCommand.Parameters.AddWithValue("@tax_amount", taxAmount);
+            detailCommand.Parameters.AddWithValue("@unit_cost", unitCost);
             await detailCommand.ExecuteNonQueryAsync();
         }
 
         await UpdateSaleTotalAsync(saleId, total, transaction);
+        if (!string.IsNullOrWhiteSpace(request.ShiftId))
+        {
+            const string shiftSql = """
+                UPDATE t_register_shift SET c_total_sales=c_total_sales+@total,
+                    c_cash_sales=c_cash_sales+CASE WHEN @method='CASH' THEN @total ELSE 0 END,
+                    c_card_sales=c_card_sales+CASE WHEN @method='CARD' THEN @total ELSE 0 END,
+                    c_upi_sales=c_upi_sales+CASE WHEN @method='UPI' THEN @total ELSE 0 END
+                WHERE c_shift_id=@shift AND c_user_id=@owner AND c_franchise_id=@franchise AND c_status='OPEN'
+                  AND (@employee IS NULL OR c_cashier_id=@employee) AND (@terminal IS NULL OR c_terminal_code=@terminal);
+                """;
+            await using var shiftCommand = new NpgsqlCommand(shiftSql, _connection, transaction);
+            shiftCommand.Parameters.AddWithValue("@total", total);
+            shiftCommand.Parameters.AddWithValue("@method", request.PaymentMethod);
+            shiftCommand.Parameters.AddWithValue("@shift", request.ShiftId.Trim());
+            shiftCommand.Parameters.AddWithValue("@owner", ownerId);
+            shiftCommand.Parameters.AddWithValue("@franchise", request.FranchiseId);
+            shiftCommand.Parameters.AddWithValue("@employee", (object?)request.PosEmployeeId ?? DBNull.Value);
+            shiftCommand.Parameters.AddWithValue("@terminal", (object?)request.PosTerminalId ?? DBNull.Value);
+            if (await shiftCommand.ExecuteNonQueryAsync() != 1)
+                throw new InvalidOperationException("Sale cannot be added because its shift is not open for this franchise.");
+        }
         await CreatePaymentAsync(request.FranchiseId, "SALE", saleId, request.PaymentMethod, total, transaction);
         await transaction.CommitAsync();
         return await GetBillByIdAsync("sale", saleId, ownerId)
@@ -209,11 +273,24 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
             if (await stockCommand.ExecuteScalarAsync() == null)
                 throw new KeyNotFoundException("Product not found for this owner.");
 
-            var lineTotal = decimal.Round(line.UnitPrice * line.Quantity, 2);
+            const string taxSql = "SELECT c_tax_rate,c_tax_type FROM t_product WHERE c_product_id=@id AND c_user_id=@owner;";
+            await using var taxCommand = new NpgsqlCommand(taxSql, _connection, transaction);
+            taxCommand.Parameters.AddWithValue("@id", line.ProductId);
+            taxCommand.Parameters.AddWithValue("@owner", ownerId);
+            await using var taxReader = await taxCommand.ExecuteReaderAsync();
+            await taxReader.ReadAsync();
+            var taxRate = taxReader.GetDecimal(0);
+            var taxType = taxReader.GetString(1);
+            await taxReader.DisposeAsync();
+            var lineBase = decimal.Round(line.UnitPrice * line.Quantity, 2, MidpointRounding.AwayFromZero);
+            var taxAmount = taxType == "inclusive"
+                ? (taxRate == 0 ? 0 : decimal.Round(lineBase * taxRate / (100m + taxRate), 2, MidpointRounding.AwayFromZero))
+                : decimal.Round(lineBase * taxRate / 100m, 2, MidpointRounding.AwayFromZero);
+            var lineTotal = taxType == "inclusive" ? lineBase : lineBase + taxAmount;
             total += lineTotal;
             const string detailSql = """
-                INSERT INTO t_purchase_detail (c_purchase_id, c_product_id, c_quantity, c_unit_price, c_total_amount)
-                VALUES (@purchase_id, @product_id, @quantity, @unit_price, @total);
+                INSERT INTO t_purchase_detail (c_purchase_id, c_product_id, c_quantity, c_unit_price, c_total_amount, c_tax_rate, c_tax_type, c_tax_amount)
+                VALUES (@purchase_id, @product_id, @quantity, @unit_price, @total, @tax_rate, @tax_type, @tax_amount);
                 """;
             await using var detailCommand = new NpgsqlCommand(detailSql, _connection, transaction);
             detailCommand.Parameters.AddWithValue("@purchase_id", purchaseId);
@@ -221,6 +298,9 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
             detailCommand.Parameters.AddWithValue("@quantity", line.Quantity);
             detailCommand.Parameters.AddWithValue("@unit_price", line.UnitPrice);
             detailCommand.Parameters.AddWithValue("@total", lineTotal);
+            detailCommand.Parameters.AddWithValue("@tax_rate", taxRate);
+            detailCommand.Parameters.AddWithValue("@tax_type", taxType);
+            detailCommand.Parameters.AddWithValue("@tax_amount", taxAmount);
             await detailCommand.ExecuteNonQueryAsync();
         }
 
@@ -248,7 +328,7 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
     {
         const string sql = """
             SELECT fp.c_franchise_product_id, fp.c_franchise_id, fp.c_product_id,
-                   p.c_product_name, fp.c_stock_quantity, fp.c_selling_price, fp.c_status
+                   p.c_product_name, fp.c_stock_quantity, fp.c_selling_price, fp.c_status, fp.c_reorder_level
             FROM t_franchise_product fp
             JOIN t_franchise f ON f.c_franchise_id = fp.c_franchise_id
             JOIN t_product p ON p.c_product_id = fp.c_product_id
@@ -274,16 +354,17 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
     {
         const string upsertSql = """
             INSERT INTO t_franchise_product
-                (c_franchise_id, c_product_id, c_stock_quantity, c_selling_price, c_status)
+                (c_franchise_id, c_product_id, c_stock_quantity, c_selling_price, c_status, c_reorder_level)
             SELECT @franchise_id, p.c_product_id, @stock_quantity,
-                   COALESCE(@selling_price, p.c_selling_price), @status
+                   COALESCE(@selling_price, p.c_selling_price), @status, @reorder_level
             FROM t_product p
             WHERE p.c_product_id = @product_id AND p.c_user_id = @owner_id
               AND EXISTS (SELECT 1 FROM t_franchise f WHERE f.c_franchise_id = @franchise_id AND f.c_user_id = @owner_id)
             ON CONFLICT (c_franchise_id, c_product_id)
             DO UPDATE SET c_stock_quantity = EXCLUDED.c_stock_quantity,
                           c_selling_price = EXCLUDED.c_selling_price,
-                          c_status = EXCLUDED.c_status
+                          c_status = EXCLUDED.c_status,
+                          c_reorder_level = EXCLUDED.c_reorder_level
             RETURNING c_franchise_product_id;
             """;
         await OpenConnectionAsync();
@@ -296,6 +377,7 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
             command.Parameters.AddWithValue("@stock_quantity", request.StockQuantity);
             command.Parameters.AddWithValue("@selling_price", (object?)request.SellingPrice ?? DBNull.Value);
             command.Parameters.AddWithValue("@status", request.Status.Trim().ToUpperInvariant());
+            command.Parameters.AddWithValue("@reorder_level", request.ReorderLevel);
             var result = await command.ExecuteScalarAsync();
             id = result == null || result == DBNull.Value ? null : Convert.ToInt32(result);
         }
@@ -303,7 +385,7 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
 
         const string getSql = """
             SELECT fp.c_franchise_product_id, fp.c_franchise_id, fp.c_product_id,
-                   p.c_product_name, fp.c_stock_quantity, fp.c_selling_price, fp.c_status
+                   p.c_product_name, fp.c_stock_quantity, fp.c_selling_price, fp.c_status, fp.c_reorder_level
             FROM t_franchise_product fp JOIN t_product p ON p.c_product_id = fp.c_product_id
             JOIN t_franchise f ON f.c_franchise_id = fp.c_franchise_id
             WHERE fp.c_franchise_product_id = @id AND f.c_user_id = @owner_id AND p.c_user_id = @owner_id;
@@ -537,7 +619,7 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
     {
         FranchiseProductId = reader.GetInt32(0), FranchiseId = reader.GetInt32(1), ProductId = reader.GetInt32(2),
         ProductName = reader.GetString(3), StockQuantity = reader.GetDecimal(4),
-        SellingPrice = reader.IsDBNull(5) ? null : reader.GetDecimal(5), Status = reader.GetString(6)
+        SellingPrice = reader.IsDBNull(5) ? null : reader.GetDecimal(5), Status = reader.GetString(6), ReorderLevel = reader.GetDecimal(7)
     };
 
     private static BillRecord MapBill(NpgsqlDataReader reader) => new()

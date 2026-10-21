@@ -24,6 +24,8 @@ public class User
     [StringLength(50, ErrorMessage = "Role cannot exceed 50 characters.")]
     public string Role { get; set; } = "FRANCHISE_OWNER";
 
+    public bool IsVerified { get; set; } = true;
+
     [Required]
     public DateTime CreatedAt { get; set; }
 }

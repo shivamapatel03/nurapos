@@ -102,6 +102,8 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
         {Select(definition.CategoryId, "category_id", "integer")},
         {Select(definition.SellingPrice, "selling_price", "numeric")},
         {Select(definition.CostPrice, "cost_price", "numeric")},
+        {Select(definition.TaxRate, "tax_rate", "numeric")},
+        {Select(definition.TaxType, "tax_type", "text")},
         {Select(definition.Unit, "unit", "text")},
         {definition.Status} AS status
         """;
@@ -120,6 +122,8 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
         CategoryId = ReadInt(reader, "category_id"),
         SellingPrice = ReadDecimal(reader, "selling_price"),
         CostPrice = ReadDecimal(reader, "cost_price"),
+        TaxRate = ReadDecimal(reader, "tax_rate"),
+        TaxType = ReadString(reader, "tax_type"),
         Unit = ReadString(reader, "unit"),
         Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "ACTIVE" : reader.GetString(reader.GetOrdinal("status"))
     };
@@ -147,7 +151,7 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
         OwnerCatalogType.Category => ("c_category_name, c_description, c_status", "@name, @description, @status"),
         OwnerCatalogType.ExpenseCategory => ("c_expense_category_name, c_description, c_status", "@name, @description, @status"),
         OwnerCatalogType.Supplier => ("c_supplier_name, c_contact, c_email, c_address, c_status", "@name, @contact, @email, @address, @status"),
-        OwnerCatalogType.Product => ("c_product_name, c_category_id, c_selling_price, c_cost_price, c_unit, c_status", "@name, @category_id, @selling_price, @cost_price, @unit, @status"),
+        OwnerCatalogType.Product => ("c_product_name, c_category_id, c_selling_price, c_cost_price, c_tax_rate, c_tax_type, c_unit, c_status", "@name, @category_id, @selling_price, @cost_price, @tax_rate, @tax_type, @unit, @status"),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
@@ -156,7 +160,7 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
         OwnerCatalogType.Category => "c_category_name = @name, c_description = @description, c_status = @status",
         OwnerCatalogType.ExpenseCategory => "c_expense_category_name = @name, c_description = @description, c_status = @status",
         OwnerCatalogType.Supplier => "c_supplier_name = @name, c_contact = @contact, c_email = @email, c_address = @address, c_status = @status",
-        OwnerCatalogType.Product => "c_product_name = @name, c_category_id = @category_id, c_selling_price = @selling_price, c_cost_price = @cost_price, c_unit = @unit, c_status = @status",
+        OwnerCatalogType.Product => "c_product_name = @name, c_category_id = @category_id, c_selling_price = @selling_price, c_cost_price = @cost_price, c_tax_rate = @tax_rate, c_tax_type = @tax_type, c_unit = @unit, c_status = @status",
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
@@ -181,21 +185,23 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
             command.Parameters.AddWithValue("@category_id", (object?)item.CategoryId ?? DBNull.Value);
             command.Parameters.AddWithValue("@selling_price", item.SellingPrice!.Value);
             command.Parameters.AddWithValue("@cost_price", item.CostPrice!.Value);
+            command.Parameters.AddWithValue("@tax_rate", item.TaxRate ?? 0m);
+            command.Parameters.AddWithValue("@tax_type", item.TaxType ?? "exclusive");
             command.Parameters.AddWithValue("@unit", item.Unit!.Trim().ToUpperInvariant());
         }
     }
 
     private static Definition GetDefinition(OwnerCatalogType type) => type switch
     {
-        OwnerCatalogType.Category => new("t_category", "c_category_id", "c_category_name", "c_description", null, null, null, null, null, null, null, "c_status"),
-        OwnerCatalogType.ExpenseCategory => new("t_expense_category", "c_expense_category_id", "c_expense_category_name", "c_description", null, null, null, null, null, null, null, "c_status"),
-        OwnerCatalogType.Supplier => new("t_supplier", "c_supplier_id", "c_supplier_name", null, "c_contact", "c_email", "c_address", null, null, null, null, "c_status"),
-        OwnerCatalogType.Product => new("t_product", "c_product_id", "c_product_name", null, null, null, null, "c_category_id", "c_selling_price", "c_cost_price", "c_unit", "c_status"),
+        OwnerCatalogType.Category => new("t_category", "c_category_id", "c_category_name", "c_description", null, null, null, null, null, null, null, null, null, "c_status"),
+        OwnerCatalogType.ExpenseCategory => new("t_expense_category", "c_expense_category_id", "c_expense_category_name", "c_description", null, null, null, null, null, null, null, null, null, "c_status"),
+        OwnerCatalogType.Supplier => new("t_supplier", "c_supplier_id", "c_supplier_name", null, "c_contact", "c_email", "c_address", null, null, null, null, null, null, "c_status"),
+        OwnerCatalogType.Product => new("t_product", "c_product_id", "c_product_name", null, null, null, null, "c_category_id", "c_selling_price", "c_cost_price", "c_tax_rate", "c_tax_type", "c_unit", "c_status"),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 
     private sealed record Definition(
         string Table, string Id, string Name, string? Description, string? Contact,
         string? Email, string? Address, string? CategoryId, string? SellingPrice,
-        string? CostPrice, string? Unit, string Status);
+        string? CostPrice, string? TaxRate, string? TaxType, string? Unit, string Status);
 }

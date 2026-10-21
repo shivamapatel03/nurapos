@@ -22,6 +22,18 @@ public class FranchiseRepository : IFranchiseRepository
             ALTER TABLE t_expense_category ADD COLUMN IF NOT EXISTS c_user_id INT;
             ALTER TABLE t_supplier ADD COLUMN IF NOT EXISTS c_user_id INT;
             ALTER TABLE t_product ADD COLUMN IF NOT EXISTS c_user_id INT;
+            ALTER TABLE t_product ADD COLUMN IF NOT EXISTS c_tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_product ADD COLUMN IF NOT EXISTS c_tax_type VARCHAR(12) NOT NULL DEFAULT 'exclusive';
+            ALTER TABLE t_franchise_product ADD COLUMN IF NOT EXISTS c_reorder_level NUMERIC(14,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_sale_detail ADD COLUMN IF NOT EXISTS c_tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_sale_detail ADD COLUMN IF NOT EXISTS c_tax_type VARCHAR(12) NOT NULL DEFAULT 'exclusive';
+            ALTER TABLE t_sale_detail ADD COLUMN IF NOT EXISTS c_tax_amount NUMERIC(14,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_sale_detail ADD COLUMN IF NOT EXISTS c_unit_cost NUMERIC(14,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_purchase_detail ADD COLUMN IF NOT EXISTS c_tax_rate NUMERIC(5,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_purchase_detail ADD COLUMN IF NOT EXISTS c_tax_type VARCHAR(12) NOT NULL DEFAULT 'exclusive';
+            ALTER TABLE t_purchase_detail ADD COLUMN IF NOT EXISTS c_tax_amount NUMERIC(14,2) NOT NULL DEFAULT 0;
+            ALTER TABLE t_sale ADD COLUMN IF NOT EXISTS c_idempotency_key VARCHAR(100);
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_sale_owner_idempotency ON t_sale(c_user_id,c_idempotency_key) WHERE c_idempotency_key IS NOT NULL;
             ALTER TABLE t_category DROP CONSTRAINT IF EXISTS t_category_c_category_name_key;
             ALTER TABLE t_expense_category DROP CONSTRAINT IF EXISTS t_expense_category_c_expense_category_name_key;
             CREATE UNIQUE INDEX IF NOT EXISTS uq_category_owner_name

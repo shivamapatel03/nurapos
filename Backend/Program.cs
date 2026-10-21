@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Text;
 using System.Threading.RateLimiting;
+using StackExchange.Redis;
 
 using Nurapos.Repositories;
 using Nurapos.Repositories.Interfaces;
@@ -69,6 +70,16 @@ builder.Services.AddScoped<NpgsqlConnection>(sp =>
 builder.Services.AddScoped<IFranchiseRepository,FranchiseRepository>();
 builder.Services.AddScoped<IOwnerCatalogRepository, OwnerCatalogRepository>();
 builder.Services.AddScoped<IOwnerOperationsRepository, OwnerOperationsRepository>();
+builder.Services.AddScoped<IOnboardingRepository, OnboardingRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<ITerminalRepository, TerminalRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+builder.Services.AddScoped<ITableRepository, TableRepository>();
+builder.Services.AddScoped<IOfferRepository, OfferRepository>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<IUploadRepository, UploadRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
 // Auth Repository
 builder.Services.AddScoped<Nurapos.Repositories.Interfaces.IAuthRepository, Nurapos.Repositories.AuthRepository>();
 
@@ -81,8 +92,37 @@ builder.Services.AddScoped<Nurapos.Repositories.Interfaces.IAuthRepository, Nura
 builder.Services.AddScoped<IFranchiseService,FranchiseService>();
 builder.Services.AddScoped<IOwnerCatalogService, OwnerCatalogService>();
 builder.Services.AddScoped<IOwnerOperationsService, OwnerOperationsService>();
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<ITerminalService, TerminalService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<ITableService, TableService>();
+builder.Services.AddScoped<IOfferService, OfferService>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IUploadService, UploadService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 // Auth Service
 builder.Services.AddScoped<IAuthService,AuthService>();
+builder.Services.AddSingleton<IEmailSender, EmailSender>();
+var redisConnectionString = builder.Configuration["Redis:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    {
+        var options = ConfigurationOptions.Parse(redisConnectionString);
+        options.AbortOnConnectFail = false;
+        return ConnectionMultiplexer.Connect(options);
+    });
+    builder.Services.AddSingleton<IOtpStore, RedisOtpStore>();
+    builder.Services.AddSingleton<IRedisRateLimitStore, RedisRateLimitStore>();
+}
+else
+{
+    builder.Services.AddSingleton<IOtpStore, UnconfiguredOtpStore>();
+    builder.Services.AddSingleton<IRedisRateLimitStore, UnconfiguredRedisRateLimitStore>();
+}
 
 // Jwt helper
 builder.Services.AddSingleton<IJwtHelper,JwtHelper>();
@@ -167,6 +207,46 @@ builder.Services.AddRateLimiter(options =>
                 AutoReplenishment = true
             }));
 
+    options.AddPolicy("OtpResend", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3, Window = TimeSpan.FromMinutes(10), QueueLimit = 0, AutoReplenishment = true
+            }));
+
+    options.AddPolicy("PasswordForgot", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0, AutoReplenishment = true
+            }));
+
+    options.AddPolicy("PinMutation", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"{httpContext.Connection.RemoteIpAddress}:{httpContext.Request.RouteValues["id"]}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0, AutoReplenishment = true
+            }));
+
+    options.AddPolicy("PosPin", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0, AutoReplenishment = true
+            }));
+
+    options.AddPolicy("PosSale", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true
+            }));
+
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
@@ -214,6 +294,33 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     var franchiseRepository = scope.ServiceProvider.GetRequiredService<IFranchiseRepository>();
     await franchiseRepository.EnsureFranchiseSchemaAsync();
+
+    var onboardingRepository = scope.ServiceProvider.GetRequiredService<IOnboardingRepository>();
+    await onboardingRepository.EnsureSchemaAsync();
+
+    var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
+    await employeeRepository.EnsureSchemaAsync();
+
+    var terminalRepository = scope.ServiceProvider.GetRequiredService<ITerminalRepository>();
+    await terminalRepository.EnsureSchemaAsync();
+
+    var customerRepository = scope.ServiceProvider.GetRequiredService<ICustomerRepository>();
+    await customerRepository.EnsureSchemaAsync();
+
+    var shiftRepository = scope.ServiceProvider.GetRequiredService<IShiftRepository>();
+    await shiftRepository.EnsureSchemaAsync();
+
+    var tableRepository = scope.ServiceProvider.GetRequiredService<ITableRepository>();
+    await tableRepository.EnsureSchemaAsync();
+
+    var offerRepository = scope.ServiceProvider.GetRequiredService<IOfferRepository>();
+    await offerRepository.EnsureSchemaAsync();
+
+    var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
+    await settingsRepository.EnsureSchemaAsync();
+
+    var uploadRepository = scope.ServiceProvider.GetRequiredService<IUploadRepository>();
+    await uploadRepository.EnsureSchemaAsync();
 }
 
 
@@ -253,6 +360,7 @@ app.UseStatusCodePages(async statusContext =>
 app.UseCors("Frontend");
 
 app.UseRouting();
+app.UseMiddleware<DistributedRateLimitMiddleware>();
 app.UseRateLimiter();
 
 app.UseAuthentication();

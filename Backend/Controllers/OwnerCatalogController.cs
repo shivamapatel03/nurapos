@@ -45,7 +45,7 @@ public sealed class OwnerCatalogController : ControllerBase
     [HttpPost("suppliers")]
     public Task<IActionResult> CreateSupplier(SupplierRequest request) => Create(OwnerCatalogType.Supplier, new OwnerCatalogItem { Name = request.Name, Contact = request.Contact, Email = request.Email, Address = request.Address, Status = request.Status });
     [HttpPost("products")]
-    public Task<IActionResult> CreateProduct(ProductRequest request) => Create(OwnerCatalogType.Product, new OwnerCatalogItem { Name = request.Name, CategoryId = request.CategoryId, SellingPrice = request.SellingPrice, CostPrice = request.CostPrice, Unit = request.Unit, Status = request.Status });
+    public Task<IActionResult> CreateProduct(ProductRequest request) => Create(OwnerCatalogType.Product, new OwnerCatalogItem { Name = request.Name, CategoryId = request.CategoryId, SellingPrice = request.SellingPrice, CostPrice = request.CostPrice, TaxRate = request.TaxRate, TaxType = request.TaxType, Unit = request.Unit, Status = request.Status });
 
     [HttpPut("categories/{id:int}")]
     public Task<IActionResult> UpdateCategory([Range(1, int.MaxValue)] int id, CategoryRequest request) => Update(OwnerCatalogType.Category, id, new OwnerCatalogItem { Name = request.Name, Description = request.Description, Status = request.Status });
@@ -54,7 +54,7 @@ public sealed class OwnerCatalogController : ControllerBase
     [HttpPut("suppliers/{id:int}")]
     public Task<IActionResult> UpdateSupplier([Range(1, int.MaxValue)] int id, SupplierRequest request) => Update(OwnerCatalogType.Supplier, id, new OwnerCatalogItem { Name = request.Name, Contact = request.Contact, Email = request.Email, Address = request.Address, Status = request.Status });
     [HttpPut("products/{id:int}")]
-    public Task<IActionResult> UpdateProduct([Range(1, int.MaxValue)] int id, ProductRequest request) => Update(OwnerCatalogType.Product, id, new OwnerCatalogItem { Name = request.Name, CategoryId = request.CategoryId, SellingPrice = request.SellingPrice, CostPrice = request.CostPrice, Unit = request.Unit, Status = request.Status });
+    public Task<IActionResult> UpdateProduct([Range(1, int.MaxValue)] int id, ProductRequest request) => Update(OwnerCatalogType.Product, id, new OwnerCatalogItem { Name = request.Name, CategoryId = request.CategoryId, SellingPrice = request.SellingPrice, CostPrice = request.CostPrice, TaxRate = request.TaxRate, TaxType = request.TaxType, Unit = request.Unit, Status = request.Status });
 
     [HttpDelete("categories/{id:int}")]
     public Task<IActionResult> DeleteCategory([Range(1, int.MaxValue)] int id) => Delete(OwnerCatalogType.Category, id);
@@ -97,6 +97,7 @@ public sealed class OwnerCatalogController : ControllerBase
             return StatusCode(201, new ApiResponse<OwnerCatalogItem> { StatusCode = 201, Message = "Record created successfully.", Data = created });
         }
         catch (KeyNotFoundException ex) { return NotFound(Error(404, ex.Message)); }
+        catch (ArgumentException ex) { return BadRequest(Error(400, ex.Message)); }
         catch (PostgresException ex) when (ex.SqlState is "23505" or "23503") { return Conflict(Error(409, "A related record conflicts with this request.")); }
     }
 
@@ -112,6 +113,7 @@ public sealed class OwnerCatalogController : ControllerBase
                 : Ok(new ApiResponse<OwnerCatalogItem> { StatusCode = 200, Message = "Record updated successfully.", Data = updated });
         }
         catch (KeyNotFoundException ex) { return NotFound(Error(404, ex.Message)); }
+        catch (ArgumentException ex) { return BadRequest(Error(400, ex.Message)); }
         catch (PostgresException ex) when (ex.SqlState is "23505" or "23503") { return Conflict(Error(409, "A related record conflicts with this request.")); }
     }
 

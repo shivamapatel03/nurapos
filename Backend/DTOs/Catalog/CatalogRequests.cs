@@ -46,6 +46,10 @@ public sealed class ProductRequest
     public decimal SellingPrice { get; set; }
     [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal CostPrice { get; set; }
+    [Range(typeof(decimal), "0", "28")]
+    public decimal TaxRate { get; set; }
+    [Required, RegularExpression(@"\A(inclusive|exclusive)\z")]
+    public string TaxType { get; set; } = "exclusive";
     [Required, StringLength(20, MinimumLength = 1)]
     public string Unit { get; set; } = "PIECE";
     [Required, RegularExpression(@"\A(ACTIVE|INACTIVE)\z")]

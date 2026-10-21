@@ -31,6 +31,12 @@ public sealed class OwnerCatalogItem
     [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal? CostPrice { get; set; }
 
+    [Range(typeof(decimal), "0", "28")]
+    public decimal? TaxRate { get; set; }
+
+    [RegularExpression(@"\A(inclusive|exclusive)\z")]
+    public string? TaxType { get; set; }
+
     [StringLength(20, MinimumLength = 1)]
     public string? Unit { get; set; }
 

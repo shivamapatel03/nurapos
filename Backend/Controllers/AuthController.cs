@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Nurapos.Middleware;
 
 namespace Nurapos.Controllers;
 
@@ -21,41 +22,96 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("signup")]
-    public async Task<IActionResult> Signup(
-        [FromBody] SignupRequest request)
+    [HttpPost("register")]
+    [DistributedRateLimit(5,60)]
+    public async Task<IActionResult> Signup([FromBody] SignupRequest request)
     {
         try
         {
-            var response =
-                await _authService.SignupAsync(request);
-
-            return StatusCode(StatusCodes.Status201Created,
-                new ApiResponse<AuthResponse>
-                {
-                    StatusCode = StatusCodes.Status201Created,
-                    Message = "Account created successfully.",
-                    Data = response
-                });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new ApiResponse<object?>
+            var data = await _authService.RegisterAsync(request);
+            return StatusCode(StatusCodes.Status201Created, new ApiResponse<RegisterResponse>
             {
-                StatusCode = StatusCodes.Status409Conflict,
-                Message = ex.Message
+                StatusCode = 201, Message = "Verification code sent.", Data = data
             });
         }
-        catch (ArgumentException ex)
+        catch (InvalidOperationException ex) when (ex.Message == "Email already registered.")
         {
-            return BadRequest(new ApiResponse<object?>
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = ex.Message
-            });
+            return Conflict(new ApiResponse<object?> { StatusCode = 409, Message = ex.Message });
+        }
+        catch (InvalidOperationException)
+        {
+            return StatusCode(503, new ApiResponse<object?> { StatusCode = 503, Message = "Account verification is temporarily unavailable. Please retry shortly." });
+        }
+        catch (Npgsql.NpgsqlException ex) when (ex.SqlState == "23505")
+        {
+            return Conflict(new ApiResponse<object?> { StatusCode = 409, Message = "Email already registered." });
         }
     }
 
+    [HttpPost("verify-email")]
+    [DistributedRateLimit(5,600)]
+    public async Task<IActionResult> VerifyEmail([FromBody] EmailCodeRequest request)
+    {
+        try
+        {
+            var session = await _authService.VerifyEmailAsync(request);
+            return Ok(new ApiResponse<EmailVerificationResponse>
+            {
+                StatusCode = 200, Message = "Email verified successfully.",
+                Data = new EmailVerificationResponse { IsVerified = true, Session = session }
+            });
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new ApiResponse<object?> { StatusCode = 404, Message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new ApiResponse<object?> { StatusCode = 409, Message = ex.Message }); }
+        catch (UnauthorizedAccessException ex) { return BadRequest(new ApiResponse<object?> { StatusCode = 400, Message = ex.Message }); }
+    }
+
+    [HttpPost("resend-verification")]
+    [EnableRateLimiting("OtpResend")]
+    [DistributedRateLimit(3,600)]
+    public async Task<IActionResult> ResendVerification([FromBody] EmailRequest request)
+    {
+        await _authService.ResendVerificationAsync(request);
+        return Ok(new ApiResponse<object?> { StatusCode = 200, Message = "If this email is awaiting verification, a code has been sent." });
+    }
+
+    [HttpPost("password/forgot")]
+    [EnableRateLimiting("PasswordForgot")]
+    [DistributedRateLimit(5,900)]
+    public async Task<IActionResult> ForgotPassword([FromBody] EmailRequest request)
+    {
+        await _authService.ForgotPasswordAsync(request);
+        return Ok(new ApiResponse<object?> { StatusCode = 200, Message = "If this email is registered, a 4-digit reset code has been sent." });
+    }
+
+    [HttpPost("password/verify-code")]
+    [DistributedRateLimit(5,600)]
+    public async Task<IActionResult> VerifyPasswordCode([FromBody] EmailCodeRequest request)
+    {
+        try
+        {
+            var token = await _authService.VerifyPasswordResetCodeAsync(request);
+            return Ok(new ApiResponse<object> { StatusCode = 200, Message = "Reset code verified.", Data = new { resetToken = token } });
+        }
+        catch (InvalidOperationException ex) { return Conflict(new ApiResponse<object?> { StatusCode = 409, Message = ex.Message }); }
+        catch (UnauthorizedAccessException ex) { return BadRequest(new ApiResponse<object?> { StatusCode = 400, Message = ex.Message }); }
+    }
+
+    [HttpPost("password/reset")]
+    [DistributedRateLimit(5,900)]
+    public async Task<IActionResult> ResetPassword([FromBody] PasswordResetRequest request)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(request);
+            return Ok(new ApiResponse<object?> { StatusCode = 200, Message = "Password updated successfully. Please sign in with your new credentials." });
+        }
+        catch (UnauthorizedAccessException ex) { return BadRequest(new ApiResponse<object?> { StatusCode = 400, Message = ex.Message }); }
+        catch (InvalidOperationException ex) { return Conflict(new ApiResponse<object?> { StatusCode = 409, Message = ex.Message }); }
+    }
+
     [HttpPost("login")]
+    [DistributedRateLimit(5,60)]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request)
     {
@@ -90,6 +146,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
+    [DistributedRateLimit(20,60)]
     public async Task<IActionResult> Refresh(
         [FromBody] RefreshTokenRequest request)
     {

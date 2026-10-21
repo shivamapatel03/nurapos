@@ -26,4 +26,8 @@ public interface IAuthRepository
         DateTime replacementExpiresAtUtc);
 
     Task<bool> RevokeRefreshTokenAsync(string tokenHash);
+
+    Task<bool> SetEmailVerifiedAsync(int userId);
+
+    Task<bool> UpdatePasswordAndRevokeRefreshTokensAsync(int userId, string passwordHash);
 }

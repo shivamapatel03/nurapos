@@ -43,6 +43,7 @@ Desktop.ini
 
 # ASP.NET Core
 wwwroot/dist/
+App_Data/uploads/
 
 # Local development certificates
 *.pfx

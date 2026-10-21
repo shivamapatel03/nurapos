@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Nurapos.DTOs.Operations;
 
@@ -16,6 +17,10 @@ public sealed class ExpenseRequest
 public sealed class SaleRequest
 {
     [Range(1, int.MaxValue)] public int FranchiseId { get; set; }
+    [StringLength(40)] public string? ShiftId { get; set; }
+    [JsonIgnore] public int? PosEmployeeId { get; set; }
+    [JsonIgnore] public string? PosTerminalId { get; set; }
+    [JsonIgnore] public string? IdempotencyKey { get; set; }
     [Required, StringLength(20, MinimumLength = 2)] public string PaymentMethod { get; set; } = string.Empty;
     [Required, MinLength(1, ErrorMessage = "At least one sale item is required.")]
     public List<SaleLineRequest> Items { get; set; } = [];
@@ -54,6 +59,8 @@ public sealed class FranchiseProductRequest
 {
     [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal StockQuantity { get; set; }
+    [Range(typeof(decimal), "0", "9999999999.99")]
+    public decimal ReorderLevel { get; set; }
     [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal? SellingPrice { get; set; }
     [Required, RegularExpression(@"\A(ACTIVE|INACTIVE)\z")]

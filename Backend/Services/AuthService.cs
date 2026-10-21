@@ -13,15 +13,139 @@ public class AuthService : IAuthService
     private readonly IAuthRepository _repo;
     private readonly IJwtHelper _jwtHelper;
     private readonly IConfiguration _configuration;
+    private readonly IOtpStore _otpStore;
+    private readonly IEmailSender _emailSender;
 
     public AuthService(
         IAuthRepository repo,
         IJwtHelper jwtHelper,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IOtpStore otpStore,
+        IEmailSender emailSender)
     {
         _repo = repo;
         _jwtHelper = jwtHelper;
         _configuration = configuration;
+        _otpStore = otpStore;
+        _emailSender = emailSender;
+    }
+
+    public async Task<RegisterResponse> RegisterAsync(SignupRequest request)
+    {
+        EnsureOtpDeliveryConfigured();
+        await _repo.CreateUsersTableIfNotExistsAsync();
+        var email = NormalizeEmail(request.Email);
+        if (await _repo.GetByEmailAsync(email) != null)
+            throw new InvalidOperationException("Email already registered.");
+
+        var user = new User
+        {
+            Name = request.Name.Trim(), Email = email,
+            PasswordHash = PasswordHelper.HashPassword(request.Password),
+            Role = "FRANCHISE_OWNER", IsVerified = false
+        };
+        await _repo.CreateUserAsync(user);
+        var verificationId = await IssueOtpAsync("verify", email, "Verify your Nurapos email", "email verification");
+        return new RegisterResponse
+        {
+            VerificationId = verificationId,
+            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(OtpTtlMinutes)
+        };
+    }
+
+    public async Task<AuthResponse?> VerifyEmailAsync(EmailCodeRequest request)
+    {
+        await _repo.CreateUsersTableIfNotExistsAsync();
+        var email = NormalizeEmail(request.Email);
+        var user = await _repo.GetByEmailAsync(email) ?? throw new KeyNotFoundException("Email is not registered.");
+        if (user.IsVerified) return null;
+        var result = await _otpStore.VerifyAsync("verify", email, HashOtp("verify", email, request.Code), MaxOtpAttempts, request.VerificationId);
+        EnsureOtpAccepted(result);
+        await _repo.SetEmailVerifiedAsync(user.UserId);
+        return await CreateAuthResponseAsync(user.UserId,user.Email,user.Role,user.CreatedAt);
+    }
+
+    public async Task ResendVerificationAsync(EmailRequest request)
+    {
+        EnsureOtpDeliveryConfigured();
+        var email = NormalizeEmail(request.Email);
+        var user = await _repo.GetByEmailAsync(email);
+        if (user is not null && !user.IsVerified)
+            _ = await IssueOtpAsync("verify", email, "Your Nurapos verification code", "email verification");
+    }
+
+    public async Task ForgotPasswordAsync(EmailRequest request)
+    {
+        EnsureOtpDeliveryConfigured();
+        var email = NormalizeEmail(request.Email);
+        var user = await _repo.GetByEmailAsync(email);
+        if (user is not null)
+            _ = await IssueOtpAsync("reset", email, "Your Nurapos password reset code", "password reset");
+    }
+
+    public async Task<string> VerifyPasswordResetCodeAsync(EmailCodeRequest request)
+    {
+        var email = NormalizeEmail(request.Email);
+        var result = await _otpStore.VerifyAsync("reset", email, HashOtp("reset", email, request.Code), MaxOtpAttempts);
+        EnsureOtpAccepted(result);
+        var token = CreateRefreshToken();
+        var tokenHash = HashRefreshToken(token);
+        await _otpStore.PutTokenAsync("reset", tokenHash, email, TimeSpan.FromMinutes(10));
+        return token;
+    }
+
+    public async Task ResetPasswordAsync(PasswordResetRequest request)
+    {
+        var email = NormalizeEmail(request.Email);
+        var tokenEmail = await _otpStore.ConsumeTokenAsync("reset", HashRefreshToken(request.ResetToken));
+        if (!string.Equals(tokenEmail, email, StringComparison.Ordinal))
+            throw new UnauthorizedAccessException("Reset token is invalid or expired.");
+        var user = await _repo.GetByEmailAsync(email)
+            ?? throw new UnauthorizedAccessException("Reset token is invalid or expired.");
+        if (!await _repo.UpdatePasswordAndRevokeRefreshTokensAsync(user.UserId, PasswordHelper.HashPassword(request.NewPassword)))
+            throw new InvalidOperationException("Password could not be updated.");
+    }
+
+    private int OtpTtlMinutes => Math.Clamp(_configuration.GetValue("Redis:OtpTtlMinutes", 10), 1, 30);
+    private int MaxOtpAttempts => Math.Clamp(_configuration.GetValue("Redis:MaxOtpAttempts", 5), 1, 10);
+
+    private async Task<string> IssueOtpAsync(string purpose, string email, string subject, string label)
+    {
+        var code = RandomNumberGenerator.GetInt32(0, 10000).ToString("D4");
+        var transactionId = purpose == "verify" ? Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant() : null;
+        await _otpStore.PutAsync(purpose, email, HashOtp(purpose, email, code), TimeSpan.FromMinutes(OtpTtlMinutes), transactionId);
+        var safeCode = System.Net.WebUtility.HtmlEncode(code);
+        await _emailSender.SendAsync(email, subject,
+            $"<p>Your {label} code is <strong>{safeCode}</strong>.</p><p>It expires in {OtpTtlMinutes} minutes.</p>");
+        return transactionId ?? string.Empty;
+    }
+
+    private void EnsureOtpDeliveryConfigured()
+    {
+        if (string.IsNullOrWhiteSpace(_configuration["Redis:ConnectionString"]))
+            throw new InvalidOperationException("Redis:ConnectionString must be configured before account verification can be used.");
+        if (string.IsNullOrWhiteSpace(_configuration["Mail:Host"]) || string.IsNullOrWhiteSpace(_configuration["Mail:FromAddress"]))
+            throw new InvalidOperationException("Mail:Host and Mail:FromAddress must be configured before account verification can be used.");
+        _ = HashOtp("configuration-check", "configuration-check", "0000");
+    }
+
+    private string HashOtp(string purpose, string email, string code)
+    {
+        var pepper = _configuration["Auth:OtpPepper"] ?? _configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(pepper) || pepper == "YOUR_VERY_LONG_RANDOM_SECRET_KEY_HERE")
+            throw new InvalidOperationException("Configure Auth:OtpPepper using a secret value.");
+        var bytes = System.Security.Cryptography.HMACSHA256.HashData(Encoding.UTF8.GetBytes(pepper), Encoding.UTF8.GetBytes($"{purpose}:{email}:{code}"));
+        return Convert.ToHexString(bytes);
+    }
+
+    private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
+
+    private static void EnsureOtpAccepted(OtpValidationResult result)
+    {
+        if (result == OtpValidationResult.Valid) return;
+        if (result is OtpValidationResult.MissingOrExpired or OtpValidationResult.AttemptsExceeded)
+            throw new InvalidOperationException(result == OtpValidationResult.MissingOrExpired ? "Code expired." : "Maximum verification attempts exceeded.");
+        throw new UnauthorizedAccessException("Invalid verification code.");
     }
 
     public async Task<AuthResponse> SignupAsync(SignupRequest request)
@@ -58,6 +182,9 @@ public class AuthService : IAuthService
 
         var user = await _repo.GetByEmailAsync(request.Email)
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
+
+        if (!user.IsVerified)
+            throw new UnauthorizedAccessException("Verify your email before signing in.");
 
         if (!PasswordHelper.Verify(request.Password, user.PasswordHash))
         {

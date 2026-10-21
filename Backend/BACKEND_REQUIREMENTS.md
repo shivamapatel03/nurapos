@@ -4,15 +4,19 @@ This document is the backend handoff for the current Nuradesk frontend. It separ
 
 ## 1. Current Backend Status
 
-Implemented today:
+Implemented today (snapshot; verify against the code before relying on this list):
 
-- `POST /api/franchises`
-- `GET /api/franchises`
-- `GET /api/franchises/{id}`
-- `PUT /api/franchises/{id}`
-- `DELETE /api/franchises/{id}`
-- PostgreSQL via `Npgsql`
-- JWT authentication middleware is registered, but no auth controller, token issuing endpoint, or `[Authorize]` protected business endpoint exists.
+- PostgreSQL via `Npgsql`, JWT authentication, and owner-scoped franchise, catalog, sales/purchase/expense, inventory, payment-mode, and summary APIs.
+- Auth signup/register, login, refresh/logout, email OTP verify/resend, password recovery/reset, and owner POS PIN setup/verify. OTPs/reset tokens are held in Redis; OTPs are HMAC-hashed.
+- Onboarding status, JSON draft persistence, and transactional completion that creates a franchise/store profile, payment modes, and staff.
+- Employee CRUD/deactivation and PIN setup/reset; terminal registration/heartbeat/eligible employees and POS PIN login.
+- Shift open/active/cash-movement/close with server cash reconciliation; customers and loyalty redemption; offers and code validation; table status/transfer.
+- Product-image/receipt upload, sales-tax/profit-loss/Z/inventory-valuation reports, and store/hardware settings.
+- Exception middleware, an action logging filter, IP rate limits, and Redis-backed distributed limits on sensitive auth/PIN routes.
+
+Some report values depend on the available transactional data. Discount/refund totals are zero until those workflows are implemented, and legacy sale lines without cost snapshots use the current product cost for COGS.
+
+The remaining endpoints below are target contracts, not a claim of implementation. The canonical architecture/layering and Redis/email configuration plan is in `BACKEND_ARCHITECTURE.md`.
 
 The frontend API helper is `src/lib/api-client.ts` and uses:
 

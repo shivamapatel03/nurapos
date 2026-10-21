@@ -22,6 +22,7 @@ public class AuthRepository : IAuthRepository
                 c_email TEXT UNIQUE NOT NULL,
                 c_password_hash TEXT NOT NULL,
                 c_role TEXT NOT NULL,
+                c_is_verified BOOLEAN NOT NULL DEFAULT TRUE,
                 c_created_at TIMESTAMP DEFAULT now()
             );
             """;
@@ -30,6 +31,12 @@ public class AuthRepository : IAuthRepository
 
         await using var command = new NpgsqlCommand(sql, _connection);
         await command.ExecuteNonQueryAsync();
+
+        await using (var verifiedColumnCommand = new NpgsqlCommand(
+            "ALTER TABLE t_user ADD COLUMN IF NOT EXISTS c_is_verified BOOLEAN NOT NULL DEFAULT TRUE;", _connection))
+        {
+            await verifiedColumnCommand.ExecuteNonQueryAsync();
+        }
 
         await using (var pinColumnCommand = new NpgsqlCommand(
             "ALTER TABLE t_user ADD COLUMN IF NOT EXISTS c_pos_pin_hash TEXT;", _connection))
@@ -61,14 +68,16 @@ public class AuthRepository : IAuthRepository
                 c_name,
                 c_email,
                 c_password_hash,
-                c_role
+                c_role,
+                c_is_verified
             )
             VALUES
             (
                 @name,
                 @email,
                 @password_hash,
-                @role
+                @role,
+                @is_verified
             )
             RETURNING c_user_id;
             """;
@@ -81,6 +90,7 @@ public class AuthRepository : IAuthRepository
         command.Parameters.AddWithValue("@email", user.Email);
         command.Parameters.AddWithValue("@password_hash", user.PasswordHash);
         command.Parameters.AddWithValue("@role", user.Role);
+        command.Parameters.AddWithValue("@is_verified", user.IsVerified);
 
         var result = await command.ExecuteScalarAsync();
 
@@ -96,6 +106,7 @@ public class AuthRepository : IAuthRepository
                 c_email,
                 c_password_hash,
                 c_role,
+                c_is_verified,
                 c_created_at
             FROM t_user
             WHERE LOWER(c_email) = LOWER(@email)
@@ -121,6 +132,7 @@ public class AuthRepository : IAuthRepository
             Email = reader.GetString(reader.GetOrdinal("c_email")),
             PasswordHash = reader.GetString(reader.GetOrdinal("c_password_hash")),
             Role = reader.GetString(reader.GetOrdinal("c_role")),
+            IsVerified = reader.GetBoolean(reader.GetOrdinal("c_is_verified")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("c_created_at"))
         };
     }
@@ -128,7 +140,7 @@ public class AuthRepository : IAuthRepository
     public async Task<User?> GetByIdAsync(int userId)
     {
         const string sql = """
-            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_created_at
+            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_is_verified, c_created_at
             FROM t_user
             WHERE c_user_id = @user_id;
             """;
@@ -217,7 +229,7 @@ public class AuthRepository : IAuthRepository
         }
 
         const string userSql = """
-            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_created_at
+            SELECT c_user_id, c_name, c_email, c_password_hash, c_role, c_is_verified, c_created_at
             FROM t_user
             WHERE c_user_id = @user_id;
             """;
@@ -247,6 +259,32 @@ public class AuthRepository : IAuthRepository
         return await command.ExecuteNonQueryAsync() > 0;
     }
 
+    public async Task<bool> SetEmailVerifiedAsync(int userId)
+    {
+        const string sql = "UPDATE t_user SET c_is_verified = TRUE WHERE c_user_id = @user_id;";
+        await OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(sql, _connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+        return await command.ExecuteNonQueryAsync() == 1;
+    }
+
+    public async Task<bool> UpdatePasswordAndRevokeRefreshTokensAsync(int userId, string passwordHash)
+    {
+        await OpenConnectionAsync();
+        await using var transaction = await _connection.BeginTransactionAsync();
+        const string updatePassword = "UPDATE t_user SET c_password_hash = @password_hash WHERE c_user_id = @user_id;";
+        await using var passwordCommand = new NpgsqlCommand(updatePassword, _connection, transaction);
+        passwordCommand.Parameters.AddWithValue("@password_hash", passwordHash);
+        passwordCommand.Parameters.AddWithValue("@user_id", userId);
+        var changed = await passwordCommand.ExecuteNonQueryAsync();
+        if (changed != 1) { await transaction.RollbackAsync(); return false; }
+        await using var revokeCommand = new NpgsqlCommand("DELETE FROM t_refresh_token WHERE c_user_id = @user_id;", _connection, transaction);
+        revokeCommand.Parameters.AddWithValue("@user_id", userId);
+        await revokeCommand.ExecuteNonQueryAsync();
+        await transaction.CommitAsync();
+        return true;
+    }
+
     private static User MapUser(NpgsqlDataReader reader)
     {
         return new User
@@ -256,6 +294,7 @@ public class AuthRepository : IAuthRepository
             Email = reader.GetString(reader.GetOrdinal("c_email")),
             PasswordHash = reader.GetString(reader.GetOrdinal("c_password_hash")),
             Role = reader.GetString(reader.GetOrdinal("c_role")),
+            IsVerified = reader.GetBoolean(reader.GetOrdinal("c_is_verified")),
             CreatedAt = reader.GetDateTime(reader.GetOrdinal("c_created_at"))
         };
     }

@@ -97,6 +97,9 @@ public sealed class FranchiseProductRecord
     public decimal StockQuantity { get; set; }
 
     [Range(typeof(decimal), "0", "9999999999.99")]
+    public decimal ReorderLevel { get; set; }
+
+    [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal? SellingPrice { get; set; }
 
     [Required, RegularExpression(@"\A(ACTIVE|INACTIVE)\z")]
