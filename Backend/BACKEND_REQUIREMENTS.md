@@ -1,6 +1,6 @@
 # Nuradesk Pending Backend Requirements
 
-> **Scope Note:** This document lists **ONLY the APIs that are currently missing from the backend**.  
+> **Scope Note:** This document lists **ONLY the APIs that are currently missing from the backend**.
 > The 26 core franchise owner endpoints (`/api/auth/signup`, `login`, `pos-pin/setup`, `pos-pin/verify`, `/api/franchises/*`, `/api/owner-catalog/*`, `/api/owner/sales`, `purchases`, `expenses`, `payments`, `inventory`, `daily-summaries`) are already implemented.
 
 ---
@@ -29,7 +29,7 @@ NEXT_PUBLIC_API_URL || http://localhost:5000/api
 
 All other frontend features currently use component state, mock data, or `localStorage`. They must be replaced with authenticated API calls and server-side persistence.
 
-## 2. User Roles
+## User Roles Reference
 
 Required roles:
 
@@ -50,7 +50,6 @@ Every request must be scoped by `organizationId` and, where applicable, `branchI
 ### 1.1 Email Verification (OTP)
 * **Frontend Screens:** `/verify-email`, `/verification`
 * **Purpose:** Validate new owner account via 4-digit numeric code sent after signup.
->>>>>>> dbb565d5b2e9b4edbf3e51c1119b8f0517f0cc6f
 
 #### `POST /api/auth/verify-email`
 * **Auth:** Public
