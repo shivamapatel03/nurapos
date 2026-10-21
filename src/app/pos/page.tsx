@@ -41,6 +41,7 @@ import ActionMenu, {
   ActionEndShiftIcon,
   ActionDarkModeIcon,
 } from '@/components/pos/ActionMenu';
+import CompletePaymentModal from '@/components/pos/CompletePaymentModal';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
@@ -2376,286 +2377,64 @@ export default function PosMainScreen() {
           </div>
         </aside>
 
-      {/* PAYMENT MODAL */}
-      {showPaymentModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1.5rem',
-        }}>
-          <div style={{
-            width: '100%',
-            maxWidth: '460px',
-            backgroundColor: theme.popoverBg,
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            padding: '1.75rem',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
-          }}>
-            {paymentSuccess ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                <CheckCircleRoundedIcon sx={{ fontSize: 64, color: '#22C55E', marginBottom: '1rem' }} />
-                <h3 style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, marginBottom: '0.35rem' }}>
-                  Payment of ₹{total} Successful!
-                </h3>
-                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 0.5rem 0' }}>
-                  Order {orderNumber} completed • Receipt printing...
-                </p>
-                <div style={{
-                  display: 'inline-flex',
-                  flexDirection: 'column',
-                  gap: '5px',
-                  textAlign: 'left',
-                  backgroundColor: theme.bgCardSubtle,
-                  padding: '0.65rem 0.95rem',
-                  borderRadius: '0.65rem',
-                  border: `1px solid ${theme.border}`,
-                  fontSize: '12px',
-                  marginTop: '0.5rem',
-                }}>
-                  <div>
-                    <strong>Order Type:</strong>{' '}
-                    {orderType === 'dine_in'
-                      ? `Dine In (${tableSection} • ${tableNumber})`
-                      : orderType === 'takeaway'
-                      ? `Takeaway (${ticketNumber})`
-                      : `Delivery (${deliveryPlatform})`}
-                  </div>
-                  <div><strong>Customer:</strong> {customerName} {customerPhone ? `(${customerPhone})` : ''}</div>
-                  {saleNote && <div><strong>Sale Note:</strong> {saleNote}</div>}
-                  {paymentNote && <div><strong>Pay Ref:</strong> {paymentNote}</div>}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <div>
-                    <h3 style={{ fontSize: '20px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                      Complete Payment
-                    </h3>
-                    <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '0.2rem 0 0 0' }}>
-                      Total Due: ₹{total} •{' '}
-                      <strong style={{ color: theme.activeBg }}>
-                        {orderType === 'dine_in'
-                          ? `Dine In (${tableSection} • ${tableNumber})`
-                          : orderType === 'takeaway'
-                          ? `Takeaway (${ticketNumber})`
-                          : `Delivery (${deliveryPlatform})`}
-                      </strong>
-                    </p>
-                    <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: '0.15rem 0 0 0' }}>
-                      Customer: <strong style={{ color: theme.textPrimary }}>{customerName}</strong> {customerPhone ? `(${customerPhone})` : ''}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPaymentModal(false)}
-                    style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 20 }} />
-                  </button>
-                </div>
+      {/* COMPLETE PAYMENT MODAL */}
+      <CompletePaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          if (cart.length === 0) {
+            setSaleNote('');
+            setPaymentNote('');
+            setCustomerName('Guest Customer');
+            setCustomerPhone('');
+            setOrderType('dine_in');
+            setTableSection('Main Hall');
+            setTableNumber('T-01');
+          }
+        }}
+        theme={theme}
+        orderNumber={orderNumber}
+        orderType={orderType}
+        tableSection={tableSection}
+        tableNumber={tableNumber}
+        ticketNumber={ticketNumber}
+        deliveryPlatform={deliveryPlatform}
+        customerName={customerName}
+        customerPhone={customerPhone}
+        cart={cart}
+        subtotal={subtotal}
+        discountAmount={discountAmount}
+        tax={tax}
+        total={total}
+        saleNote={saleNote}
+        paymentNote={paymentNote}
+        setPaymentNote={setPaymentNote}
+        onCompleteOrder={() => {
+          try {
+            const existing = JSON.parse(localStorage.getItem('nuradesk_orders') || '[]');
+            setOrderNumber(`#ORD-${1000 + existing.length + 1}`);
 
-                {/* Payment Method Selector */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.65rem', marginBottom: '1.5rem' }}>
-                  {[
-                    { id: 'upi', label: 'UPI / QR', icon: <QrCode2RoundedIcon sx={{ fontSize: 22 }} /> },
-                    { id: 'cash', label: 'Cash', icon: <PaymentsRoundedIcon sx={{ fontSize: 22 }} /> },
-                    { id: 'card', label: 'Card', icon: <CreditCardRoundedIcon sx={{ fontSize: 22 }} /> },
-                  ].map((m) => {
-                    const isSelected = paymentMethod === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => setPaymentMethod(m.id as any)}
-                        style={{
-                          padding: '0.85rem 0.5rem',
-                          borderRadius: '0.75rem',
-                          border: isSelected ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                          backgroundColor: isSelected ? theme.activeBg : theme.bgCardSubtle,
-                          color: isSelected ? theme.activeText : theme.textPrimary,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        {m.icon}
-                        <span>{m.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            // Auto-increment takeaway ticket number for the next takeaway customer
+            if (orderType === 'takeaway') {
+              const nextNum = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
+              setTicketNumber(`TK-${String(nextNum).padStart(2, '0')}`);
+            }
+          } catch (e) {}
 
-                {paymentMethod === 'upi' && (
-                  <div style={{
-                    padding: '1.25rem',
-                    backgroundColor: theme.bgCardSubtle,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.85rem',
-                    textAlign: 'center',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <div style={{
-                      width: '120px',
-                      height: '120px',
-                      backgroundColor: '#FFFFFF',
-                      border: `1px solid ${theme.border}`,
-                      borderRadius: '0.5rem',
-                      margin: '0 auto 0.85rem auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <QrCode2RoundedIcon sx={{ fontSize: 100, color: '#000000' }} />
-                    </div>
-                    <span style={{ fontSize: '12.5px', color: theme.textSecondary }}>
-                      Scan dynamic UPI QR code on customer display
-                    </span>
-                  </div>
-                )}
+          // Clear cart so next order starts clean
+          setCart([]);
+          setSaleNote('');
+          setPaymentNote('');
+          setCustomerName('Guest Customer');
+          setCustomerPhone('');
+          setOrderType('dine_in');
+          setTableSection('Main Hall');
+          setTableNumber('T-01');
+        }}
+        getItemUnitPrice={getItemUnitPrice}
+        getItemLineTotal={getItemLineTotal}
+      />
 
-                {paymentMethod === 'cash' && (
-                  <div style={{
-                    padding: '1.25rem',
-                    backgroundColor: theme.bgCardSubtle,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.85rem',
-                    marginBottom: '1.5rem',
-                  }}>
-                    <div style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '0.5rem' }}>
-                      Cash Received:
-                    </div>
-                    <input
-                      type="number"
-                      defaultValue={total}
-                      style={{
-                        width: '100%',
-                        height: '42px',
-                        backgroundColor: theme.bgCard,
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '0.55rem',
-                        padding: '0 0.85rem',
-                        color: theme.textPrimary,
-                        fontSize: '18px',
-                        fontWeight: 800,
-                        fontFamily: 'inherit',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-                )}
-
-                {paymentMethod === 'card' && (
-                  <div style={{
-                    padding: '1.25rem',
-                    backgroundColor: theme.bgCardSubtle,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.85rem',
-                    textAlign: 'center',
-                    marginBottom: '1.5rem',
-                    color: theme.textSecondary,
-                    fontSize: '13px',
-                  }}>
-                    Insert or tap debit/credit card on EDC terminal.
-                  </div>
-                )}
-
-                {/* Notes in Payment Modal */}
-                <div style={{
-                  marginBottom: '1.25rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.65rem',
-                }}>
-                  {saleNote && (
-                    <div style={{
-                      padding: '0.55rem 0.75rem',
-                      backgroundColor: theme.bgCardSubtle,
-                      borderRadius: '0.55rem',
-                      border: `1px solid ${theme.border}`,
-                      fontSize: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                    }}>
-                      <span style={{ color: theme.textSecondary, fontWeight: 700 }}>Sale Note:</span>
-                      <span style={{ color: theme.textPrimary }}>{saleNote}</span>
-                    </div>
-                  )}
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary }}>
-                        Payment Note / Reference:
-                      </label>
-                      {paymentNote && (
-                        <button
-                          type="button"
-                          onClick={() => setPaymentNote('')}
-                          style={{ background: 'none', border: 'none', color: theme.textMuted, fontSize: '11px', cursor: 'pointer' }}
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="e.g. UPI txn ref, Cheque #, Split info..."
-                      value={paymentNote}
-                      onChange={(e) => setPaymentNote(e.target.value)}
-                      style={{
-                        width: '100%',
-                        height: '38px',
-                        backgroundColor: theme.bgCard,
-                        border: `1px solid ${theme.border}`,
-                        borderRadius: '0.55rem',
-                        padding: '0 0.75rem',
-                        color: theme.textPrimary,
-                        fontSize: '13px',
-                        fontFamily: 'inherit',
-                        boxSizing: 'border-box',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Payment Button */}
-                <button
-                  type="button"
-                  onClick={handleProcessPayment}
-                  className="button-20"
-                  style={{
-                    width: '100%',
-                    height: '46px',
-                    borderRadius: '6px',
-                    backgroundColor: theme.posBtnBg,
-                    color: theme.posBtnText,
-                    fontSize: '14.5px',
-                    fontWeight: 800,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Confirm & Complete Order
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* END SHIFT MODAL */}
       {showEndShiftModal && (

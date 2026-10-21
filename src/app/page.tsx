@@ -11,7 +11,6 @@ import WorkflowSection from '../components/WorkflowSection';
 import FeatureAccordion from '../components/FeatureAccordion';
 import PricingSection from '../components/PricingSection';
 import FaqSection from '../components/FaqSection';
-import BentoGrid from '../components/BentoGrid';
 import Footer from '../components/Footer';
 
 export default function HomePage() {
@@ -34,7 +33,6 @@ export default function HomePage() {
       <FeatureAccordion />
       <PricingSection />
       <FaqSection />
-      <BentoGrid />
       <Footer />
     </main>
   );
