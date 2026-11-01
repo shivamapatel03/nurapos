@@ -1,19 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import { getOnboardingStatus } from '@/lib/api-client';
 
 export default function OnboardingScreen1() {
   const router = useRouter();
+  const [currentStep, setCurrentStep] = useState<number>(2);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [isChecking, setIsChecking] = useState<boolean>(true);
 
   // Temporary direct Unsplash image for store setup onboarding
   const unsplashImageUrl = 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=800&auto=format&fit=crop';
 
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const res = await getOnboardingStatus();
+        if (res.data?.isCompleted) {
+          setIsCompleted(true);
+          router.replace('/dashboard');
+          return;
+        }
+        if (res.data?.currentStep && res.data.currentStep >= 2) {
+          setCurrentStep(res.data.currentStep);
+        }
+      } catch {
+        // Fallback for offline/guest state
+      } finally {
+        setIsChecking(false);
+      }
+    }
+    checkStatus();
+  }, [router]);
+
   const handleGetStarted = () => {
-    router.push('/onboarding-2');
+    router.push(`/onboarding-${currentStep}`);
   };
 
   return (

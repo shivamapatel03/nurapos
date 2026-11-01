@@ -2,6 +2,12 @@ namespace Nurapos.Models;
 
 public class StoreSettings
 {
+    public string? StoreName { get; set; }
+    public string? StoreCode { get; set; }
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? Website { get; set; }
     public string CurrencyCode { get; set; } = "INR";
     public string CurrencySymbol { get; set; } = "₹";
     public decimal DefaultTaxRate { get; set; }

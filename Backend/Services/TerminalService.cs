@@ -40,5 +40,8 @@ public sealed class TerminalService(ITerminalRepository repository, IJwtHelper j
         };
     }
 
+    public Task<EmployeeLookupDto?> LookupEmployeeAsync(string identifier) =>
+        repository.LookupEmployeeAsync(identifier);
+
     private static string? BlankToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

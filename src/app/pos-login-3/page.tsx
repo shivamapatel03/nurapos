@@ -37,7 +37,9 @@ export default function PosLoginScreen3() {
 
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
-    // Route to PIN screen (screen 2) for the chosen user
+    if (selectedUser) {
+      localStorage.setItem('nuradesk_user_name', selectedUser);
+    }
     router.push('/pos-login-2');
   };
 

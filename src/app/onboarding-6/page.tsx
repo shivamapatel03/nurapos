@@ -1,21 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FullScreenBufferLoader from '@/components/FullScreenBufferLoader';
+import { getOnboardingStatus, completeOnboarding } from '@/lib/api-client';
 
 export default function OnboardingScreen6() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{
+    businessName: string;
+    storeName: string;
+    teamCount: number;
+    paymentMethods: string;
+  }>({
+    businessName: 'My Business',
+    storeName: 'Main Store',
+    teamCount: 1,
+    paymentMethods: 'Cash · Card · UPI',
+  });
 
-  const handleGoToDashboard = () => {
+  useEffect(() => {
+    async function fetchSummary() {
+      try {
+        const res = await getOnboardingStatus();
+        const draft = res.data?.draft;
+        if (draft) {
+          const methods: string[] = [];
+          if (draft.paymentMethods?.cash) methods.push('Cash');
+          if (draft.paymentMethods?.card) methods.push('Card');
+          if (draft.paymentMethods?.upi) methods.push('UPI');
+
+          setSummary({
+            businessName: draft.businessName || 'My Business',
+            storeName: draft.storeName || 'Main Store',
+            teamCount: Array.isArray(draft.staff) ? draft.staff.length : 1,
+            paymentMethods: methods.length > 0 ? methods.join(' · ') : 'Cash · Card · UPI',
+          });
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    fetchSummary();
+  }, []);
+
+  const handleGoToDashboard = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 2200);
+    setErrorMessage(null);
+
+    try {
+      await completeOnboarding();
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMessage(
+        err.message || 'Failed to complete store onboarding. Please check your details.'
+      );
+    }
   };
 
   return (
@@ -135,6 +184,29 @@ export default function OnboardingScreen6() {
           You&apos;re all set!
         </h1>
 
+        {/* Error Message */}
+        {errorMessage && (
+          <div style={{
+            width: '100%',
+            maxWidth: '380px',
+            padding: '0.6rem 0.85rem',
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FCA5A5',
+            borderRadius: '0.75rem',
+            color: '#B91C1C',
+            fontSize: '13px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            textAlign: 'left',
+            marginBottom: '1rem',
+          }}>
+            <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {/* Structured Configuration Summary Card */}
         <div style={{
           width: '100%',
@@ -158,7 +230,7 @@ export default function OnboardingScreen6() {
             fontSize: '14.5px',
           }}>
             <span style={{ color: '#555555', fontWeight: 600 }}>Business</span>
-            <span style={{ color: '#000000', fontWeight: 800 }}>Nuradesk</span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>{summary.businessName}</span>
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%' }} />
@@ -171,7 +243,7 @@ export default function OnboardingScreen6() {
             fontSize: '14.5px',
           }}>
             <span style={{ color: '#555555', fontWeight: 600 }}>Store</span>
-            <span style={{ color: '#000000', fontWeight: 800 }}>Nuradesk Ahmedabad</span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>{summary.storeName}</span>
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%' }} />
@@ -184,7 +256,9 @@ export default function OnboardingScreen6() {
             fontSize: '14.5px',
           }}>
             <span style={{ color: '#555555', fontWeight: 600 }}>Team</span>
-            <span style={{ color: '#000000', fontWeight: 800 }}>2 employees</span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>
+              {summary.teamCount} {summary.teamCount === 1 ? 'employee' : 'employees'}
+            </span>
           </div>
 
           <div style={{ height: '1px', backgroundColor: '#F0F0F0', width: '100%' }} />
@@ -197,7 +271,7 @@ export default function OnboardingScreen6() {
             fontSize: '14.5px',
           }}>
             <span style={{ color: '#555555', fontWeight: 600 }}>Payment methods</span>
-            <span style={{ color: '#000000', fontWeight: 800 }}>Cash · Card · UPI</span>
+            <span style={{ color: '#000000', fontWeight: 800 }}>{summary.paymentMethods}</span>
           </div>
         </div>
 

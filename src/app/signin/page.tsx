@@ -1,27 +1,55 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import { loginUser } from '@/lib/api-client';
+import { isAuthenticated } from '@/lib/auth';
 
 export default function SigninPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // If already authenticated with valid token, redirect straight to dashboard
+  useEffect(() => {
+    if (isAuthenticated()) {
+      window.location.replace('/dashboard');
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter your email and password.');
+      return;
+    }
+    setErrorMessage('');
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      // POST /api/auth/login
+      const res = await loginUser({ email: email.trim(), password });
       setIsSubmitted(true);
-    }, 1000);
+      setTimeout(() => {
+        const dest = res.data && !res.data.posPinConfigured ? '/onboarding' : '/dashboard';
+        window.location.replace(dest);
+      }, 700);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Direct Unsplash image link for modern retail / cafe POS checkout
@@ -175,27 +203,61 @@ export default function SigninPage() {
               fontWeight: 800,
               letterSpacing: '-0.03em',
               color: '#000000',
-              marginBottom: 'clamp(1rem, 2vh, 1.75rem)',
+              marginBottom: 'clamp(0.8rem, 1.5vh, 1.4rem)',
             }}>
               Welcome Back
             </h1>
 
+            {/* Error Message */}
+            {errorMessage && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.55rem 0.75rem',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FCA5A5',
+                borderRadius: '0.75rem',
+                color: '#B91C1C',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+              }}>
+                <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             {isSubmitted ? (
               <div style={{
                 backgroundColor: '#FAFAFA',
-                border: '1px solid #000000',
-                borderRadius: '1rem',
+                border: '1px solid #E5E7EB',
+                borderRadius: '1.25rem',
                 padding: '1.75rem',
                 textAlign: 'center',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
               }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                <div style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ECFDF5',
+                  border: '2px solid #A7F3D0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem auto',
+                }}>
+                  <CheckCircleRoundedIcon sx={{ fontSize: 30, color: '#10B981' }} />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.4rem', color: '#000000' }}>
                   Authenticated!
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#525252', marginBottom: '1.25rem' }}>
-                  Logged in to Nuradesk as <strong>{email}</strong>.
+                <p style={{ fontSize: '0.86rem', color: '#525252', marginBottom: '1.25rem' }}>
+                  Logged in to Nuradesk as <strong>{email}</strong>. Launching your workspace...
                 </p>
-                <Link href="/" className="button-20 button-20-3d" role="button" style={{ width: '100%' }}>
-                  Launch POS Terminal
+                <Link href="/dashboard" className="button-20-3d" role="button" style={{ width: '100%', height: '46px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                  Go to Dashboard &gt;&gt;
                 </Link>
               </div>
             ) : (
@@ -220,7 +282,10 @@ export default function SigninPage() {
                     required
                     placeholder="example@gmail.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
                     style={{
                       width: '100%',
                       height: '50px',
@@ -264,7 +329,10 @@ export default function SigninPage() {
                       required
                       placeholder="Enter your password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errorMessage) setErrorMessage('');
+                      }}
                       style={{
                         width: '100%',
                         height: '50px',
@@ -349,13 +417,13 @@ export default function SigninPage() {
                     style={{
                       width: '100%',
                       height: '50px',
-                      fontSize: '1.05rem',
+                      fontSize: '1rem',
                       fontWeight: 600,
                       borderRadius: '1rem',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.55rem',
+                      gap: '0.65rem',
                       cursor: isLoading ? 'not-allowed' : 'pointer',
                       opacity: isLoading ? 0.85 : 1,
                       outline: 'none',
@@ -365,8 +433,8 @@ export default function SigninPage() {
                       <>
                         <svg
                           style={{
-                            width: '18px',
-                            height: '18px',
+                            width: '20px',
+                            height: '20px',
                             animation: 'spin 0.75s linear infinite',
                             flexShrink: 0,
                           }}
@@ -379,8 +447,7 @@ export default function SigninPage() {
                             r="10"
                             stroke="currentColor"
                             strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeDasharray="31.4 31.4"
+                            strokeOpacity="0.25"
                           />
                           <path
                             d="M12 2a10 10 0 0 1 10 10"
@@ -389,7 +456,7 @@ export default function SigninPage() {
                             strokeLinecap="round"
                           />
                         </svg>
-                        <span>Logging in...</span>
+                        <span>Authenticating...</span>
                       </>
                     ) : (
                       <span>Login</span>
@@ -397,14 +464,14 @@ export default function SigninPage() {
                   </button>
                 </div>
 
-                {/* Not have an Account link */}
+                {/* Create an Account link */}
                 <div style={{
                   textAlign: 'center',
-                  marginTop: '0.5rem',
-                  fontSize: '0.88rem',
+                  marginTop: '0.6rem',
+                  fontSize: '0.9rem',
                   color: '#000000',
                 }}>
-                  Not have an Account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
                     style={{
@@ -413,7 +480,7 @@ export default function SigninPage() {
                       textDecoration: 'none',
                     }}
                   >
-                    Create Account
+                    Create an Account
                   </Link>
                 </div>
               </form>

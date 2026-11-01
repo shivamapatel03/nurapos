@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getOnboardingStatus, saveOnboardingDraft } from '@/lib/api-client';
 
 const CITIES = [
   'Surat',
@@ -32,10 +34,54 @@ export default function OnboardingScreen3() {
   const [storeCode, setStoreCode] = useState('');
   const [storeAddress, setStoreAddress] = useState('');
   const [city, setCity] = useState('Surat');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleContinue = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadDraft() {
+      try {
+        const res = await getOnboardingStatus();
+        const draft = res.data?.draft;
+        if (draft) {
+          if (draft.storeName) setStoreName(draft.storeName);
+          if (draft.storeCode) setStoreCode(draft.storeCode);
+          if (draft.storeAddress) setStoreAddress(draft.storeAddress);
+          if (draft.city) setCity(draft.city);
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadDraft();
+  }, []);
+
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/onboarding-4');
+    setErrorMessage(null);
+
+    if (!storeName.trim()) {
+      setErrorMessage('Please enter your store name.');
+      return;
+    }
+    if (!storeCode.trim()) {
+      setErrorMessage('Please enter a unique store code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await saveOnboardingDraft({
+        storeName: storeName.trim(),
+        storeCode: storeCode.trim().toUpperCase(),
+        storeAddress: storeAddress.trim(),
+        city,
+      });
+      router.push('/onboarding-4');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to save store details.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -159,6 +205,26 @@ export default function OnboardingScreen3() {
           flexDirection: 'column',
           gap: '1.15rem',
         }}>
+          {/* Error Message */}
+          {errorMessage && (
+            <div style={{
+              padding: '0.6rem 0.85rem',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '0.75rem',
+              color: '#B91C1C',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+            }}>
+              <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Field 1: Store name */}
           <div>
             <label style={{
@@ -344,6 +410,7 @@ export default function OnboardingScreen3() {
             {/* Continue Button */}
             <button
               type="submit"
+              disabled={isLoading}
               className="button-20-3d"
               role="button"
               style={{
@@ -353,10 +420,15 @@ export default function OnboardingScreen3() {
                 fontWeight: 700,
                 letterSpacing: '-0.01em',
                 borderRadius: '0.85rem',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.8 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
               }}
             >
-              Continue
+              {isLoading ? 'Saving...' : 'Continue'}
             </button>
 
             {/* Back Button */}

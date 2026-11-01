@@ -45,6 +45,7 @@ import CustomersManagement from '@/components/admin/CustomersManagement';
 import EmployeesManagement from '@/components/admin/EmployeesManagement';
 import ReportsManagement from '@/components/admin/ReportsManagement';
 import { AppTheme, ThemeMode, ThemeId, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 
 interface SubNavItem {
   id: string;
@@ -62,6 +63,7 @@ interface NavItem {
 }
 
 export default function ManagerDashboardPage() {
+  const { isAuthorized, handleLogout } = useAuthGuard();
   const router = useRouter();
 
   // Active Tab & Menu Expansion State
@@ -164,7 +166,6 @@ export default function ManagerDashboardPage() {
       icon: <ReceiptLongOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'orders_all', label: 'All Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'orders_returns', label: 'Returns', icon: <AssignmentReturnRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'orders_payments', label: 'Payments', icon: <CreditCardRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
@@ -189,8 +190,6 @@ export default function ManagerDashboardPage() {
       subItems: [
         { id: 'emp_staff', label: 'Staff', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'emp_shifts', label: 'Shifts', icon: <ScheduleRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'emp_attendance', label: 'Attendance', icon: <EventAvailableRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'emp_performance', label: 'Performance', icon: <TrendingUpRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -200,7 +199,6 @@ export default function ManagerDashboardPage() {
       subItems: [
         { id: 'rep_sales', label: 'Sales', icon: <BarChartRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'rep_inventory', label: 'Inventory', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'rep_performance', label: 'Employee Performance', icon: <BadgeRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -215,7 +213,6 @@ export default function ManagerDashboardPage() {
   const isOrdersActive =
     activeTabId === 'orders' ||
     activeTabId === 'orders_all' ||
-    activeTabId === 'orders_returns' ||
     activeTabId === 'orders_payments';
 
   const isInventoryActive = activeTabId === 'inventory';
@@ -262,6 +259,41 @@ export default function ManagerDashboardPage() {
 
   // Recent orders list
   const recentOrders: { id: string; customer: string; amount: string; status: string; time: string; items: number }[] = [];
+
+  if (isAuthorized !== true) {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.bgPage,
+        color: theme.textSecondary,
+        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: `3px solid ${theme.border}`,
+            borderTopColor: theme.activeBg || '#111827',
+            borderRadius: '50%',
+            animation: 'nurapos-spin 0.7s linear infinite',
+          }} />
+          <style>{`
+            @keyframes nurapos-spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+          <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.02em' }}>
+            Securing session...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -736,8 +768,9 @@ export default function ManagerDashboardPage() {
                 <span>{themeMode === 'dark' ? 'Light' : 'Dark'}</span>
               </button>
 
-              <Link
-                href="/signin"
+              <button
+                type="button"
+                onClick={handleLogout}
                 title="Log out of manager session"
                 style={{
                   height: '26px',
@@ -745,19 +778,19 @@ export default function ManagerDashboardPage() {
                   borderRadius: '0.4rem',
                   border: `1px solid ${theme.border}`,
                   backgroundColor: 'transparent',
-                  color: theme.textSecondary,
+                  color: '#EF4444',
                   fontSize: '11px',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
-                  textDecoration: 'none',
+                  cursor: 'pointer',
                   fontFamily: 'inherit',
                 }}
               >
                 <LogoutRoundedIcon sx={{ fontSize: 13 }} />
                 <span>Log out</span>
-              </Link>
+              </button>
             </div>
           </div>
         </aside>
@@ -787,11 +820,10 @@ export default function ManagerDashboardPage() {
             {isOrdersActive && (
               <SalesManagement
                 activeSubTab={
-                  activeTabId === 'orders_returns' ? 'returns' :
                   activeTabId === 'orders_payments' ? 'payments' : 'orders'
                 }
                 onSelectSubTab={(tab) => {
-                  const mapped = tab === 'returns' ? 'orders_returns' : tab === 'payments' ? 'orders_payments' : 'orders_all';
+                  const mapped = tab === 'payments' ? 'orders_payments' : 'orders_all';
                   setActiveTabId(mapped);
                   openSingleMenu('orders');
                 }}
@@ -826,15 +858,10 @@ export default function ManagerDashboardPage() {
               <EmployeesManagement
                 isManagerView={true}
                 activeSubTab={
-                  activeTabId === 'emp_shifts' ? 'emp_shifts' :
-                  activeTabId === 'emp_attendance' ? 'emp_attendance' :
-                  activeTabId === 'emp_performance' ? 'emp_performance' : 'emp_all'
+                  activeTabId === 'emp_shifts' ? 'emp_shifts' : 'emp_all'
                 }
                 onSelectSubTab={(tab) => {
-                  const mapped =
-                    tab === 'emp_shifts' ? 'emp_shifts' :
-                    tab === 'emp_attendance' ? 'emp_attendance' :
-                    tab === 'emp_performance' ? 'emp_performance' : 'emp_staff';
+                  const mapped = tab === 'emp_shifts' ? 'emp_shifts' : 'emp_staff';
                   setActiveTabId(mapped);
                   openSingleMenu('employees');
                 }}
@@ -846,8 +873,7 @@ export default function ManagerDashboardPage() {
             {isReportsActive && (
               <ReportsManagement
                 activeSubTab={
-                  activeTabId === 'rep_inventory' ? 'rep_inventory' :
-                  activeTabId === 'rep_performance' ? 'rep_performance' : 'rep_sales'
+                  activeTabId === 'rep_inventory' ? 'rep_inventory' : 'rep_sales'
                 }
                 onSelectSubTab={(tab) => {
                   setActiveTabId(tab);

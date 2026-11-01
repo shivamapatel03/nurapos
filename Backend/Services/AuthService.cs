@@ -249,7 +249,7 @@ public class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid or expired refresh token.");
         }
 
-        var accessToken = _jwtHelper.GenerateToken(user.UserId, user.Email, user.Role);
+        var accessToken = _jwtHelper.GenerateToken(user.UserId, user.Email, user.Role, posPinVerified: true);
         var hasPosPin = await _repo.HasPosPinAsync(user.UserId);
         return new AuthResponse
         {
@@ -280,7 +280,7 @@ public class AuthService : IAuthService
         string role,
         DateTime createdAt)
     {
-        var accessToken = _jwtHelper.GenerateToken(userId, email, role);
+        var accessToken = _jwtHelper.GenerateToken(userId, email, role, posPinVerified: true);
         var refreshToken = CreateRefreshToken();
         var refreshTokenExpiresAtUtc = GetRefreshTokenExpiry();
 

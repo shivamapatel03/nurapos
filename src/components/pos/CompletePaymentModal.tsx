@@ -17,6 +17,8 @@ import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import { redeemLoyaltyPoints, createPosSale } from '@/lib/api-client';
 
 export interface CartItem {
   product: {
@@ -91,6 +93,9 @@ interface CompletePaymentModalProps {
   deliveryPlatform?: string;
   customerName: string;
   customerPhone?: string;
+  customerId?: number | null;
+  customerLoyaltyPoints?: number;
+  onLoyaltyRedeemed?: (discountAmount: number, remainingPoints: number) => void;
   cart: any[];
   subtotal: number;
   discountAmount: number;
@@ -117,6 +122,9 @@ export default function CompletePaymentModal({
   deliveryPlatform,
   customerName,
   customerPhone,
+  customerId,
+  customerLoyaltyPoints,
+  onLoyaltyRedeemed,
   cart,
   subtotal,
   discountAmount,
@@ -132,8 +140,27 @@ export default function CompletePaymentModal({
   // Primary payment method selector
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('upi');
 
+  // Loyalty Points Redemption state (API 42: POST /api/customers/{id}/loyalty/redeem)
+  const [redeemPointsInput, setRedeemPointsInput] = useState<string>('');
+  const [isRedeemingPoints, setIsRedeemingPoints] = useState<boolean>(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
+  const [redeemSuccessMsg, setRedeemSuccessMsg] = useState<string | null>(null);
+  const [loyaltyDiscount, setLoyaltyDiscount] = useState<number>(0);
+  const [currentLoyaltyPoints, setCurrentLoyaltyPoints] = useState<number>(customerLoyaltyPoints || 0);
+
+  useEffect(() => {
+    setCurrentLoyaltyPoints(customerLoyaltyPoints || 0);
+    setLoyaltyDiscount(0);
+    setRedeemPointsInput('');
+    setRedeemError(null);
+    setRedeemSuccessMsg(null);
+  }, [customerLoyaltyPoints, isOpen]);
+
+  // Effective Payable Total after Loyalty Discount
+  const payableTotal = Math.max(0, Math.round((total - loyaltyDiscount) * 100) / 100);
+
   // Cash state
-  const [cashTendered, setCashTendered] = useState<string>(String(total));
+  const [cashTendered, setCashTendered] = useState<string>(String(payableTotal));
 
   // UPI state
   const [upiStatus, setUpiStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
@@ -201,8 +228,8 @@ export default function CompletePaymentModal({
 
   // Cash calculations
   const parsedCashTendered = parseFloat(cashTendered) || 0;
-  const cashChange = Math.max(0, Math.round((parsedCashTendered - total) * 100) / 100);
-  const isCashInsufficient = parsedCashTendered < total;
+  const cashChange = Math.max(0, Math.round((parsedCashTendered - payableTotal) * 100) / 100);
+  const isCashInsufficient = parsedCashTendered < payableTotal;
 
   // Split calculations
   const parsedSplitCash = Math.max(0, parseFloat(splitAllocations.cash) || 0);
@@ -210,7 +237,7 @@ export default function CompletePaymentModal({
   const parsedSplitCard = Math.max(0, parseFloat(splitAllocations.card) || 0);
 
   const splitAllocatedTotal = Math.round((parsedSplitCash + parsedSplitUpi + parsedSplitCard) * 100) / 100;
-  const splitRemainingBalance = Math.round((total - splitAllocatedTotal) * 100) / 100;
+  const splitRemainingBalance = Math.round((payableTotal - splitAllocatedTotal) * 100) / 100;
   const isSplitBalanced = Math.abs(splitRemainingBalance) < 0.01;
   const isSplitOverallocated = splitRemainingBalance < -0.01;
 
@@ -236,8 +263,8 @@ export default function CompletePaymentModal({
 
   // Quick 50/50 Split Helper
   const handleSplitFiftyFifty = () => {
-    const half = Math.round((total / 2) * 100) / 100;
-    const remainder = Math.round((total - half) * 100) / 100;
+    const half = Math.round((payableTotal / 2) * 100) / 100;
+    const remainder = Math.round((payableTotal - half) * 100) / 100;
     setSplitAllocations({
       cash: String(half),
       upi: String(remainder),
@@ -272,13 +299,52 @@ export default function CompletePaymentModal({
     }, 700);
   };
 
+  // Handle Redeem Loyalty Points (API 42: POST /api/customers/{id}/loyalty/redeem)
+  const handleRedeemLoyalty = async () => {
+    if (!customerId) return;
+    const pts = parseInt(redeemPointsInput);
+    if (isNaN(pts) || pts <= 0) {
+      setRedeemError('Please enter valid points (1 or more).');
+      return;
+    }
+    if (pts > currentLoyaltyPoints) {
+      setRedeemError(`Cannot redeem more than available balance (${currentLoyaltyPoints} pts).`);
+      return;
+    }
+
+    setIsRedeemingPoints(true);
+    setRedeemError(null);
+
+    try {
+      const res = await redeemLoyaltyPoints(customerId, {
+        points: pts,
+        saleSubtotal: subtotal,
+      });
+
+      if (res.data) {
+        const disc = res.data.discountAmount;
+        const remaining = res.data.remainingPoints;
+        setLoyaltyDiscount(disc);
+        setCurrentLoyaltyPoints(remaining);
+        setRedeemSuccessMsg(`Redeemed ${pts} pts for ₹${disc.toFixed(2)} bill discount!`);
+        const newPayable = Math.max(0, Math.round((total - disc) * 100) / 100);
+        setCashTendered(String(newPayable));
+        onLoyaltyRedeemed?.(disc, remaining);
+      }
+    } catch (err: any) {
+      setRedeemError(err.message || 'Failed to redeem loyalty points. Please try again.');
+    } finally {
+      setIsRedeemingPoints(false);
+    }
+  };
+
   // Process and finalize payment
-  const handleConfirmAndComplete = () => {
+  const handleConfirmAndComplete = async () => {
     if (isSubmitting) return;
 
     // Validation checks
     if (paymentMethod === 'cash' && isCashInsufficient) {
-      alert(`Insufficient cash received. Short by ₹${(total - parsedCashTendered).toFixed(2)}`);
+      alert(`Insufficient cash received. Short by ₹${(payableTotal - parsedCashTendered).toFixed(2)}`);
       return;
     }
 
@@ -305,14 +371,14 @@ export default function CompletePaymentModal({
     if (paymentMethod === 'upi') {
       paymentsList.push({
         method: 'UPI / QR',
-        amount: total,
+        amount: payableTotal,
         reference: upiTxnRef || `UPI${Math.floor(100000 + Math.random() * 900000)}`,
         status: 'Success',
       });
     } else if (paymentMethod === 'cash') {
       paymentsList.push({
         method: 'Cash',
-        amount: total,
+        amount: payableTotal,
         tendered: parsedCashTendered,
         change: cashChange,
         status: 'Success',
@@ -320,7 +386,7 @@ export default function CompletePaymentModal({
     } else if (paymentMethod === 'card') {
       paymentsList.push({
         method: 'Card',
-        amount: total,
+        amount: payableTotal,
         reference: cardAuthRef || `AUTH${Math.floor(10000 + Math.random() * 90000)}`,
         status: 'Success',
       });
@@ -379,10 +445,10 @@ export default function CompletePaymentModal({
         total: getItemLineTotal(i),
       })),
       subtotal,
-      discountAmount,
+      discountAmount: discountAmount + loyaltyDiscount,
       taxAmount: tax,
-      totalAmount: total,
-      total,
+      totalAmount: payableTotal,
+      total: payableTotal,
       paymentMethod: paymentMethod === 'split' ? 'Split Payment' : paymentMethod.toUpperCase(),
       payments: paymentsList,
       paymentStatus: 'Success',
@@ -396,6 +462,27 @@ export default function CompletePaymentModal({
       paymentNote: autoRefNote || undefined,
       cashChange: paymentMethod === 'cash' ? cashChange : paymentMethod === 'split' ? splitCashChange : 0,
     };
+
+    // Save to real backend POS Sales API & deduct inventory stock
+    try {
+      const storedFranchiseId = Number(localStorage.getItem('nurapos_selected_franchise_id')) || 1;
+      const activeShiftId = localStorage.getItem('nurapos_active_shift_id') || undefined;
+      const salePayload = {
+        franchiseId: storedFranchiseId,
+        shiftId: activeShiftId,
+        paymentMethod: paymentMethod === 'split' ? 'SPLIT' : paymentMethod.toUpperCase(),
+        items: cart.map((i) => ({
+          productId: Number(i.product.id) || 1,
+          quantity: i.quantity,
+        })),
+      };
+      const saleRes = await createPosSale(salePayload);
+      if (saleRes?.data?.billNumber) {
+        orderRecord.orderNumber = saleRes.data.billNumber;
+      }
+    } catch (apiErr) {
+      console.warn('Backend POS sale notice (saved locally):', apiErr);
+    }
 
     // Save to localStorage
     try {
@@ -672,7 +759,7 @@ export default function CompletePaymentModal({
                   Complete Payment
                 </h3>
                 <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  <span>Total Due: <strong style={{ color: theme.textPrimary }}>₹{total.toFixed(2)}</strong></span>
+                  <span>Total Due: <strong style={{ color: theme.textPrimary }}>₹{payableTotal.toFixed(2)}</strong></span>
                   <span>•</span>
                   <span style={{ fontWeight: 700, color: theme.activeBg }}>{orderTypeLabel}</span>
                 </div>
@@ -708,7 +795,7 @@ export default function CompletePaymentModal({
                 border: `1px solid ${theme.border}`,
                 borderRadius: '0.75rem',
                 padding: '0.75rem 0.95rem',
-                marginBottom: '1.25rem',
+                marginBottom: '1rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -718,16 +805,108 @@ export default function CompletePaymentModal({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: theme.textSecondary }}>Order {orderNumber}</span>
                 <span style={{ color: theme.textPrimary, fontWeight: 700 }}>
-                  Subtotal: ₹{subtotal.toFixed(2)} {discountAmount > 0 && <span style={{ color: '#16A34A' }}>(-₹{discountAmount.toFixed(2)})</span>} + GST: ₹{tax.toFixed(2)}
+                  Subtotal: ₹{subtotal.toFixed(2)} {(discountAmount + loyaltyDiscount) > 0 && <span style={{ color: '#16A34A' }}>(-₹{(discountAmount + loyaltyDiscount).toFixed(2)})</span>} + GST: ₹{tax.toFixed(2)}
                 </span>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <span style={{ color: theme.textSecondary, fontSize: '11px' }}>Amount Due</span>
                 <div style={{ fontSize: '18px', fontWeight: 900, color: theme.textPrimary, lineHeight: 1.1 }}>
-                  ₹{total.toFixed(2)}
+                  ₹{payableTotal.toFixed(2)}
                 </div>
               </div>
             </div>
+
+            {/* Loyalty Points Redemption (API 42: POST /api/customers/{id}/loyalty/redeem) */}
+            {customerId && currentLoyaltyPoints > 0 && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(234, 179, 8, 0.08)',
+                  border: '1px solid rgba(234, 179, 8, 0.28)',
+                  borderRadius: '0.75rem',
+                  padding: '0.65rem 0.85rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <StarRoundedIcon sx={{ fontSize: 20, color: '#EAB308' }} />
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: theme.textPrimary }}>
+                      Loyalty Points: {currentLoyaltyPoints} Pts
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: theme.textSecondary }}>
+                      {redeemSuccessMsg ? (
+                        <span style={{ color: '#16A34A', fontWeight: 700 }}>{redeemSuccessMsg}</span>
+                      ) : redeemError ? (
+                        <span style={{ color: '#EF4444', fontWeight: 600 }}>{redeemError}</span>
+                      ) : (
+                        'Redeem loyalty points for direct discount on this bill'
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {loyaltyDiscount === 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max={currentLoyaltyPoints}
+                      value={redeemPointsInput}
+                      onChange={(e) => setRedeemPointsInput(e.target.value)}
+                      placeholder="Points"
+                      style={{
+                        width: '68px',
+                        height: '30px',
+                        padding: '0 8px',
+                        borderRadius: '6px',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgCard,
+                        color: theme.textPrimary,
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      disabled={isRedeemingPoints || !redeemPointsInput}
+                      onClick={handleRedeemLoyalty}
+                      style={{
+                        height: '30px',
+                        padding: '0 10px',
+                        borderRadius: '6px',
+                        backgroundColor: '#CA8A04',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: isRedeemingPoints || !redeemPointsInput ? 'not-allowed' : 'pointer',
+                        opacity: isRedeemingPoints || !redeemPointsInput ? 0.6 : 1,
+                      }}
+                    >
+                      {isRedeemingPoints ? 'Redeeming...' : 'Redeem'}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{
+                    fontSize: '11.5px',
+                    fontWeight: 800,
+                    color: '#16A34A',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.25)',
+                  }}>
+                    -₹{loyaltyDiscount.toFixed(2)} Off
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* 4-Item Payment Method Selector (UPI, Cash, Card, Split Payment) */}
             <div

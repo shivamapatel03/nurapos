@@ -38,19 +38,31 @@ public sealed class CustomerRepository(NpgsqlConnection connection) : ICustomerR
 
     public async Task<IReadOnlyList<Customer>> GetAllAsync(int ownerId, string? search, string? name)
     {
-        const string sql = """
+        await OpenAsync();
+        await using var cmd = connection.CreateCommand();
+        cmd.Parameters.AddWithValue("@owner_id", ownerId);
+
+        var sql = new System.Text.StringBuilder("""
             SELECT c_customer_id, c_user_id, c_name, c_phone, c_email, c_address, c_loyalty_points,
                    c_total_spent, c_total_visits, c_created_at
             FROM t_customer WHERE c_user_id = @owner_id
-              AND (@search IS NULL OR c_phone ILIKE '%' || @search || '%' OR c_name ILIKE '%' || @search || '%')
-              AND (@name IS NULL OR c_name ILIKE '%' || @name || '%')
-            ORDER BY c_name LIMIT 500;
-            """;
-        await OpenAsync();
-        await using var cmd = new NpgsqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@owner_id", ownerId);
-        cmd.Parameters.AddWithValue("@search", (object?)search ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@name", (object?)name ?? DBNull.Value);
+            """);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            sql.Append(" AND (c_phone ILIKE '%' || @search || '%' OR c_name ILIKE '%' || @search || '%')");
+            cmd.Parameters.AddWithValue("@search", search.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            sql.Append(" AND c_name ILIKE '%' || @name || '%'");
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+        }
+
+        sql.Append(" ORDER BY c_name LIMIT 500;");
+        cmd.CommandText = sql.ToString();
+
         await using var reader = await cmd.ExecuteReaderAsync();
         var customers = new List<Customer>();
         while (await reader.ReadAsync()) customers.Add(Map(reader));

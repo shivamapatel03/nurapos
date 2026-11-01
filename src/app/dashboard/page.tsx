@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -47,7 +47,6 @@ import AssignmentReturnRoundedIcon from '@mui/icons-material/AssignmentReturnRou
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
-import BrandingWatermarkRoundedIcon from '@mui/icons-material/BrandingWatermarkRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
@@ -68,9 +67,10 @@ import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
-import PaletteRoundedIcon from '@mui/icons-material/PaletteRounded';
 import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRounded';
 import { ThemeId, ThemeMode, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { getOwnerSales, getCatalogProducts, BillRecord } from '@/lib/api-client';
 
 interface SubNavItem {
   id: string;
@@ -88,6 +88,7 @@ interface NavItem {
 }
 
 export default function AdminDashboardPage() {
+  const { isAuthorized, handleLogout } = useAuthGuard();
   const router = useRouter();
 
   // Sidebar collapse/expand state with smooth animation
@@ -102,7 +103,6 @@ export default function AdminDashboardPage() {
     employees: false,
     customers: false,
     settings: false,
-    announcements: false,
   });
 
   const [activeTabId, setActiveTabId] = useState('dashboard');
@@ -116,22 +116,13 @@ export default function AdminDashboardPage() {
   const isSettingsActive =
     activeTabId === 'settings' ||
     activeTabId === 'set_store' ||
-    activeTabId === 'set_business' ||
     activeTabId === 'set_tables' ||
-    activeTabId === 'set_tax' ||
-    activeTabId === 'set_payments' ||
-    activeTabId === 'set_hardware' ||
-    activeTabId === 'set_pos' ||
-    activeTabId === 'set_notifications' ||
-    activeTabId === 'set_users' ||
-    activeTabId === 'set_security' ||
-    activeTabId === 'set_appearance';
+    activeTabId === 'set_hardware';
 
   const isCustomersActive =
     activeTabId === 'customers' ||
     activeTabId === 'cust_all' ||
-    activeTabId === 'cust_history' ||
-    activeTabId === 'cust_feedback';
+    activeTabId === 'cust_history';
 
   const isEmployeesActive =
     activeTabId === 'employees' ||
@@ -139,14 +130,11 @@ export default function AdminDashboardPage() {
     activeTabId === 'emp_cashiers' ||
     activeTabId === 'emp_managers' ||
     activeTabId === 'emp_roles' ||
-    activeTabId === 'emp_shifts' ||
-    activeTabId === 'emp_attendance' ||
-    activeTabId === 'emp_performance';
+    activeTabId === 'emp_shifts';
 
   const isSalesActive =
     activeTabId === 'sales' ||
     activeTabId === 'orders' ||
-    activeTabId === 'returns' ||
     activeTabId === 'payments';
 
   const isInventoryActive =
@@ -159,17 +147,12 @@ export default function AdminDashboardPage() {
     activeTabId === 'catalog' ||
     activeTabId === 'products' ||
     activeTabId === 'add_product' ||
-    activeTabId === 'categories' ||
-    activeTabId === 'brands';
+    activeTabId === 'categories';
 
   const isReportsActive =
     activeTabId === 'reports' ||
     activeTabId === 'rep_sales' ||
-    activeTabId === 'rep_inventory' ||
-    activeTabId === 'rep_customers' ||
-    activeTabId === 'rep_performance';
-
-  const isAnnouncementsActive = activeTabId === 'announcements';
+    activeTabId === 'rep_inventory';
 
   // Accordion navigation helpers: only ONE menu expanded at a time
   const openSingleMenu = (menuId: string) => {
@@ -181,8 +164,7 @@ export default function AdminDashboardPage() {
       employees: menuId === 'employees',
       customers: menuId === 'customers',
       settings: menuId === 'settings',
-      news: menuId === 'announcements',
-    });
+          });
   };
 
   const closeAllMenus = () => {
@@ -194,8 +176,7 @@ export default function AdminDashboardPage() {
       employees: false,
       customers: false,
       settings: false,
-      announcements: false,
-    });
+          });
   };
 
   const toggleMenu = (menuId: string) => {
@@ -211,8 +192,7 @@ export default function AdminDashboardPage() {
           employees: false,
           customers: false,
           settings: false,
-          announcements: false,
-        };
+                  };
       }
       // Open this menu and automatically close all other menus
       return {
@@ -223,8 +203,7 @@ export default function AdminDashboardPage() {
         employees: menuId === 'employees',
         customers: menuId === 'customers',
         settings: menuId === 'settings',
-        announcements: menuId === 'announcements',
-      };
+              };
     });
   };
 
@@ -236,7 +215,6 @@ export default function AdminDashboardPage() {
       icon: <PointOfSaleOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'orders', label: 'Orders', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'returns', label: 'Returns', icon: <AssignmentReturnRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'payments', label: 'Payments', icon: <PaymentsRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
@@ -248,7 +226,6 @@ export default function AdminDashboardPage() {
         { id: 'products', label: 'Products', icon: <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'add_product', label: 'Add Product', icon: <AddRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'categories', label: 'Categories', icon: <GridViewRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'brands', label: 'Brands', icon: <BrandingWatermarkRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'offers', label: 'Offers & Discounts', icon: <LocalOfferOutlinedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
@@ -269,8 +246,6 @@ export default function AdminDashboardPage() {
       subItems: [
         { id: 'rep_sales', label: 'Sales', icon: <BarChartRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'rep_inventory', label: 'Inventory', icon: <LayersRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'rep_customers', label: 'Customers', icon: <PersonOutlineRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'rep_performance', label: 'Employee Performance', icon: <BadgeRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -283,8 +258,6 @@ export default function AdminDashboardPage() {
         { id: 'emp_managers', label: 'Managers', icon: <AdminPanelSettingsRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'emp_roles', label: 'Roles & Permissions', icon: <SecurityRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'emp_shifts', label: 'Shifts', icon: <ScheduleRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'emp_attendance', label: 'Attendance', icon: <EventAvailableRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'emp_performance', label: 'Employee Performance', icon: <TrendingUpRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -294,7 +267,6 @@ export default function AdminDashboardPage() {
       subItems: [
         { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'cust_feedback', label: 'Feedback & Reviews', icon: <RateReviewRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
     {
@@ -309,23 +281,10 @@ export default function AdminDashboardPage() {
       icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'set_store', label: 'Store Profile', icon: <StoreRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_business', label: 'Business Settings', icon: <TuneRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_tables', label: 'Tables & Dining', icon: <TableRestaurantRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_tax', label: 'Tax & Invoicing', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_payments', label: 'Payments', icon: <PaymentsRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'set_hardware', label: 'Hardware', icon: <PrintRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_pos', label: 'POS Settings', icon: <PointOfSaleRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_notifications', label: 'Notifications', icon: <NotificationsNoneRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_users', label: 'Users & Permissions', icon: <SecurityRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_security', label: 'Security', icon: <LockRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_appearance', label: 'Appearance', icon: <PaletteRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_logout', label: 'Log Out', icon: <LogoutRoundedIcon sx={{ fontSize: 14 }} />, href: '/signin' },
+        { id: 'set_logout', label: 'Log Out', icon: <LogoutRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
-    },
-    {
-      id: 'announcements',
-      label: 'announcements',
-      icon: <CampaignOutlinedIcon sx={{ fontSize: 18 }} />,
     },
   ];
 
@@ -347,10 +306,50 @@ export default function AdminDashboardPage() {
   const [greeting, setGreeting] = useState('Welcome');
   const [merchantName, setMerchantName] = useState('');
 
-  // Real-time dashboard KPI states (defaults to zero / empty when no mock data)
+  // Real-time dashboard KPI states from backend API
   const [todayRevenue, setTodayRevenue] = useState('₹0');
   const [todayOrdersCount, setTodayOrdersCount] = useState(0);
   const [activeProductsCount, setActiveProductsCount] = useState(0);
+  const [liveSales, setLiveSales] = useState<BillRecord[]>([]);
+
+  // Fetch real-time dashboard analytics from backend APIs
+  const fetchDashboardAnalytics = useCallback(async () => {
+    try {
+      const storedName = localStorage.getItem('nuradesk_user_name') || localStorage.getItem('storeName') || '';
+      if (storedName) {
+        setMerchantName(storedName);
+      }
+
+      const [salesRes, prodRes] = await Promise.allSettled([
+        getOwnerSales(),
+        getCatalogProducts(),
+      ]);
+
+      if (prodRes.status === 'fulfilled' && prodRes.value.data) {
+        const count = Array.isArray(prodRes.value.data)
+          ? prodRes.value.data.filter((p: any) => p.status === 'ACTIVE' || p.isActive !== false).length
+          : 0;
+        setActiveProductsCount(count);
+      }
+
+      if (salesRes.status === 'fulfilled' && salesRes.value.data && Array.isArray(salesRes.value.data)) {
+        const sales = salesRes.value.data;
+        setLiveSales(sales);
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayBills = sales.filter((s: any) => {
+          const sDate = s.createdAtUtc ? s.createdAtUtc.split('T')[0] : '';
+          return sDate === todayStr;
+        });
+
+        setTodayOrdersCount(todayBills.length);
+        const rev = todayBills.reduce((sum: number, s: any) => sum + (Number(s.totalAmount) || 0), 0);
+        setTodayRevenue(`₹${Math.round(rev).toLocaleString('en-IN')}`);
+      }
+    } catch (e) {
+      console.error('Failed to load dashboard analytics:', e);
+    }
+  }, []);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -358,35 +357,81 @@ export default function AdminDashboardPage() {
     else if (hour < 17) setGreeting('Good afternoon');
     else setGreeting('Good evening');
 
-    try {
-      const storedName = localStorage.getItem('nuradesk_user_name') || localStorage.getItem('storeName') || '';
-      if (storedName) {
-        setMerchantName(storedName);
-      }
+    fetchDashboardAnalytics();
+  }, [fetchDashboardAnalytics, activeTabId]);
 
-      // Check real stored products
-      const savedProducts = localStorage.getItem('nuradesk_products');
-      if (savedProducts) {
-        const parsed = JSON.parse(savedProducts);
-        if (Array.isArray(parsed)) {
-          setActiveProductsCount(parsed.filter((p: any) => p.isActive !== false).length);
-        }
-      }
+  // Dynamic Orders Trend Calculation for the Bar Chart
+  const ordersTrendData = useMemo(() => {
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    const now = new Date();
+    const todayIndex = (now.getDay() + 6) % 7; // Convert Sun(0)..Sat(6) to Mon(0)..Sun(6)
 
-      // Check real stored orders
-      const savedOrders = localStorage.getItem('nuradesk_orders');
-      if (savedOrders) {
-        const parsed = JSON.parse(savedOrders);
-        if (Array.isArray(parsed)) {
-          const todayStr = new Date().toISOString().split('T')[0];
-          const todayOrders = parsed.filter((o: any) => o.date === todayStr || o.timestamp?.startsWith(todayStr));
-          setTodayOrdersCount(todayOrders.length);
-          const rev = todayOrders.reduce((sum: number, o: any) => sum + (Number(o.totalAmount || o.total) || 0), 0);
-          setTodayRevenue(`₹${rev.toLocaleString('en-IN')}`);
-        }
+    let relevant = liveSales;
+    if (dateRange === 'today') {
+      const todayStr = now.toISOString().split('T')[0];
+      relevant = liveSales.filter(s => s.createdAtUtc && s.createdAtUtc.startsWith(todayStr));
+    } else if (dateRange === 'week') {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      relevant = liveSales.filter(s => s.createdAtUtc && new Date(s.createdAtUtc) >= sevenDaysAgo);
+    } else if (dateRange === 'month') {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      relevant = liveSales.filter(s => s.createdAtUtc && new Date(s.createdAtUtc) >= thirtyDaysAgo);
+    }
+
+    relevant.forEach((s) => {
+      if (s.createdAtUtc) {
+        const d = new Date(s.createdAtUtc);
+        const idx = (d.getDay() + 6) % 7;
+        counts[idx] += 1;
       }
-    } catch (e) {}
-  }, [activeTabId]);
+    });
+
+    const maxCount = Math.max(...counts, 1);
+    const bars = counts.map((count, idx) => ({
+      day: dayLabels[idx],
+      count,
+      height: count === 0 ? 8 : Math.max(14, Math.round((count / maxCount) * 100)),
+      isToday: idx === todayIndex,
+    }));
+
+    return {
+      bars,
+      totalOrders: relevant.length,
+    };
+  }, [liveSales, dateRange]);
+
+  // Dynamic Top-Selling Products Calculation
+  const topSellingProducts = useMemo(() => {
+    const now = new Date();
+    let relevant = liveSales;
+
+    if (dateRange === 'today') {
+      const todayStr = now.toISOString().split('T')[0];
+      relevant = liveSales.filter(s => s.createdAtUtc && s.createdAtUtc.startsWith(todayStr));
+    } else if (dateRange === 'week') {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      relevant = liveSales.filter(s => s.createdAtUtc && new Date(s.createdAtUtc) >= sevenDaysAgo);
+    } else if (dateRange === 'month') {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      relevant = liveSales.filter(s => s.createdAtUtc && new Date(s.createdAtUtc) >= thirtyDaysAgo);
+    }
+
+    const qtyMap: Record<string, { name: string; quantity: number }> = {};
+    for (const sale of relevant) {
+      for (const item of sale.items || []) {
+        const name = item.productName || `Item #${item.productId}`;
+        if (!qtyMap[name]) {
+          qtyMap[name] = { name, quantity: 0 };
+        }
+        qtyMap[name].quantity += Number(item.quantity) || 1;
+      }
+    }
+
+    return Object.values(qtyMap)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 3);
+  }, [liveSales, dateRange]);
 
   // Dynamic Admin Dark / Light Mode State
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
@@ -413,6 +458,41 @@ export default function AdminDashboardPage() {
 
   const currentThemeId = themeMode;
   const theme = APP_THEMES[themeMode] || APP_THEMES.light;
+
+  if (isAuthorized !== true) {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.bgPage,
+        color: theme.textSecondary,
+        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: `3px solid ${theme.border}`,
+            borderTopColor: theme.activeBg || '#111827',
+            borderRadius: '50%',
+            animation: 'nurapos-spin 0.7s linear infinite',
+          }} />
+          <style>{`
+            @keyframes nurapos-spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+          <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.02em' }}>
+            Securing session...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -690,6 +770,55 @@ export default function AdminDashboardPage() {
                       {item.subItems?.map((sub) => {
                         const isSubActive = activeTabId === sub.id;
 
+                        if (sub.id === 'set_logout') {
+                          return (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={handleLogout}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.55rem',
+                                textAlign: 'left',
+                                padding: '0.32rem 0.5rem',
+                                borderRadius: '0.45rem',
+                                border: 'none',
+                                backgroundColor: 'transparent',
+                                color: '#EF4444',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                transition: 'all 0.15s ease',
+                                width: '100%',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
+                            >
+                              <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#EF4444',
+                              }}>
+                                {sub.icon}
+                              </span>
+                              <span style={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}>
+                                {sub.label}
+                              </span>
+                            </button>
+                          );
+                        }
+
                         if (sub.href) {
                           return (
                             <Link
@@ -919,130 +1048,16 @@ export default function AdminDashboardPage() {
         <main style={{
           flex: 1,
           height: '100%',
-          overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive || isAnnouncementsActive) ? 'auto' : 'hidden',
-          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isInventoryActive || isAnnouncementsActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
+          overflow: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isCatalogActive || isInventoryActive) ? 'auto' : 'hidden',
+          padding: (isSettingsActive || isCustomersActive || isEmployeesActive || isSalesActive || isReportsActive || isInventoryActive) ? 'clamp(1.5rem, 3vw, 2.5rem)' : 0,
           backgroundColor: theme.bgPage,
           boxSizing: 'border-box',
         }}>
-          {isAnnouncementsActive ? (
-            <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-              {/* News Page Header */}
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                  <AutoAwesomeRoundedIcon sx={{ fontSize: 22, color: '#F59E0B' }} />
-                  <h1 style={{ fontSize: '22px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.03em' }}>
-                    Announcements
-                  </h1>
-                </div>
-                <p style={{ fontSize: '14px', color: theme.textSecondary, margin: 0, fontWeight: 500 }}>
-                  Stay up to date with the latest features, updates and improvements.
-                </p>
-              </div>
-
-              {/* Release cards */}
-              {[
-                {
-                  version: 'v2.4.0',
-                  date: 'September 2026',
-                  badge: 'Latest',
-                  badgeColor: '#10B981',
-                  title: 'UPI QR, Split Payments & Thermal Receipts',
-                  img: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=800&auto=format&fit=crop',
-                  items: [
-                    'UPI QR code generation at checkout for seamless digital payments.',
-                    'Split payment support — split bills across cash, card & UPI.',
-                    'Thermal receipt printing with custom logo & GST breakdown.',
-                    'Improved POS speed with offline-first transaction caching.',
-                  ],
-                },
-                {
-                  version: 'v2.3.0',
-                  date: 'August 2026',
-                  badge: 'Previous',
-                  badgeColor: '#6B7280',
-                  title: 'Employee Shifts & Attendance Tracking',
-                  img: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop',
-                  items: [
-                    'Shift scheduling for all store roles with weekly view.',
-                    'Attendance clock-in/clock-out with biometric PIN option.',
-                    'Employee performance dashboard with daily sales targets.',
-                    'Role-based permissions for manager vs. cashier access.',
-                  ],
-                },
-                {
-                  version: 'v2.2.0',
-                  date: 'July 2026',
-                  badge: 'Previous',
-                  badgeColor: '#6B7280',
-                  title: 'Loyalty Program & Customer Groups',
-                  img: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=800&auto=format&fit=crop',
-                  items: [
-                    'Points-based loyalty program with configurable rewards.',
-                    'Customer groups for targeted promotions and discounts.',
-                    'Feedback & review collection at checkout.',
-                    'Purchase history with exportable CSV reports.',
-                  ],
-                },
-              ].map((release) => (
-                <div
-                  key={release.version}
-                  style={{
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '1rem',
-                    overflow: 'hidden',
-                    marginBottom: '1.25rem',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  {/* Image banner */}
-                  <div style={{ height: '140px', width: '100%', overflow: 'hidden', position: 'relative' }}>
-                    <img
-                      src={release.img}
-                      alt={release.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                    <div style={{
-                      position: 'absolute', top: '10px', left: '12px',
-                      backgroundColor: release.badgeColor,
-                      color: '#fff', fontSize: '10px', fontWeight: 800,
-                      padding: '2px 8px', borderRadius: '9999px', letterSpacing: '0.04em', textTransform: 'uppercase',
-                    }}>
-                      {release.badge}
-                    </div>
-                  </div>
-                  {/* Body */}
-                  <div style={{ padding: '1.1rem 1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: theme.textSecondary }}>{release.version}</span>
-                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>·</span>
-                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>{release.date}</span>
-                    </div>
-                    <h2 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.75rem 0', letterSpacing: '-0.02em' }}>
-                      {release.title}
-                    </h2>
-                    <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      {release.items.map((item, i) => (
-                        <li key={i} style={{ fontSize: '13px', color: theme.textSecondary, lineHeight: 1.5 }}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : isSettingsActive ? (
+          {isSettingsActive ? (
             <SettingsManagement
               activeSubTab={
-                activeTabId === 'set_business' ? 'set_business' :
                 activeTabId === 'set_tables' ? 'set_tables' :
-                activeTabId === 'set_tax' ? 'set_tax' :
-                activeTabId === 'set_payments' ? 'set_payments' :
-                activeTabId === 'set_hardware' ? 'set_hardware' :
-                activeTabId === 'set_pos' ? 'set_pos' :
-                activeTabId === 'set_notifications' ? 'set_notifications' :
-                activeTabId === 'set_users' ? 'set_users' :
-                activeTabId === 'set_security' ? 'set_security' :
-                activeTabId === 'set_appearance' ? 'set_appearance' : 'set_store'
+                activeTabId === 'set_hardware' ? 'set_hardware' : 'set_store'
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
@@ -1051,12 +1066,12 @@ export default function AdminDashboardPage() {
               theme={theme}
               currentThemeId={currentThemeId}
               onSelectTheme={handleSelectTheme}
+              onLogout={handleLogout}
             />
           ) : isCustomersActive ? (
             <CustomersManagement
               activeSubTab={
-                activeTabId === 'cust_history' ? 'cust_history' :
-                activeTabId === 'cust_feedback' ? 'cust_feedback' : 'cust_all'
+                activeTabId === 'cust_history' ? 'cust_history' : 'cust_all'
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
@@ -1070,9 +1085,7 @@ export default function AdminDashboardPage() {
                 activeTabId === 'emp_cashiers' ? 'emp_cashiers' :
                 activeTabId === 'emp_managers' ? 'emp_managers' :
                 activeTabId === 'emp_roles' ? 'emp_roles' :
-                activeTabId === 'emp_shifts' ? 'emp_shifts' :
-                activeTabId === 'emp_attendance' ? 'emp_attendance' :
-                activeTabId === 'emp_performance' ? 'emp_performance' : 'emp_all'
+                activeTabId === 'emp_shifts' ? 'emp_shifts' : 'emp_all'
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
@@ -1083,7 +1096,6 @@ export default function AdminDashboardPage() {
           ) : isSalesActive ? (
             <SalesManagement
               activeSubTab={
-                activeTabId === 'returns' ? 'returns' :
                 activeTabId === 'payments' ? 'payments' : 'orders'
               }
               onSelectSubTab={(tab) => {
@@ -1095,9 +1107,7 @@ export default function AdminDashboardPage() {
           ) : isReportsActive ? (
             <ReportsManagement
               activeSubTab={
-                activeTabId === 'rep_inventory' ? 'rep_inventory' :
-                activeTabId === 'rep_customers' ? 'rep_customers' :
-                activeTabId === 'rep_performance' ? 'rep_performance' : 'rep_sales'
+                activeTabId === 'rep_inventory' ? 'rep_inventory' : 'rep_sales'
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
@@ -1111,8 +1121,7 @@ export default function AdminDashboardPage() {
             <ProductManagement
               activeSubTab={
                 activeTabId === 'add_product' ? 'add_product' :
-                activeTabId === 'categories' ? 'categories' :
-                activeTabId === 'brands' ? 'brands' : 'products'
+                activeTabId === 'categories' ? 'categories' : 'products'
               }
               onSelectSubTab={(tab) => {
                 setActiveTabId(tab);
@@ -1409,7 +1418,7 @@ export default function AdminDashboardPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveTabId('set_pos');
+                              setActiveTabId('set_hardware');
                               openSingleMenu('settings');
                             }}
                             style={{
@@ -1428,7 +1437,7 @@ export default function AdminDashboardPage() {
                             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.75'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
                           >
-                            <span>POS settings</span>
+                            <span>Hardware settings</span>
                           </button>
                         </div>
                       </div>
@@ -1515,48 +1524,7 @@ export default function AdminDashboardPage() {
 
                         {/* Bottom Actions Row */}
                         <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('set_tables');
-                              openSingleMenu('settings');
-                            }}
-                            className="button-20"
-                            style={{
-                              borderRadius: '9999px',
-                              padding: '0.45rem 1.15rem',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            <span>Set tables</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('set_tables');
-                              openSingleMenu('settings');
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: theme.textPrimary,
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              padding: '0.45rem 0.45rem',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontFamily: 'inherit',
-                              transition: 'opacity 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.75'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <span>Ticket settings</span>
-                          </button>
+                          
                         </div>
                       </div>
                     </div>
@@ -1775,13 +1743,27 @@ export default function AdminDashboardPage() {
                         {dateRange === 'today' ? 'Orders for today' : dateRange === 'week' ? 'Orders over the last 7 days' : 'Orders over the last 30 days'}
                       </p>
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#16A34A', backgroundColor: 'rgba(22, 163, 74, 0.1)', borderRadius: '9999px', padding: '0.25rem 0.55rem' }}>+12.5%</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#16A34A', backgroundColor: 'rgba(22, 163, 74, 0.1)', borderRadius: '9999px', padding: '0.25rem 0.55rem' }}>
+                      {ordersTrendData.totalOrders > 0 ? `+${ordersTrendData.totalOrders} Orders` : '0 Orders'}
+                    </span>
                   </div>
                   <div style={{ height: '145px', display: 'flex', alignItems: 'flex-end', gap: '0.7rem', borderBottom: `1px solid ${theme.border}`, padding: '0 0.35rem' }}>
-                    {[38, 55, 42, 72, 64, 88, 76].map((height, index) => (
+                    {ordersTrendData.bars.map((bar, index) => (
                       <div key={index} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: '0.45rem' }}>
-                        <div style={{ width: '100%', maxWidth: '32px', height: `${height}%`, backgroundColor: index === 5 ? theme.activeBg : theme.border, borderRadius: '0.35rem 0.35rem 0 0' }} />
-                        <span style={{ fontSize: '10px', color: theme.textMuted }}>{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}</span>
+                        <div
+                          title={`${bar.day}: ${bar.count} order${bar.count === 1 ? '' : 's'}`}
+                          style={{
+                            width: '100%',
+                            maxWidth: '32px',
+                            height: `${bar.height}%`,
+                            backgroundColor: bar.isToday ? theme.activeBg : theme.border,
+                            borderRadius: '0.35rem 0.35rem 0 0',
+                            transition: 'height 0.3s ease, background-color 0.2s ease',
+                          }}
+                        />
+                        <span style={{ fontSize: '10px', color: bar.isToday ? theme.textPrimary : theme.textMuted, fontWeight: bar.isToday ? 700 : 400 }}>
+                          {bar.day}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1801,17 +1783,20 @@ export default function AdminDashboardPage() {
                   <p style={{ margin: '0.25rem 0 1rem', fontSize: '12px', color: theme.textSecondary }}>
                     Best performers {dateRange === 'today' ? 'today' : dateRange === 'week' ? 'this week' : 'this month'}
                   </p>
-                  {[
-                    ['Classic Burger', '84 sold'],
-                    ['Cold Coffee', '67 sold'],
-                    ['French Fries', '51 sold'],
-                  ].map(([product, sales], index) => (
-                    <div key={product} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.65rem 0', borderTop: index === 0 ? 'none' : `1px solid ${theme.border}` }}>
-                      <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.45rem', backgroundColor: theme.hoverBg, color: theme.textSecondary, fontSize: '11px', fontWeight: 800 }}>{index + 1}</span>
-                      <span style={{ flex: 1, fontSize: '12px', fontWeight: 700, color: theme.textPrimary }}>{product}</span>
-                      <span style={{ fontSize: '11px', color: theme.textSecondary }}>{sales}</span>
+                  {topSellingProducts.length > 0 ? (
+                    topSellingProducts.map((p, index) => (
+                      <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.65rem 0', borderTop: index === 0 ? 'none' : `1px solid ${theme.border}` }}>
+                        <span style={{ width: '24px', height: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '0.45rem', backgroundColor: theme.hoverBg, color: theme.textSecondary, fontSize: '11px', fontWeight: 800 }}>{index + 1}</span>
+                        <span style={{ flex: 1, fontSize: '12px', fontWeight: 700, color: theme.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                        <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 600 }}>{p.quantity} sold</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '2rem 0.5rem', textAlign: 'center', color: theme.textSecondary, fontSize: '12px' }}>
+                      <p style={{ margin: 0, fontWeight: 600 }}>No sales recorded {dateRange === 'today' ? 'today' : dateRange === 'week' ? 'this week' : 'this month'}</p>
+                      <p style={{ margin: '4px 0 0', fontSize: '11px', color: theme.textMuted }}>Orders rung up on POS will rank here live.</p>
                     </div>
-                  ))}
+                  )}
                 </div>
 
               </section>

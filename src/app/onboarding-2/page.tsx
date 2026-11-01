@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getOnboardingStatus, saveOnboardingDraft } from '@/lib/api-client';
 
 interface CountryItem {
   name: string;
@@ -53,8 +55,34 @@ export default function OnboardingScreen2() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showFlagDropdown, setShowFlagDropdown] = useState(false);
   const [flagSearch, setFlagSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load existing draft if present
+  useEffect(() => {
+    async function loadDraft() {
+      try {
+        const res = await getOnboardingStatus();
+        const draft = res.data?.draft;
+        if (draft) {
+          if (draft.businessName) setBusinessName(draft.businessName);
+          if (draft.businessType) setBusinessType(draft.businessType);
+          if (draft.phone) setPhoneNumber(draft.phone);
+          if (draft.country) {
+            const found = COUNTRIES.find(
+              (c) => c.name.toLowerCase() === String(draft.country).toLowerCase()
+            );
+            if (found) setSelectedCountry(found);
+          }
+        }
+      } catch {
+        // Fallback for offline or local preview
+      }
+    }
+    loadDraft();
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -73,9 +101,29 @@ export default function OnboardingScreen2() {
     setFlagSearch('');
   };
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/onboarding-3');
+    setErrorMessage(null);
+
+    if (!businessName.trim()) {
+      setErrorMessage('Please enter your business or brand name.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await saveOnboardingDraft({
+        businessName: businessName.trim(),
+        businessType,
+        country: selectedCountry.name,
+        phone: phoneNumber.trim(),
+      });
+      router.push('/onboarding-3');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to save store draft.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -206,6 +254,26 @@ export default function OnboardingScreen2() {
           flexDirection: 'column',
           gap: '1.15rem',
         }}>
+          {/* Error Message */}
+          {errorMessage && (
+            <div style={{
+              padding: '0.6rem 0.85rem',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '0.75rem',
+              color: '#B91C1C',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+            }}>
+              <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Field 1: Business name */}
           <div>
             <label style={{
@@ -540,6 +608,7 @@ export default function OnboardingScreen2() {
             {/* Continue Button */}
             <button
               type="submit"
+              disabled={isLoading}
               className="button-20-3d"
               role="button"
               style={{
@@ -549,10 +618,15 @@ export default function OnboardingScreen2() {
                 fontWeight: 700,
                 letterSpacing: '-0.01em',
                 borderRadius: '0.85rem',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.8 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
               }}
             >
-              Continue
+              {isLoading ? 'Saving...' : 'Continue'}
             </button>
 
             {/* Back Button */}

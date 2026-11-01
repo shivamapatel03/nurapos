@@ -32,17 +32,35 @@ public sealed class EmployeeRepository(NpgsqlConnection connection) : IEmployeeR
 
     public async Task<IReadOnlyList<Employee>> GetAllAsync(int ownerId, int? franchiseId)
     {
-        const string sql = """
-            SELECT e.c_employee_id, e.c_franchise_id, e.c_employee_code, e.c_name, e.c_role, e.c_phone, e.c_email,
-                   e.c_is_active, e.c_pin_hash IS NOT NULL AS c_pin_configured, e.c_created_at
-            FROM t_employee e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
-            WHERE f.c_user_id = @owner_id AND (@franchise_id IS NULL OR f.c_franchise_id = @franchise_id)
-            ORDER BY e.c_employee_id;
-            """;
         await OpenAsync();
-        await using var cmd = new NpgsqlCommand(sql, connection);
+        await using var cmd = connection.CreateCommand();
         cmd.Parameters.AddWithValue("@owner_id", ownerId);
-        cmd.Parameters.AddWithValue("@franchise_id", (object?)franchiseId ?? DBNull.Value);
+
+        if (franchiseId.HasValue)
+        {
+            cmd.CommandText = """
+                SELECT e.c_employee_id, e.c_franchise_id, e.c_employee_code, e.c_name, e.c_role, e.c_phone, e.c_email,
+                       e.c_is_active, e.c_pin_hash IS NOT NULL AS c_pin_configured, e.c_created_at
+                FROM t_employee e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
+                WHERE f.c_user_id = @owner_id AND f.c_franchise_id = @franchise_id
+                ORDER BY e.c_employee_id;
+                """;
+            cmd.Parameters.Add(new NpgsqlParameter("@franchise_id", NpgsqlTypes.NpgsqlDbType.Integer)
+            {
+                Value = franchiseId.Value
+            });
+        }
+        else
+        {
+            cmd.CommandText = """
+                SELECT e.c_employee_id, e.c_franchise_id, e.c_employee_code, e.c_name, e.c_role, e.c_phone, e.c_email,
+                       e.c_is_active, e.c_pin_hash IS NOT NULL AS c_pin_configured, e.c_created_at
+                FROM t_employee e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
+                WHERE f.c_user_id = @owner_id
+                ORDER BY e.c_employee_id;
+                """;
+        }
+
         await using var reader = await cmd.ExecuteReaderAsync();
         var items = new List<Employee>();
         while (await reader.ReadAsync()) items.Add(Map(reader));
@@ -67,24 +85,60 @@ public sealed class EmployeeRepository(NpgsqlConnection connection) : IEmployeeR
 
     public async Task<Employee> CreateAsync(Employee employee, string? pinHash, int ownerId)
     {
+        await OpenAsync();
+
+        // 1. Resolve a valid franchise for this owner
+        const string resolveFranchiseSql = """
+            SELECT c_franchise_id
+            FROM t_franchise
+            WHERE c_user_id = @owner_id
+            ORDER BY CASE WHEN c_franchise_id = @franchise_id THEN 0 ELSE 1 END, c_franchise_id
+            LIMIT 1;
+            """;
+        int resolvedFranchiseId;
+        await using (var cmdFranchise = new NpgsqlCommand(resolveFranchiseSql, connection))
+        {
+            cmdFranchise.Parameters.AddWithValue("@owner_id", ownerId);
+            cmdFranchise.Parameters.AddWithValue("@franchise_id", employee.FranchiseId);
+            var fResult = await cmdFranchise.ExecuteScalarAsync();
+            if (fResult is not null)
+            {
+                resolvedFranchiseId = Convert.ToInt32(fResult);
+            }
+            else
+            {
+                // Auto-create a default flagship franchise for this owner if none exists
+                const string createFranchiseSql = """
+                    INSERT INTO t_franchise (c_user_id, c_name, c_code, c_address, c_is_active)
+                    VALUES (@owner_id, 'Main Flagship', 'HQ-01', 'Primary Store Location', true)
+                    RETURNING c_franchise_id;
+                    """;
+                await using var cmdCreate = new NpgsqlCommand(createFranchiseSql, connection);
+                cmdCreate.Parameters.AddWithValue("@owner_id", ownerId);
+                var newFId = await cmdCreate.ExecuteScalarAsync();
+                resolvedFranchiseId = Convert.ToInt32(newFId);
+            }
+        }
+
+        employee.FranchiseId = resolvedFranchiseId;
+
+        // 2. Insert into t_employee
         const string sql = """
             INSERT INTO t_employee (c_franchise_id, c_employee_code, c_name, c_role, c_phone, c_email, c_pin_hash)
-            SELECT @franchise_id, @code, @name, @role, @phone, @email, @pin_hash
-            WHERE EXISTS (SELECT 1 FROM t_franchise WHERE c_franchise_id = @franchise_id AND c_user_id = @owner_id)
+            VALUES (@franchise_id, @code, @name, @role, @phone, @email, @pin_hash)
             RETURNING c_employee_id;
             """;
-        await OpenAsync();
         await using var cmd = new NpgsqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@franchise_id", employee.FranchiseId);
+        cmd.Parameters.AddWithValue("@franchise_id", resolvedFranchiseId);
         cmd.Parameters.AddWithValue("@code", employee.EmployeeCode);
         cmd.Parameters.AddWithValue("@name", employee.Name);
         cmd.Parameters.AddWithValue("@role", employee.Role);
         cmd.Parameters.AddWithValue("@phone", (object?)employee.Phone ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@email", (object?)employee.Email ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@pin_hash", (object?)pinHash ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@owner_id", ownerId);
+
         var id = await cmd.ExecuteScalarAsync();
-        if (id is null) throw new KeyNotFoundException("Franchise not found.");
+        if (id is null) throw new InvalidOperationException("Failed to insert employee.");
         employee.Id = Convert.ToInt32(id);
         employee.PinConfigured = pinHash is not null;
         employee.CreatedAtUtc = DateTime.UtcNow;

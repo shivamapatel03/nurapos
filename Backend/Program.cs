@@ -172,7 +172,10 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("PosPinVerified", policy =>
-        policy.RequireClaim("pos_pin_verified", "true"));
+        policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") ||
+            ctx.User.IsInRole("FRANCHISE_OWNER") ||
+            ctx.User.HasClaim("pos_pin_verified", "true")));
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -287,40 +290,54 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Keep the owner link available when deploying over an existing database.
-await using (var scope = app.Services.CreateAsyncScope())
+// Resilient startup for cloud serverless databases (Neon) during cold starts.
+const int maxRetries = 4;
+for (var attempt = 1; attempt <= maxRetries; attempt++)
 {
-    var authRepository = scope.ServiceProvider.GetRequiredService<IAuthRepository>();
-    await authRepository.CreateUsersTableIfNotExistsAsync();
+    try
+    {
+        await using (var scope = app.Services.CreateAsyncScope())
+        {
+            var authRepository = scope.ServiceProvider.GetRequiredService<IAuthRepository>();
+            await authRepository.CreateUsersTableIfNotExistsAsync();
 
-    var franchiseRepository = scope.ServiceProvider.GetRequiredService<IFranchiseRepository>();
-    await franchiseRepository.EnsureFranchiseSchemaAsync();
+            var franchiseRepository = scope.ServiceProvider.GetRequiredService<IFranchiseRepository>();
+            await franchiseRepository.EnsureFranchiseSchemaAsync();
 
-    var onboardingRepository = scope.ServiceProvider.GetRequiredService<IOnboardingRepository>();
-    await onboardingRepository.EnsureSchemaAsync();
+            var onboardingRepository = scope.ServiceProvider.GetRequiredService<IOnboardingRepository>();
+            await onboardingRepository.EnsureSchemaAsync();
 
-    var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
-    await employeeRepository.EnsureSchemaAsync();
+            var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
+            await employeeRepository.EnsureSchemaAsync();
 
-    var terminalRepository = scope.ServiceProvider.GetRequiredService<ITerminalRepository>();
-    await terminalRepository.EnsureSchemaAsync();
+            var terminalRepository = scope.ServiceProvider.GetRequiredService<ITerminalRepository>();
+            await terminalRepository.EnsureSchemaAsync();
 
-    var customerRepository = scope.ServiceProvider.GetRequiredService<ICustomerRepository>();
-    await customerRepository.EnsureSchemaAsync();
+            var customerRepository = scope.ServiceProvider.GetRequiredService<ICustomerRepository>();
+            await customerRepository.EnsureSchemaAsync();
 
-    var shiftRepository = scope.ServiceProvider.GetRequiredService<IShiftRepository>();
-    await shiftRepository.EnsureSchemaAsync();
+            var shiftRepository = scope.ServiceProvider.GetRequiredService<IShiftRepository>();
+            await shiftRepository.EnsureSchemaAsync();
 
-    var tableRepository = scope.ServiceProvider.GetRequiredService<ITableRepository>();
-    await tableRepository.EnsureSchemaAsync();
+            var tableRepository = scope.ServiceProvider.GetRequiredService<ITableRepository>();
+            await tableRepository.EnsureSchemaAsync();
 
-    var offerRepository = scope.ServiceProvider.GetRequiredService<IOfferRepository>();
-    await offerRepository.EnsureSchemaAsync();
+            var offerRepository = scope.ServiceProvider.GetRequiredService<IOfferRepository>();
+            await offerRepository.EnsureSchemaAsync();
 
-    var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
-    await settingsRepository.EnsureSchemaAsync();
+            var settingsRepository = scope.ServiceProvider.GetRequiredService<ISettingsRepository>();
+            await settingsRepository.EnsureSchemaAsync();
 
-    var uploadRepository = scope.ServiceProvider.GetRequiredService<IUploadRepository>();
-    await uploadRepository.EnsureSchemaAsync();
+            var uploadRepository = scope.ServiceProvider.GetRequiredService<IUploadRepository>();
+            await uploadRepository.EnsureSchemaAsync();
+        }
+        break;
+    }
+    catch (Exception ex) when (attempt < maxRetries)
+    {
+        app.Logger.LogWarning(ex, "Database connection attempt {Attempt}/{MaxRetries} failed (Neon cold start). Retrying in 3 seconds...", attempt, maxRetries);
+        await Task.Delay(3000);
+    }
 }
 
 

@@ -82,18 +82,34 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
 
     public async Task<List<ExpenseRecord>> GetExpensesAsync(int ownerId, int? franchiseId)
     {
-        const string sql = """
-            SELECT e.c_expense_id, e.c_franchise_id, e.c_expense_category_id, e.c_user_id,
-                   e.c_expense_date, e.c_expense_amount, e.c_description, e.c_payment_method,
-                   e.c_receipt_image, e.c_created_at
-            FROM t_expense e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
-            WHERE f.c_user_id = @owner_id AND (@franchise_id IS NULL OR e.c_franchise_id = @franchise_id)
-            ORDER BY e.c_expense_date DESC, e.c_expense_id DESC;
-            """;
         await OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(sql, _connection);
+        await using var command = _connection.CreateCommand();
         command.Parameters.AddWithValue("@owner_id", ownerId);
-        command.Parameters.AddWithValue("@franchise_id", (object?)franchiseId ?? DBNull.Value);
+
+        if (franchiseId.HasValue)
+        {
+            command.CommandText = """
+                SELECT e.c_expense_id, e.c_franchise_id, e.c_expense_category_id, e.c_user_id,
+                       e.c_expense_date, e.c_expense_amount, e.c_description, e.c_payment_method,
+                       e.c_receipt_image, e.c_created_at
+                FROM t_expense e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
+                WHERE f.c_user_id = @owner_id AND e.c_franchise_id = @franchise_id
+                ORDER BY e.c_expense_date DESC, e.c_expense_id DESC;
+                """;
+            command.Parameters.Add(new NpgsqlParameter("@franchise_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = franchiseId.Value });
+        }
+        else
+        {
+            command.CommandText = """
+                SELECT e.c_expense_id, e.c_franchise_id, e.c_expense_category_id, e.c_user_id,
+                       e.c_expense_date, e.c_expense_amount, e.c_description, e.c_payment_method,
+                       e.c_receipt_image, e.c_created_at
+                FROM t_expense e JOIN t_franchise f ON f.c_franchise_id = e.c_franchise_id
+                WHERE f.c_user_id = @owner_id
+                ORDER BY e.c_expense_date DESC, e.c_expense_id DESC;
+                """;
+        }
+
         await using var reader = await command.ExecuteReaderAsync();
         var records = new List<ExpenseRecord>();
         while (await reader.ReadAsync()) records.Add(MapExpense(reader));
@@ -208,7 +224,7 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
                     c_card_sales=c_card_sales+CASE WHEN @method='CARD' THEN @total ELSE 0 END,
                     c_upi_sales=c_upi_sales+CASE WHEN @method='UPI' THEN @total ELSE 0 END
                 WHERE c_shift_id=@shift AND c_user_id=@owner AND c_franchise_id=@franchise AND c_status='OPEN'
-                  AND (@employee IS NULL OR c_cashier_id=@employee) AND (@terminal IS NULL OR c_terminal_code=@terminal);
+                  AND (@employee::integer IS NULL OR c_cashier_id=@employee) AND (@terminal::text IS NULL OR c_terminal_code=@terminal);
                 """;
             await using var shiftCommand = new NpgsqlCommand(shiftSql, _connection, transaction);
             shiftCommand.Parameters.AddWithValue("@total", total);
@@ -399,17 +415,32 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
 
     public async Task<List<PaymentRecord>> GetPaymentsAsync(int ownerId, int? franchiseId)
     {
-        const string sql = """
-            SELECT p.c_payment_id, p.c_franchise_id, p.c_reference_type, p.c_reference_id,
-                   p.c_payment_method, p.c_payment_amount, p.c_payment_date, p.c_payment_status
-            FROM t_payment p JOIN t_franchise f ON f.c_franchise_id = p.c_franchise_id
-            WHERE f.c_user_id = @owner_id AND (@franchise_id IS NULL OR p.c_franchise_id = @franchise_id)
-            ORDER BY p.c_payment_date DESC, p.c_payment_id DESC;
-            """;
         await OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(sql, _connection);
+        await using var command = _connection.CreateCommand();
         command.Parameters.AddWithValue("@owner_id", ownerId);
-        command.Parameters.AddWithValue("@franchise_id", (object?)franchiseId ?? DBNull.Value);
+
+        if (franchiseId.HasValue)
+        {
+            command.CommandText = """
+                SELECT p.c_payment_id, p.c_franchise_id, p.c_reference_type, p.c_reference_id,
+                       p.c_payment_method, p.c_payment_amount, p.c_payment_date, p.c_payment_status
+                FROM t_payment p JOIN t_franchise f ON f.c_franchise_id = p.c_franchise_id
+                WHERE f.c_user_id = @owner_id AND p.c_franchise_id = @franchise_id
+                ORDER BY p.c_payment_date DESC, p.c_payment_id DESC;
+                """;
+            command.Parameters.Add(new NpgsqlParameter("@franchise_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = franchiseId.Value });
+        }
+        else
+        {
+            command.CommandText = """
+                SELECT p.c_payment_id, p.c_franchise_id, p.c_reference_type, p.c_reference_id,
+                       p.c_payment_method, p.c_payment_amount, p.c_payment_date, p.c_payment_status
+                FROM t_payment p JOIN t_franchise f ON f.c_franchise_id = p.c_franchise_id
+                WHERE f.c_user_id = @owner_id
+                ORDER BY p.c_payment_date DESC, p.c_payment_id DESC;
+                """;
+        }
+
         await using var reader = await command.ExecuteReaderAsync();
         var items = new List<PaymentRecord>();
         while (await reader.ReadAsync())
@@ -427,18 +458,34 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
 
     public async Task<List<DailySummaryRecord>> GetDailySummariesAsync(int ownerId, int? franchiseId)
     {
-        const string sql = """
-            SELECT d.c_daily_summary_id, d.c_franchise_id, d.c_summary_date,
-                   d.c_total_sales, d.c_total_purchases, d.c_total_expenses,
-                   d.c_gross_profit, d.c_net_profit
-            FROM t_daily_summary d JOIN t_franchise f ON f.c_franchise_id = d.c_franchise_id
-            WHERE f.c_user_id = @owner_id AND (@franchise_id IS NULL OR d.c_franchise_id = @franchise_id)
-            ORDER BY d.c_summary_date DESC, d.c_daily_summary_id DESC;
-            """;
         await OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(sql, _connection);
+        await using var command = _connection.CreateCommand();
         command.Parameters.AddWithValue("@owner_id", ownerId);
-        command.Parameters.AddWithValue("@franchise_id", (object?)franchiseId ?? DBNull.Value);
+
+        if (franchiseId.HasValue)
+        {
+            command.CommandText = """
+                SELECT d.c_daily_summary_id, d.c_franchise_id, d.c_summary_date,
+                       d.c_total_sales, d.c_total_purchases, d.c_total_expenses,
+                       d.c_gross_profit, d.c_net_profit
+                FROM t_daily_summary d JOIN t_franchise f ON f.c_franchise_id = d.c_franchise_id
+                WHERE f.c_user_id = @owner_id AND d.c_franchise_id = @franchise_id
+                ORDER BY d.c_summary_date DESC, d.c_daily_summary_id DESC;
+                """;
+            command.Parameters.Add(new NpgsqlParameter("@franchise_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = franchiseId.Value });
+        }
+        else
+        {
+            command.CommandText = """
+                SELECT d.c_daily_summary_id, d.c_franchise_id, d.c_summary_date,
+                       d.c_total_sales, d.c_total_purchases, d.c_total_expenses,
+                       d.c_gross_profit, d.c_net_profit
+                FROM t_daily_summary d JOIN t_franchise f ON f.c_franchise_id = d.c_franchise_id
+                WHERE f.c_user_id = @owner_id
+                ORDER BY d.c_summary_date DESC, d.c_daily_summary_id DESC;
+                """;
+        }
+
         await using var reader = await command.ExecuteReaderAsync();
         var items = new List<DailySummaryRecord>();
         while (await reader.ReadAsync())
@@ -460,19 +507,23 @@ public sealed class OwnerOperationsRepository : IOwnerOperationsRepository
         var idColumn = isSale ? "c_sale_id" : "c_purchase_id";
         var dateColumn = isSale ? "c_sale_date" : "c_purchase_date";
         var userFilter = isSale ? " AND b.c_user_id = @owner_id" : string.Empty;
+        var franchiseFilter = franchiseId.HasValue ? " AND b.c_franchise_id = @franchise_id" : string.Empty;
         var sql = $"""
             SELECT b.{idColumn} AS id, b.c_franchise_id AS franchise_id,
                    {(isSale ? "NULL::integer" : "b.c_supplier_id")} AS supplier_id,
                    b.{dateColumn} AS bill_date, b.c_total_amount AS total_amount,
                    b.c_payment_method AS payment_method, b.c_status AS status
             FROM {table} b JOIN t_franchise f ON f.c_franchise_id = b.c_franchise_id
-            WHERE f.c_user_id = @owner_id AND (@franchise_id IS NULL OR b.c_franchise_id = @franchise_id){userFilter}
+            WHERE f.c_user_id = @owner_id{franchiseFilter}{userFilter}
             ORDER BY b.{dateColumn} DESC, b.{idColumn} DESC;
             """;
         await OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, _connection);
         command.Parameters.AddWithValue("@owner_id", ownerId);
-        command.Parameters.AddWithValue("@franchise_id", (object?)franchiseId ?? DBNull.Value);
+        if (franchiseId.HasValue)
+        {
+            command.Parameters.Add(new NpgsqlParameter("@franchise_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = franchiseId.Value });
+        }
         await using var reader = await command.ExecuteReaderAsync();
         var records = new List<BillRecord>();
         while (await reader.ReadAsync()) records.Add(MapBill(reader));

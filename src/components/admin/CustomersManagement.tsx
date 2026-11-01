@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { getCustomers, createCustomer, getOwnerSales } from '@/lib/api-client';
+import type { Customer as ApiCustomer } from '@/types/customer';
 
 // Material Rounded Icons
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -62,23 +63,9 @@ export interface Customer {
   avatarColor: string;
 }
 
-export interface CustomerFeedbackRecord {
-  id: string; // e.g. REV-501
-  customerId: string;
-  customerName: string;
-  customerPhone: string;
-  rating: number; // 1 to 5
-  date: string;
-  orderId: string;
-  category: 'Food Quality' | 'Service Speed' | 'Ambiance' | 'Order Accuracy';
-  comment: string;
-  status: 'Published' | 'Action Required' | 'Resolved';
-  resolutionNotes?: string;
-}
-
 export interface CustomersManagementProps {
-  activeSubTab?: 'cust_all' | 'cust_history' | 'cust_feedback';
-  onSelectSubTab?: (tab: 'cust_all' | 'cust_history' | 'cust_feedback') => void;
+  activeSubTab?: 'cust_all' | 'cust_history';
+  onSelectSubTab?: (tab: 'cust_all' | 'cust_history') => void;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -112,7 +99,6 @@ const INITIAL_CUSTOMERS: Customer[] = [];
 
 const INITIAL_ORDERS: CustomerOrderRecord[] = [];
 
-const INITIAL_FEEDBACK: CustomerFeedbackRecord[] = [];
 
 export default function CustomersManagement({
   activeSubTab = 'cust_all',
@@ -120,7 +106,7 @@ export default function CustomersManagement({
   theme,
 }: CustomersManagementProps) {
   // Navigation State
-  const [currentTab, setCurrentTab] = useState<'cust_all' | 'cust_history' | 'cust_feedback'>(activeSubTab);
+  const [currentTab, setCurrentTab] = useState<'cust_all' | 'cust_history'>(activeSubTab);
 
   React.useEffect(() => {
     if (activeSubTab) {
@@ -130,25 +116,7 @@ export default function CustomersManagement({
 
   // Customers State
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
-
-  // Sync customers with localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('nuradesk_customers');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setCustomers(parsed);
-        }
-      }
-    } catch (e) {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('nuradesk_customers', JSON.stringify(customers));
-    } catch (e) {}
-  }, [customers]);
+  const [customersLoading, setCustomersLoading] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [groupFilter, setGroupFilter] = useState('ALL');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -161,17 +129,100 @@ export default function CustomersManagement({
   const [newCustGroup, setNewCustGroup] = useState<Customer['group']>('New Patrons');
   const [newCustBirthday, setNewCustBirthday] = useState('');
   const [newCustNotes, setNewCustNotes] = useState('');
+  const [isSubmittingCustomer, setIsSubmittingCustomer] = useState(false);
 
   // Orders State
-  const [orders] = useState<CustomerOrderRecord[]>(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<CustomerOrderRecord[]>(INITIAL_ORDERS);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  // Live Fetch Customers from Backend API
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setCustomersLoading(true);
+      const res = await getCustomers();
+      if (res.data && Array.isArray(res.data)) {
+        const colors = ['#1E293B', '#2563EB', '#059669', '#D97706', '#7C3AED'];
+        const mapped: Customer[] = res.data.map((c: ApiCustomer, idx: number) => {
+          let grp: Customer['group'] = 'New Patrons';
+          if (c.totalSpent >= 5000 || c.totalVisits >= 10) {
+            grp = 'VIP Elite';
+          } else if (c.totalVisits >= 3) {
+            grp = 'Store Regulars';
+          }
+          const dtStr = c.createdAtUtc ? new Date(c.createdAtUtc).toLocaleDateString() : 'Recent';
+          return {
+            id: `CUST-${c.id}`,
+            name: c.name || 'Valued Guest',
+            phone: c.phone || '',
+            email: c.email || '',
+            group: grp,
+            totalOrders: c.totalVisits || 0,
+            lifetimeSpend: Number(c.totalSpent) || 0,
+            lastVisit: c.totalVisits > 0 ? `${c.totalVisits} visits` : 'Recent',
+            joinedDate: dtStr,
+            favoriteItem: `${c.loyaltyPoints || 0} Pts`,
+            notes: c.address || undefined,
+            avatarColor: colors[Math.abs(c.id || idx) % colors.length],
+          };
+        });
+        setCustomers(mapped);
+      }
+    } catch (err) {
+      console.error('Error fetching live customers:', err);
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, []);
+
+  // Live Fetch Orders from Backend Sales Ledger for Purchase History
+  const fetchOrders = useCallback(async () => {
+    try {
+      setOrdersLoading(true);
+      const res = await getOwnerSales();
+      if (res.data && Array.isArray(res.data)) {
+        const mapped: CustomerOrderRecord[] = res.data.map((s: any) => {
+          const dt = s.createdAtUtc ? new Date(s.createdAtUtc) : new Date();
+          const rawMethod = (s.paymentMethod || 'Cash').toUpperCase();
+          const paymentMethod: CustomerOrderRecord['paymentMethod'] =
+            rawMethod.includes('UPI') ? 'UPI' :
+            rawMethod.includes('CARD') ? 'Card' :
+            rawMethod.includes('WALLET') ? 'Wallet' : 'Cash';
+
+          return {
+            id: s.billNumber || `ORD-${s.id}`,
+            date: dt.toLocaleDateString(),
+            time: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            customerId: `CUST-${s.id}`,
+            customerName: s.customerName || 'In-Store Guest',
+            customerPhone: s.customerPhone || 'Counter Sale',
+            items: (s.items || []).map((item: any) => ({
+              name: item.productName || `Item #${item.productId}`,
+              quantity: Number(item.quantity) || 1,
+              unitPrice: Number(item.unitPrice) || 0,
+              totalPrice: Number(item.totalPrice) || 0,
+            })),
+            totalAmount: Number(s.totalAmount) || 0,
+            paymentMethod,
+            status: 'Completed',
+          };
+        });
+        setOrders(mapped);
+      }
+    } catch (err) {
+      console.error('Error fetching live purchase history:', err);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+    fetchOrders();
+  }, [fetchCustomers, fetchOrders]);
   const [orderSearch, setOrderSearch] = useState('');
   const [orderPaymentFilter, setOrderPaymentFilter] = useState('ALL');
   const [viewingReceiptOrder, setViewingReceiptOrder] = useState<CustomerOrderRecord | null>(null);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
-
-  // Feedback State
-  const [feedbacks, setFeedbacks] = useState<CustomerFeedbackRecord[]>(INITIAL_FEEDBACK);
-  const [resolvingFeedback, setResolvingFeedback] = useState<CustomerFeedbackRecord | null>(null);
   const [resolutionActionText, setResolutionActionText] = useState('Offered compensation and apology.');
 
   // Filtered Customers
@@ -203,56 +254,38 @@ export default function CustomersManagement({
     });
   }, [orders, orderSearch, orderPaymentFilter]);
 
-  // Handle Add Customer
-  const handleSaveNewCustomer = (e: React.FormEvent) => {
+  // Handle Add Customer via Backend API
+  const handleSaveNewCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustName.trim() || !newCustPhone.trim()) return;
 
-    const newId = `CUST-${100 + customers.length + 1}`;
-    const newCust: Customer = {
-      id: newId,
-      name: newCustName.trim(),
-      phone: newCustPhone.trim(),
-      email: newCustEmail.trim() || `${newCustName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
-      group: newCustGroup,
-      totalOrders: 1,
-      lifetimeSpend: 0,
-      lastVisit: 'Today (New)',
-      joinedDate: '2026-09-20',
-      favoriteItem: 'Pending first order',
-      notes: newCustNotes.trim() || undefined,
-      birthday: newCustBirthday.trim() || undefined,
-      avatarColor: '#1E293B',
-    };
+    try {
+      setIsSubmittingCustomer(true);
+      await createCustomer({
+        name: newCustName.trim(),
+        phone: newCustPhone.trim(),
+        email: newCustEmail.trim() || undefined,
+        address: newCustNotes.trim() || undefined,
+      });
 
-    setCustomers((prev) => [newCust, ...prev]);
-    setToastNotice(`Customer ${newCust.name} added successfully.`);
-    setTimeout(() => setToastNotice(null), 3500);
+      setToastNotice(`Customer ${newCustName.trim()} registered successfully.`);
+      setTimeout(() => setToastNotice(null), 3500);
 
-    setNewCustName('');
-    setNewCustPhone('');
-    setNewCustEmail('');
-    setNewCustBirthday('');
-    setNewCustNotes('');
-    setShowAddCustomerModal(false);
-  };
+      setNewCustName('');
+      setNewCustPhone('');
+      setNewCustEmail('');
+      setNewCustBirthday('');
+      setNewCustNotes('');
+      setShowAddCustomerModal(false);
 
-  // Handle Resolve Feedback
-  const handleConfirmResolveFeedback = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resolvingFeedback) return;
-
-    setFeedbacks((prev) =>
-      prev.map((f) =>
-        f.id === resolvingFeedback.id
-          ? { ...f, status: 'Resolved', resolutionNotes: resolutionActionText }
-          : f
-      )
-    );
-
-    setToastNotice(`Complaint ${resolvingFeedback.id} marked as Resolved.`);
-    setTimeout(() => setToastNotice(null), 3500);
-    setResolvingFeedback(null);
+      await fetchCustomers();
+    } catch (err: any) {
+      console.error('Failed to create customer:', err);
+      setToastNotice(err.message || 'Failed to create customer. Phone number may already be registered.');
+      setTimeout(() => setToastNotice(null), 4000);
+    } finally {
+      setIsSubmittingCustomer(false);
+    }
   };
 
   return (
@@ -302,7 +335,7 @@ export default function CustomersManagement({
             margin: 0,
             fontWeight: 500,
           }}>
-            Patron profiles, purchase histories, and feedback reviews.
+            Patron profiles and purchase histories.
           </p>
         </div>
 
@@ -927,254 +960,6 @@ export default function CustomersManagement({
       )}
 
       {/* ==================================================================== */}
-      {/* 3. FEEDBACK & REVIEWS                                                */}
-      {/* ==================================================================== */}
-      {currentTab === 'cust_feedback' && (
-        <>
-          {/* Top KPI Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            marginBottom: '1.75rem',
-          }}>
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Average Rating
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#B45309', letterSpacing: '-0.03em' }}>
-                  {feedbacks.length > 0 ? `${(feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1)} / 5.0` : '— / 5.0'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Across {feedbacks.length} verified patron reviews
-                </span>
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Positive Sentiment
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  {feedbacks.length > 0 ? `${((feedbacks.filter(f => f.rating >= 4).length / feedbacks.length) * 100).toFixed(1)}%` : '0.0%'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  4-star and 5-star ratings
-                </span>
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Pending Complaints
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#991B1B', letterSpacing: '-0.03em' }}>
-                  {feedbacks.filter(f => f.status === 'Action Required').length} {feedbacks.filter(f => f.status === 'Action Required').length === 1 ? 'Issue' : 'Issues'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Requires supervisor resolution
-                </span>
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Avg Resolution Time
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: '#166534', letterSpacing: '-0.03em' }}>
-                  0.0 hrs
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Customer issue recovery speed
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Feedback Ledger */}
-          <div style={{
-            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            overflow: 'hidden',
-            marginBottom: '1.75rem',
-          }}>
-            <div style={{ padding: '1.25rem', borderBottom: `1px solid ${theme.border}` }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                Customer Ratings, Reviews & Service Recovery
-              </h3>
-              <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                Patron feedback logged via QR receipts and store feedback tablets.
-              </p>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Customer & Ref</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Rating</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Category</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Feedback Comment</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {feedbacks.map((f) => (
-                    <tr key={f.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: theme.textPrimary }}>{f.customerName}</div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary }}>{f.orderId} • {f.date}</div>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <StarRoundedIcon
-                              key={star}
-                              sx={{
-                                fontSize: 16,
-                                color: star <= f.rating ? '#F59E0B' : '#E5E7EB',
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
-                        {f.category}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textPrimary, maxWidth: '340px' }}>
-                        &ldquo;{f.comment}&rdquo;
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          padding: '3px 8px',
-                          borderRadius: '9999px',
-                          fontSize: '11.5px',
-                          fontWeight: 800,
-                          backgroundColor:
-                            f.status === 'Published' ? '#DCFCE7' :
-                            f.status === 'Resolved' ? '#DBEAFE' : '#FEE2E2',
-                          color:
-                            f.status === 'Published' ? '#166534' :
-                            f.status === 'Resolved' ? '#1E40AF' : '#991B1B',
-                        }}>
-                          {f.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                        {f.status === 'Action Required' && (
-                          <button
-                            type="button"
-                            className="button-20"
-                            role="button"
-                            onClick={() => setResolvingFeedback(f)}
-                            style={{
-                              padding: '0 12px',
-                              height: '28px',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            Resolve
-                          </button>
-                        )}
-                        {f.status === 'Resolved' && (
-                          <span style={{ fontSize: '11.5px', color: '#10B981', fontWeight: 700 }}>
-                            Compensated
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {feedbacks.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
-                        No customer feedback recorded yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
       {/* MODAL 1: ADD CUSTOMER MODAL                                          */}
       {/* ==================================================================== */}
       {showAddCustomerModal && (
@@ -1386,6 +1171,7 @@ export default function CustomersManagement({
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmittingCustomer}
                   className="button-20"
                   role="button"
                   style={{
@@ -1393,9 +1179,10 @@ export default function CustomersManagement({
                     fontSize: '13px',
                     fontWeight: 700,
                     fontFamily: 'inherit',
+                    opacity: isSubmittingCustomer ? 0.7 : 1,
                   }}
                 >
-                  Register Customer
+                  {isSubmittingCustomer ? 'Registering...' : 'Register Customer'}
                 </button>
               </div>
             </form>
@@ -1636,121 +1423,6 @@ export default function CustomersManagement({
             </div>
           </div>
         </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL 5: RESOLVE COMPLAINT MODAL                                     */}
-      {/* ==================================================================== */}
-      {resolvingFeedback && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            width: '100%',
-            maxWidth: '480px',
-            padding: '1.75rem',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Resolve Customer Complaint
-                </h3>
-                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                  {resolvingFeedback.customerName} • {resolvingFeedback.orderId}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setResolvingFeedback(null)}
-                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '0.65rem',
-              padding: '0.85rem',
-              marginBottom: '1rem',
-              fontSize: '12.5px',
-              color: theme.textPrimary,
-            }}>
-              <span style={{ fontWeight: 700 }}>Customer Feedback: </span>
-              &ldquo;{resolvingFeedback.comment}&rdquo;
-            </div>
-
-            <form onSubmit={handleConfirmResolveFeedback} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
-                  RESOLUTION & SERVICE RECOVERY ACTION
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={resolutionActionText}
-                  onChange={(e) => setResolutionActionText(e.target.value)}
-                  style={{
-                    width: '100%',
-                    borderRadius: '0.55rem',
-                    backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F9FAFB',
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0.65rem 0.85rem',
-                    fontSize: '13px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    resize: 'none',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="button-20-secondary"
-                  role="button"
-                  onClick={() => setResolvingFeedback(null)}
-                  style={{
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="button-20"
-                  role="button"
-                  style={{
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Mark as Resolved
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      )}    </div>
   );
 }

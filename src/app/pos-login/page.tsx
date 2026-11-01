@@ -1,28 +1,138 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getEmployees, posLookupEmployee } from '@/lib/api-client';
+import { getAuthSession } from '@/lib/auth';
+import { EmployeeDto } from '@/types/employee';
 
 export default function PosLoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<EmployeeDto[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let isMounted = true;
+    async function loadRoster() {
+      try {
+        // Try to read local cache first for instant response
+        const cached = localStorage.getItem('nurapos_registered_employees');
+        if (cached) {
+          try {
+            setEmployees(JSON.parse(cached));
+          } catch {
+            // ignore
+          }
+        }
+        const res = await getEmployees();
+        if (isMounted && res.data) {
+          const activeOnly = res.data.filter((e) => e.isActive);
+          setEmployees(activeOnly);
+          localStorage.setItem('nurapos_registered_employees', JSON.stringify(activeOnly));
+        }
+      } catch (err) {
+        console.warn('Could not prefetch staff roster:', err);
+      }
+    }
+    loadRoster();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const idVal = identifier.trim();
+    if (!idVal) {
+      setErrorMessage('Please enter your Employee ID or Email.');
+      return;
+    }
+    setErrorMessage(null);
     if (isLoading) return;
     setIsLoading(true);
-    setTimeout(() => {
-      router.push('/pos-login-3');
-    }, 1000);
+
+    try {
+      // 1. Primary Check: Call public real API posLookupEmployee
+      try {
+        const lookupRes = await posLookupEmployee(idVal);
+        if (lookupRes?.data) {
+          const emp = lookupRes.data;
+          localStorage.setItem('nurapos_selected_employee_id', String(emp.id));
+          localStorage.setItem('nurapos_selected_employee_name', emp.name);
+          localStorage.setItem('nurapos_selected_employee_role', emp.role);
+          localStorage.setItem('nurapos_selected_employee_code', emp.employeeCode);
+          localStorage.setItem('nurapos_selected_franchise_id', String(emp.franchiseId));
+          router.push('/pos-login-2');
+          return;
+        }
+      } catch {
+        // Proceed to fallback verification
+      }
+
+      // 2. Secondary Check: Check cached registered employees in localStorage
+      let roster = employees;
+      if (roster.length === 0) {
+        try {
+          const cached = localStorage.getItem('nurapos_registered_employees');
+          if (cached) {
+            roster = JSON.parse(cached);
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      const matchedEmp = roster.find(
+        (emp: any) =>
+          (emp.employeeCode && emp.employeeCode.toLowerCase() === idVal.toLowerCase()) ||
+          (emp.email && emp.email.toLowerCase() === idVal.toLowerCase()) ||
+          String(emp.id) === idVal ||
+          String(emp.numericId) === idVal
+      );
+
+      if (matchedEmp) {
+        // MATCH FOUND: Store employee session context and proceed to Screen 2
+        const resolvedEmpId = (matchedEmp as any).numericId || matchedEmp.id;
+        localStorage.setItem('nurapos_selected_employee_id', String(resolvedEmpId));
+        localStorage.setItem('nurapos_selected_employee_name', matchedEmp.name);
+        localStorage.setItem('nurapos_selected_employee_role', matchedEmp.role);
+        localStorage.setItem('nurapos_selected_employee_code', matchedEmp.employeeCode || String(matchedEmp.id));
+        if (matchedEmp.franchiseId) {
+          localStorage.setItem('nurapos_selected_franchise_id', String(matchedEmp.franchiseId));
+        }
+        router.push('/pos-login-2');
+        return;
+      }
+
+      // 3. Tertiary Check: Owner email or 'owner' / 'admin'
+      const currentSession = getAuthSession();
+      const ownerEmail = currentSession?.email || localStorage.getItem('nurapos_user_email') || '';
+      const isOwner =
+        (ownerEmail && ownerEmail.toLowerCase() === idVal.toLowerCase()) ||
+        idVal.toLowerCase() === 'owner' ||
+        idVal.toLowerCase() === 'admin';
+
+      if (isOwner) {
+        const ownerName = localStorage.getItem('nuradesk_user_name') || ownerEmail.split('@')[0] || 'Store Owner';
+        localStorage.setItem('nurapos_selected_employee_id', 'owner');
+        localStorage.setItem('nurapos_selected_employee_name', ownerName);
+        localStorage.setItem('nurapos_selected_employee_role', 'Franchise Owner');
+        localStorage.removeItem('nurapos_selected_employee_code');
+        router.push('/pos-login-2');
+        return;
+      }
+
+      // 4. Neither employee nor owner found: Show validation error
+      setErrorMessage(`Employee ID or Email "${idVal}" does not exist. Please check your credentials.`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -145,229 +255,128 @@ export default function PosLoginPage() {
           <form onSubmit={handleSubmit} style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem',
+            gap: '1.15rem',
           }}>
-              {/* Employee ID / Email Field */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: '#000000',
-                  marginBottom: '0.35rem',
-                }}>
-                  Employee ID / Email :
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder=""
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '48px',
-                    backgroundColor: '#F0F0F0',
-                    border: '1px solid transparent',
-                    borderRadius: '0.85rem',
-                    padding: '0 1.25rem',
-                    fontSize: '0.95rem',
-                    fontFamily: 'inherit',
-                    color: '#000000',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    boxShadow: 'none',
-                    transition: 'border-color 0.15s, background-color 0.15s',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#000000';
-                    e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'transparent';
-                    e.currentTarget.style.backgroundColor = '#F0F0F0';
-                  }}
-                />
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  color: '#000000',
-                  marginBottom: '0.35rem',
-                }}>
-                  Password :
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder=""
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    style={{
-                      width: '100%',
-                      height: '48px',
-                      backgroundColor: '#F0F0F0',
-                      border: '1px solid transparent',
-                      borderRadius: '0.85rem',
-                      padding: '0 2.8rem 0 1.25rem',
-                      fontSize: '0.95rem',
-                      fontFamily: 'inherit',
-                      color: '#000000',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      boxShadow: 'none',
-                      transition: 'border-color 0.15s, background-color 0.15s',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#000000';
-                      e.currentTarget.style.backgroundColor = '#FFFFFF';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'transparent';
-                      e.currentTarget.style.backgroundColor = '#F0F0F0';
-                    }}
-                  />
-                  {password.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      title={showPassword ? 'Hide password' : 'Show password'}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      style={{
-                        position: 'absolute',
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#525252',
-                        padding: '4px',
-                        borderRadius: '0.35rem',
-                        transition: 'color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = '#000000'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = '#525252'; }}
-                    >
-                      {showPassword ? (
-                        <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
-                      ) : (
-                        <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Remember this device & Forget Password row */}
+            {/* Error Message */}
+            {errorMessage && (
               <div style={{
+                padding: '0.6rem 0.8rem',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FCA5A5',
+                borderRadius: '0.75rem',
+                color: '#B91C1C',
+                fontSize: '13px',
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '0.82rem',
-                marginTop: '0.1rem',
+                gap: '0.45rem',
+                textAlign: 'left',
               }}>
-                <label style={{
+                <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Employee ID / Email Field */}
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                color: '#000000',
+                marginBottom: '0.35rem',
+              }}>
+                Employee ID / Email :
+              </label>
+              <input
+                type="text"
+                required
+                placeholder=""
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '48px',
+                  backgroundColor: '#F0F0F0',
+                  border: '1px solid transparent',
+                  borderRadius: '0.85rem',
+                  padding: '0 1.25rem',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  color: '#000000',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  boxShadow: 'none',
+                  transition: 'border-color 0.15s, background-color 0.15s',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#000000';
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'transparent';
+                  e.currentTarget.style.backgroundColor = '#F0F0F0';
+                }}
+              />
+            </div>
+
+            {/* Continue Button */}
+            <div style={{ marginTop: '0.25rem' }}>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="button-20-3d"
+                role="button"
+                style={{
+                  width: '100%',
+                  height: '48px',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  borderRadius: '1rem',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  color: '#000000',
-                  fontWeight: 500,
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={rememberDevice}
-                    onChange={(e) => setRememberDevice(e.target.checked)}
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      accentColor: '#000000',
-                      cursor: 'pointer',
-                      boxShadow: 'none',
-                    }}
-                  />
-                  <span>Remember this device</span>
-                </label>
-
-                <Link
-                  href="/forgot-password"
-                  style={{
-                    fontWeight: 600,
-                    color: '#000000',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Forget Password?
-                </Link>
-              </div>
-
-              {/* Signin Button: user button-20 with 3D tactile press & buffer loading */}
-              <div style={{ marginTop: '0.5rem' }}>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="button-20-3d"
-                  role="button"
-                  style={{
-                    width: '100%',
-                    height: '48px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    borderRadius: '1rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.55rem',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    opacity: isLoading ? 0.85 : 1,
-                  }}
-                >
-                  {isLoading ? (
-                    <>
-                      <svg
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          animation: 'spin 0.75s linear infinite',
-                          flexShrink: 0,
-                        }}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeDasharray="31.4 31.4"
-                        />
-                        <path
-                          d="M12 2a10 10 0 0 1 10 10"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <span>Connecting...</span>
-                    </>
-                  ) : (
-                    <span>Continue</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                  justifyContent: 'center',
+                  gap: '0.55rem',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  opacity: isLoading ? 0.85 : 1,
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <svg
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        animation: 'spin 0.75s linear infinite',
+                        flexShrink: 0,
+                      }}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeDasharray="31.4 31.4"
+                      />
+                      <path
+                        d="M12 2a10 10 0 0 1 10 10"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  <span>Continue</span>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </main>
     </div>

@@ -32,7 +32,11 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import { AppTheme, ThemeMode, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import ActionMenu, {
   ActionCashRegisterIcon,
   ActionHeldSalesIcon,
@@ -42,6 +46,22 @@ import ActionMenu, {
   ActionDarkModeIcon,
 } from '@/components/pos/ActionMenu';
 import CompletePaymentModal from '@/components/pos/CompletePaymentModal';
+import {
+  getActiveShift,
+  recordCashMovement,
+  closeShift,
+  getCustomers,
+  createCustomer,
+  getDiningTables,
+  updateTableStatus,
+  getCatalogProducts,
+  getOffers,
+} from '@/lib/api-client';
+import { getPosSession } from '@/lib/auth';
+import { RegisterShift, ShiftCloseResponse } from '@/types/shift';
+import { Customer } from '@/types/customer';
+import { DiningTable } from '@/types/table';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import NoteAltRoundedIcon from '@mui/icons-material/NoteAltRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
@@ -126,6 +146,7 @@ interface HeldSale {
 
 
 export default function PosMainScreen() {
+  const { isAuthorized, handleLogout } = useAuthGuard();
   const router = useRouter();
 
   // Navigation state
@@ -210,6 +231,255 @@ export default function PosMainScreen() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [showEndShiftModal, setShowEndShiftModal] = useState(false);
 
+  // ============================================================================
+  // REGISTER SHIFT STATE & OPERATIONS (PHASE 4 BATCH 1)
+  // ============================================================================
+  const [activeShift, setActiveShift] = useState<RegisterShift | null>(null);
+  const [isLoadingShift, setIsLoadingShift] = useState<boolean>(true);
+  const [currentCashierName, setCurrentCashierName] = useState<string>('Staff');
+
+  // Cash Movement (Pay In / Pay Out) Modal
+  const [showCashMovementModal, setShowCashMovementModal] = useState<boolean>(false);
+  const [cashMovementType, setCashMovementType] = useState<'PAY_IN' | 'PAY_OUT'>('PAY_IN');
+  const [cashMovementAmount, setCashMovementAmount] = useState<string>('');
+  const [cashMovementReason, setCashMovementReason] = useState<string>('');
+  const [isSubmittingCashMovement, setIsSubmittingCashMovement] = useState<boolean>(false);
+  const [cashMovementError, setCashMovementError] = useState<string | null>(null);
+
+  // Close Shift & Reconciliation State
+  const [closingCashActual, setClosingCashActual] = useState<string>('');
+  const [closingNotes, setClosingNotes] = useState<string>('');
+  const [isSubmittingCloseShift, setIsSubmittingCloseShift] = useState<boolean>(false);
+  const [closeShiftError, setCloseShiftError] = useState<string | null>(null);
+  const [closeShiftResult, setCloseShiftResult] = useState<ShiftCloseResponse | null>(null);
+
+  // Fetch Active Shift (API 37: GET /api/shifts/active)
+  const fetchActiveShiftData = async () => {
+    setIsLoadingShift(true);
+    try {
+      const res = await getActiveShift('TRM-01');
+      if (res.data) {
+        setActiveShift(res.data);
+      } else {
+        setActiveShift(null);
+      }
+    } catch (err) {
+      console.warn('Could not fetch active register shift:', err);
+      setActiveShift(null);
+    } finally {
+      setIsLoadingShift(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActiveShiftData();
+    fetchCustomersData();
+    fetchTablesData();
+    const pos = getPosSession();
+    if (pos && pos.employee) {
+      setCurrentCashierName(pos.employee.name);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeShift?.franchiseId) {
+      fetchTablesData(activeShift.franchiseId);
+    }
+  }, [activeShift?.franchiseId]);
+
+  // Handle Cash Movement (API 38: POST /api/shifts/cash-movement)
+  const handleRecordCashMovement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) {
+      setCashMovementError('No active open shift found for this terminal.');
+      return;
+    }
+    const amt = parseFloat(cashMovementAmount);
+    if (isNaN(amt) || amt <= 0) {
+      setCashMovementError('Please enter a valid cash amount greater than zero.');
+      return;
+    }
+    if (!cashMovementReason.trim()) {
+      setCashMovementError('Please provide a reason for this cash movement.');
+      return;
+    }
+
+    setIsSubmittingCashMovement(true);
+    setCashMovementError(null);
+
+    try {
+      await recordCashMovement({
+        shiftId: activeShift.shiftId,
+        type: cashMovementType,
+        amount: amt,
+        reason: cashMovementReason.trim(),
+      });
+      setShowCashMovementModal(false);
+      setCashMovementAmount('');
+      setCashMovementReason('');
+      await fetchActiveShiftData();
+    } catch (err: any) {
+      setCashMovementError(err.message || 'Failed to record cash movement.');
+    } finally {
+      setIsSubmittingCashMovement(false);
+    }
+  };
+
+  // Handle Close Shift (API 39: POST /api/shifts/close)
+  const handleCloseShift = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) {
+      setCloseShiftError('No active open shift to close.');
+      return;
+    }
+    const countNum = parseFloat(closingCashActual);
+    if (isNaN(countNum) || countNum < 0) {
+      setCloseShiftError('Please enter the actual counted cash amount in the drawer (0 or higher).');
+      return;
+    }
+
+    setIsSubmittingCloseShift(true);
+    setCloseShiftError(null);
+
+    try {
+      const res = await closeShift({
+        shiftId: activeShift.shiftId,
+        closingCashActual: countNum,
+        notes: closingNotes.trim() || undefined,
+      });
+
+      if (res.data) {
+        setCloseShiftResult(res.data);
+      }
+    } catch (err: any) {
+      setCloseShiftError(err.message || 'Failed to close shift. Please try again.');
+    } finally {
+      setIsSubmittingCloseShift(false);
+    }
+  };
+
+  // ============================================================================
+  // CUSTOMER & DINING TABLE OPERATIONS (PHASE 4 BATCH 2)
+  // ============================================================================
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [customerLoyaltyPoints, setCustomerLoyaltyPoints] = useState<number>(0);
+  const [customersList, setCustomersList] = useState<Customer[]>([]);
+  const [isSearchingCustomers, setIsSearchingCustomers] = useState<boolean>(false);
+
+  // Quick Customer Registration Modal State
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState<boolean>(false);
+  const [newCustomerName, setNewCustomerName] = useState<string>('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState<string>('');
+  const [newCustomerEmail, setNewCustomerEmail] = useState<string>('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState<string>('');
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState<boolean>(false);
+  const [addCustomerError, setAddCustomerError] = useState<string | null>(null);
+
+  // Dining Tables State
+  const [diningTables, setDiningTables] = useState<DiningTable[]>([]);
+  const [isLoadingTables, setIsLoadingTables] = useState<boolean>(false);
+
+  // Fetch Customers (API 40: GET /api/customers)
+  const fetchCustomersData = async (query?: string) => {
+    setIsSearchingCustomers(true);
+    try {
+      const res = await getCustomers(query);
+      if (res.data && Array.isArray(res.data)) {
+        setCustomersList(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch customers from backend:', err);
+    } finally {
+      setIsSearchingCustomers(false);
+    }
+  };
+
+  // Quick-register Customer at POS (API 41: POST /api/customers)
+  const handleCreateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerName.trim() || newCustomerName.trim().length < 2) {
+      setAddCustomerError('Customer name must be at least 2 characters.');
+      return;
+    }
+    if (!newCustomerPhone.trim()) {
+      setAddCustomerError('Customer phone number is required.');
+      return;
+    }
+
+    setIsCreatingCustomer(true);
+    setAddCustomerError(null);
+
+    try {
+      const res = await createCustomer({
+        name: newCustomerName.trim(),
+        phone: newCustomerPhone.trim(),
+        email: newCustomerEmail.trim() || undefined,
+        address: newCustomerAddress.trim() || undefined,
+      });
+
+      if (res.data) {
+        const created = res.data;
+        setCustomersList((prev) => [created, ...prev]);
+        setSelectedCustomerId(created.id);
+        setCustomerName(created.name);
+        setCustomerPhone(created.phone);
+        setCustomerLoyaltyPoints(created.loyaltyPoints || 0);
+        setShowAddCustomerModal(false);
+        setNewCustomerName('');
+        setNewCustomerPhone('');
+        setNewCustomerEmail('');
+        setNewCustomerAddress('');
+      }
+    } catch (err: any) {
+      setAddCustomerError(err.message || 'Failed to create customer. Phone number may already be registered.');
+    } finally {
+      setIsCreatingCustomer(false);
+    }
+  };
+
+  // Fetch Dining Tables for Outlet (API 43: GET /api/tables)
+  const fetchTablesData = async (franchiseId?: number) => {
+    setIsLoadingTables(true);
+    try {
+      const res = await getDiningTables(franchiseId);
+      if (res.data && Array.isArray(res.data)) {
+        setDiningTables(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch dining tables from backend:', err);
+    } finally {
+      setIsLoadingTables(false);
+    }
+  };
+
+  // Update Dining Table Status (API 44: PUT /api/tables/{id}/status)
+  const handleUpdateTableStatus = async (
+    tableId: number,
+    status: 'VACANT' | 'OCCUPIED' | 'RESERVED' | 'BILLED',
+    orderId?: string
+  ) => {
+    try {
+      await updateTableStatus(tableId, { status, activeOrderId: orderId });
+      setDiningTables((prev) =>
+        prev.map((t) => (t.id === tableId ? { ...t, status, activeOrderId: orderId || t.activeOrderId } : t))
+      );
+    } catch (err) {
+      console.warn('Could not update table status:', err);
+    }
+  };
+
+  // Dynamic dining sections mapping from backend tables
+  const dynamicSections = useMemo(() => {
+    if (diningTables.length === 0) return TABLE_SECTIONS;
+    const map: Record<string, string[]> = {};
+    diningTables.forEach((t) => {
+      const sec = t.section || 'General';
+      if (!map[sec]) map[sec] = [];
+      map[sec].push(t.tableNumber);
+    });
+    return map;
+  }, [diningTables]);
+
   // Product Catalog (loaded dynamically from store inventory/catalog)
   const [products, setProducts] = useState<Product[]>([]);
   const [storeOffers, setStoreOffers] = useState<StoreOffer[]>([]);
@@ -279,7 +549,7 @@ export default function PosMainScreen() {
                   price: discountedPrice,
                   originalPrice: basePrice > discountedPrice ? basePrice : undefined,
                   category: prodCat,
-                  image: p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                  image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
                   isOffer: true,
                   offerBadge: matchingOffer.badgeText || 'OFFER',
                 };
@@ -291,7 +561,7 @@ export default function PosMainScreen() {
                 variant: p.hasVariants && p.variants?.[0]?.name ? p.variants[0].name : (p.brand || 'Standard'),
                 price: basePrice,
                 category: prodCat,
-                image: p.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
                 isOffer: Boolean(p.isOffer),
                 offerBadge: 'OFFER',
               };
@@ -299,6 +569,28 @@ export default function PosMainScreen() {
           setProducts(mapped);
         }
       }
+
+      // Sync real catalog products from backend API (GET /api/owner-catalog/products)
+      getCatalogProducts()
+        .then((res) => {
+          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            const apiProducts: Product[] = res.data.map((p) => ({
+              id: String(p.id),
+              name: p.name,
+              variant: p.unit || 'Standard',
+              price: p.sellingPrice || 0,
+              category: (p as any).categoryName || 'General',
+              image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+              isOffer: false,
+            }));
+            setProducts((prev) => {
+              const apiIds = new Set(apiProducts.map((p) => p.id));
+              const remaining = prev.filter((p) => !apiIds.has(p.id));
+              return [...apiProducts, ...remaining];
+            });
+          }
+        })
+        .catch(() => {});
 
       const savedCustomers = localStorage.getItem('nuradesk_customers');
       if (savedCustomers) {
@@ -683,6 +975,41 @@ export default function PosMainScreen() {
 
   const theme: AppTheme = APP_THEMES[themeMode] || APP_THEMES.light;
 
+  if (isAuthorized !== true) {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.bgPage,
+        color: theme.textSecondary,
+        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: `3px solid ${theme.border}`,
+            borderTopColor: theme.activeBg || '#111827',
+            borderRadius: '50%',
+            animation: 'nurapos-spin 0.7s linear infinite',
+          }} />
+          <style>{`
+            @keyframes nurapos-spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+          <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.02em' }}>
+            Securing session...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       height: '100vh',
@@ -830,6 +1157,15 @@ export default function PosMainScreen() {
                       },
                     },
                     {
+                      id: 'cash_movement',
+                      label: 'Cash in / out',
+                      icon: <AccountBalanceWalletRoundedIcon sx={{ fontSize: 24, color: theme.posBtnBg }} />,
+                      onClick: () => {
+                        setShowCashMovementModal(true);
+                        setIsAppsMenuOpen(false);
+                      },
+                    },
+                    {
                       id: 'end_shift',
                       label: 'End shift',
                       icon: <img src="/icons/shifts.png" alt="End shift" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
@@ -857,9 +1193,12 @@ export default function PosMainScreen() {
                     borderTop: `1px solid ${theme.border}`,
                   }}
                 >
-                  <Link
-                    href="/pos-login"
-                    onClick={() => setIsAppsMenuOpen(false)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      handleLogout();
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -868,25 +1207,25 @@ export default function PosMainScreen() {
                       padding: '7px 10px',
                       borderRadius: '10px',
                       backgroundColor: 'transparent',
-                      color: theme.textSecondary,
-                      textDecoration: 'none',
+                      color: '#EF4444',
+                      border: 'none',
+                      cursor: 'pointer',
                       fontFamily: 'inherit',
                       fontSize: '12.5px',
                       fontWeight: 600,
                       transition: 'all 0.15s ease',
+                      width: '100%',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = theme.hoverBg;
-                      e.currentTarget.style.color = theme.textPrimary;
+                      e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = theme.textSecondary;
                     }}
                   >
-                    <img src="/icons/logout.png" alt="Logout" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', opacity: 0.75 }} />
+                    <img src="/icons/logout.png" alt="Logout" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', opacity: 0.85 }} />
                     <span>Logout</span>
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}
@@ -936,12 +1275,61 @@ export default function PosMainScreen() {
 
         </div>
 
-        {/* Center: Live Time Digital Clock */}
+        {/* Center: Live Time Digital Clock & Active Shift Status */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
+          gap: '0.75rem',
         }}>
+          {isLoadingShift ? (
+            <div style={{
+              fontSize: '11px',
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              backgroundColor: theme.bgCardSubtle,
+              border: `1px solid ${theme.border}`,
+              color: theme.textSecondary,
+            }}>
+              Checking Shift...
+            </div>
+          ) : activeShift ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              color: '#16A34A',
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#22C55E', display: 'inline-block' }} />
+              <span>Shift #{activeShift.shiftId} ({activeShift.terminalId}) • Float: ₹{activeShift.openingFloat.toFixed(2)}</span>
+            </div>
+          ) : (
+            <Link
+              href="/start-shift"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(234, 179, 8, 0.12)',
+                border: '1px solid rgba(234, 179, 8, 0.4)',
+                color: '#CA8A04',
+                textDecoration: 'none',
+              }}
+            >
+              <WarningAmberRoundedIcon sx={{ fontSize: 14 }} />
+              <span>No Shift Active • Open Shift</span>
+            </Link>
+          )}
+
           <span style={{
             fontSize: '13px',
             fontWeight: 700,
@@ -1660,7 +2048,7 @@ export default function PosMainScreen() {
                   onChange={(e) => {
                     const newSec = e.target.value;
                     setTableSection(newSec);
-                    const tables = TABLE_SECTIONS[newSec] || ['T-01'];
+                    const tables = dynamicSections[newSec] || ['T-01'];
                     if (!tables.includes(tableNumber)) {
                       setTableNumber(tables[0]);
                     }
@@ -1681,7 +2069,7 @@ export default function PosMainScreen() {
                     fontFamily: 'inherit',
                   }}
                 >
-                  {Object.keys(TABLE_SECTIONS).map((sec) => (
+                  {Object.keys(dynamicSections).map((sec) => (
                     <option key={sec} value={sec}>{sec}</option>
                   ))}
                 </select>
@@ -1706,9 +2094,13 @@ export default function PosMainScreen() {
                     fontFamily: 'inherit',
                   }}
                 >
-                  {(TABLE_SECTIONS[tableSection] || ['T-01', 'T-02']).map((tbl) => (
-                    <option key={tbl} value={tbl}>{tbl}</option>
-                  ))}
+                  {(dynamicSections[tableSection] || ['T-01', 'T-02']).map((tbl) => {
+                    const tblObj = diningTables.find((t) => t.tableNumber === tbl);
+                    const statusText = tblObj ? ` (${tblObj.status})` : '';
+                    return (
+                      <option key={tbl} value={tbl}>{tbl}{statusText}</option>
+                    );
+                  })}
                 </select>
               </div>
             )}
@@ -1859,14 +2251,35 @@ export default function PosMainScreen() {
                 />
               </div>
 
+              {/* Loyalty badge if customer has points */}
+              {customerLoyaltyPoints > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  backgroundColor: 'rgba(234, 179, 8, 0.14)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  color: '#CA8A04',
+                  fontSize: '10.5px',
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}>
+                  <StarRoundedIcon sx={{ fontSize: 13 }} />
+                  <span>{customerLoyaltyPoints} Pts</span>
+                </div>
+              )}
+
               {/* Actions: Reset & Frequent */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
                 {(customerName !== 'Guest Customer' || customerPhone) && (
                   <button
                     type="button"
                     onClick={() => {
                       setCustomerName('Guest Customer');
                       setCustomerPhone('');
+                      setSelectedCustomerId(null);
+                      setCustomerLoyaltyPoints(0);
                     }}
                     title="Reset to Guest"
                     style={{
@@ -1885,8 +2298,29 @@ export default function PosMainScreen() {
 
                 <button
                   type="button"
-                  onClick={() => setShowCustomerPicker((prev) => !prev)}
-                  title="Select frequent customer"
+                  onClick={() => setShowAddCustomerModal(true)}
+                  title="Add new customer"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.posBtnBg,
+                    cursor: 'pointer',
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <PersonAddAltRoundedIcon sx={{ fontSize: 14 }} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCustomerPicker((prev) => !prev);
+                    if (!showCustomerPicker) fetchCustomersData();
+                  }}
+                  title="Select customer from database"
                   style={{
                     background: showCustomerPicker ? theme.hoverBg : 'none',
                     border: 'none',
@@ -1898,12 +2332,12 @@ export default function PosMainScreen() {
                     borderRadius: '4px',
                   }}
                 >
-                  <PeopleAltRoundedIcon sx={{ fontSize: 13 }} />
+                  <PeopleAltRoundedIcon sx={{ fontSize: 14 }} />
                 </button>
               </div>
             </div>
 
-            {/* Frequent Customers Popover */}
+            {/* Customers Popover (API 40: GET /api/customers) */}
             {showCustomerPicker && (
               <div style={{
                 position: 'absolute',
@@ -1913,52 +2347,97 @@ export default function PosMainScreen() {
                 backgroundColor: theme.bgCard,
                 border: `1px solid ${theme.border}`,
                 borderRadius: '0.65rem',
-                padding: '0.45rem',
+                padding: '0.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.25rem',
+                gap: '0.35rem',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
                 zIndex: 50,
+                maxHeight: '260px',
+                overflowY: 'auto',
               }}>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontSize: '10.5px',
+                  fontSize: '11px',
                   fontWeight: 700,
                   color: theme.textSecondary,
-                  padding: '2px 4px',
                   borderBottom: `1px solid ${theme.border}`,
                   paddingBottom: '4px',
-                  marginBottom: '2px',
                 }}>
-                  <span>Frequent Customers</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomerPicker(false)}
-                    style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: 0 }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 13 }} />
-                  </button>
+                  <span>Customer Directory</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomerPicker(false);
+                        setShowAddCustomerModal(true);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: theme.posBtnBg,
+                        fontSize: '10.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      + Add New
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomerPicker(false)}
+                      style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: 0 }}
+                    >
+                      <CloseRoundedIcon sx={{ fontSize: 13 }} />
+                    </button>
+                  </div>
                 </div>
-                {frequentCustomers.length === 0 ? (
+
+                {/* Filter / Search input */}
+                <input
+                  type="text"
+                  placeholder="Filter by name or phone..."
+                  onChange={(e) => fetchCustomersData(e.target.value)}
+                  style={{
+                    height: '26px',
+                    padding: '0 6px',
+                    borderRadius: '4px',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '11px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+
+                {isSearchingCustomers ? (
                   <div style={{ padding: '0.65rem 0.5rem', fontSize: '11px', color: theme.textSecondary, textAlign: 'center' }}>
-                    No saved customers yet
+                    Searching customers...
+                  </div>
+                ) : customersList.length === 0 ? (
+                  <div style={{ padding: '0.65rem 0.5rem', fontSize: '11px', color: theme.textSecondary, textAlign: 'center' }}>
+                    No registered customers found.
                   </div>
                 ) : (
-                  frequentCustomers.map((cust) => (
+                  customersList.map((cust) => (
                     <div
-                      key={cust.phone}
+                      key={cust.id}
                       onClick={() => {
                         setCustomerName(cust.name);
                         setCustomerPhone(cust.phone);
+                        setSelectedCustomerId(cust.id);
+                        setCustomerLoyaltyPoints(cust.loyaltyPoints || 0);
                         setShowCustomerPicker(false);
                       }}
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '0.35rem 0.5rem',
+                        padding: '0.4rem 0.5rem',
                         borderRadius: '0.45rem',
                         cursor: 'pointer',
                         backgroundColor: customerPhone === cust.phone ? theme.hoverBg : 'transparent',
@@ -1969,12 +2448,26 @@ export default function PosMainScreen() {
                         e.currentTarget.style.backgroundColor = customerPhone === cust.phone ? theme.hoverBg : 'transparent';
                       }}
                     >
-                      <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textPrimary }}>
-                        {cust.name}
-                      </span>
-                      <span style={{ fontSize: '10.5px', color: theme.textSecondary, fontFamily: 'monospace, inherit' }}>
-                        {cust.phone}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textPrimary }}>
+                          {cust.name}
+                        </span>
+                        <span style={{ fontSize: '10px', color: theme.textSecondary }}>
+                          {cust.phone}
+                        </span>
+                      </div>
+                      {cust.loyaltyPoints > 0 && (
+                        <span style={{
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          color: '#CA8A04',
+                          backgroundColor: 'rgba(234, 179, 8, 0.12)',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                        }}>
+                          ⭐ {cust.loyaltyPoints} Pts
+                        </span>
+                      )}
                     </div>
                   ))
                 )}
@@ -2087,7 +2580,7 @@ export default function PosMainScreen() {
                           </span>
                         )}
                         {item.itemNote && (
-                          <div style={{ fontSize: '10px', color: theme.activeBg, marginTop: '2px' }}>📝 {item.itemNote}</div>
+                          <div style={{ fontSize: '10px', color: theme.activeBg, marginTop: '2px' }}>ðŸ“ {item.itemNote}</div>
                         )}
                       </div>
 
@@ -2387,6 +2880,8 @@ export default function PosMainScreen() {
             setPaymentNote('');
             setCustomerName('Guest Customer');
             setCustomerPhone('');
+            setSelectedCustomerId(null);
+            setCustomerLoyaltyPoints(0);
             setOrderType('dine_in');
             setTableSection('Main Hall');
             setTableNumber('T-01');
@@ -2401,6 +2896,11 @@ export default function PosMainScreen() {
         deliveryPlatform={deliveryPlatform}
         customerName={customerName}
         customerPhone={customerPhone}
+        customerId={selectedCustomerId}
+        customerLoyaltyPoints={customerLoyaltyPoints}
+        onLoyaltyRedeemed={(discAmt, remPts) => {
+          setCustomerLoyaltyPoints(remPts);
+        }}
         cart={cart}
         subtotal={subtotal}
         discountAmount={discountAmount}
@@ -2419,6 +2919,14 @@ export default function PosMainScreen() {
               const nextNum = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
               setTicketNumber(`TK-${String(nextNum).padStart(2, '0')}`);
             }
+
+            // Update dining table status to OCCUPIED if dine_in
+            if (orderType === 'dine_in') {
+              const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber);
+              if (currentTbl) {
+                handleUpdateTableStatus(currentTbl.id, 'OCCUPIED', orderNumber);
+              }
+            }
           } catch (e) {}
 
           // Clear cart so next order starts clean
@@ -2427,6 +2935,8 @@ export default function PosMainScreen() {
           setPaymentNote('');
           setCustomerName('Guest Customer');
           setCustomerPhone('');
+          setSelectedCustomerId(null);
+          setCustomerLoyaltyPoints(0);
           setOrderType('dine_in');
           setTableSection('Main Hall');
           setTableNumber('T-01');
@@ -2436,8 +2946,528 @@ export default function PosMainScreen() {
       />
 
 
-      {/* END SHIFT MODAL */}
+      {/* CASH DRAWER MOVEMENT MODAL (PAY_IN / PAY_OUT) */}
+      {showCashMovementModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '440px',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            padding: '1.75rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AccountBalanceWalletRoundedIcon sx={{ fontSize: 22, color: theme.posBtnBg }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Cash Movement (Drawer In / Out)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCashMovementModal(false);
+                  setCashMovementError(null);
+                }}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {cashMovementError && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#EF4444',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>
+                {cashMovementError}
+              </div>
+            )}
+
+            {!activeShift ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '1rem' }}>
+                  No active register shift is open. You must open a shift before recording cash movements.
+                </p>
+                <Link
+                  href="/start-shift"
+                  style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: '0.65rem',
+                    backgroundColor: theme.posBtnBg,
+                    color: theme.posBtnText,
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  Open Shift Now
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleRecordCashMovement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Movement Type Toggle */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                    Movement Type
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCashMovementType('PAY_IN')}
+                      style={{
+                        height: '40px',
+                        borderRadius: '0.65rem',
+                        border: cashMovementType === 'PAY_IN' ? '2px solid #22C55E' : `1px solid ${theme.border}`,
+                        backgroundColor: cashMovementType === 'PAY_IN' ? 'rgba(34, 197, 94, 0.1)' : theme.bgCardSubtle,
+                        color: cashMovementType === 'PAY_IN' ? '#16A34A' : theme.textPrimary,
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + Cash In (Deposit)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCashMovementType('PAY_OUT')}
+                      style={{
+                        height: '40px',
+                        borderRadius: '0.65rem',
+                        border: cashMovementType === 'PAY_OUT' ? '2px solid #EF4444' : `1px solid ${theme.border}`,
+                        backgroundColor: cashMovementType === 'PAY_OUT' ? 'rgba(239, 68, 68, 0.1)' : theme.bgCardSubtle,
+                        color: cashMovementType === 'PAY_OUT' ? '#EF4444' : theme.textPrimary,
+                        fontWeight: 700,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      - Cash Out (Payout)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                    Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    value={cashMovementAmount}
+                    onChange={(e) => setCashMovementAmount(e.target.value)}
+                    placeholder="e.g. 500.00"
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                    Reason / Description
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={cashMovementReason}
+                    onChange={(e) => setCashMovementReason(e.target.value)}
+                    placeholder="e.g. Petty cash for milk supplies"
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingCashMovement}
+                    style={{
+                      flex: 1,
+                      height: '42px',
+                      borderRadius: '0.75rem',
+                      backgroundColor: theme.posBtnBg,
+                      color: theme.posBtnText,
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: isSubmittingCashMovement ? 'not-allowed' : 'pointer',
+                      opacity: isSubmittingCashMovement ? 0.7 : 1,
+                    }}
+                  >
+                    {isSubmittingCashMovement ? 'Recording...' : 'Record Movement'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCashMovementModal(false)}
+                    style={{
+                      padding: '0 1rem',
+                      height: '42px',
+                      borderRadius: '0.75rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* END SHIFT MODAL & RECONCILIATION */}
       {showEndShiftModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: closeShiftResult ? '480px' : '420px',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            padding: '1.75rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                {closeShiftResult ? 'Shift Closed — Z-Report' : 'End Register Shift'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEndShiftModal(false);
+                  setCloseShiftError(null);
+                  if (closeShiftResult) {
+                    setCloseShiftResult(null);
+                    router.push('/pos-login-2');
+                  }
+                }}
+                style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {closeShiftError && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#EF4444',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>
+                {closeShiftError}
+              </div>
+            )}
+
+            {closeShiftResult ? (
+              /* Z-Report Reconciliation View */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '0.75rem',
+                  backgroundColor: theme.bgCardSubtle,
+                  border: `1px solid ${theme.border}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Shift ID</span>
+                    <span style={{ fontWeight: 700, color: theme.textPrimary }}>#{closeShiftResult.shiftId} ({activeShift?.terminalId || 'TRM-01'})</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Cashier</span>
+                    <span style={{ fontWeight: 700, color: theme.textPrimary }}>{currentCashierName}</span>
+                  </div>
+                  {activeShift?.openingFloat !== undefined && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <span style={{ color: theme.textSecondary }}>Opening Float</span>
+                      <span style={{ fontWeight: 700, color: theme.textPrimary }}>₹{activeShift.openingFloat.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Total Sales Recorded</span>
+                    <span style={{ fontWeight: 800, color: '#22C55E' }}>₹{closeShiftResult.totalSales.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Cash / Card / UPI</span>
+                    <span style={{ fontWeight: 700, color: theme.textPrimary }}>
+                      ₹{closeShiftResult.cashTotal.toFixed(2)} / ₹{closeShiftResult.cardTotal.toFixed(2)} / ₹{closeShiftResult.upiTotal.toFixed(2)}
+                    </span>
+                  </div>
+                  <div style={{ height: '1px', backgroundColor: theme.border, margin: '4px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Expected Drawer Cash</span>
+                    <span style={{ fontWeight: 800, color: theme.textPrimary }}>₹{closeShiftResult.expectedCash.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: theme.textSecondary }}>Actual Drawer Cash</span>
+                    <span style={{ fontWeight: 800, color: theme.textPrimary }}>₹{closeShiftResult.actualCash.toFixed(2)}</span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    padding: '6px 8px',
+                    borderRadius: '0.5rem',
+                    backgroundColor: closeShiftResult.cashDifference === 0
+                      ? 'rgba(34, 197, 94, 0.1)'
+                      : closeShiftResult.cashDifference > 0
+                        ? 'rgba(59, 130, 246, 0.1)'
+                        : 'rgba(239, 68, 68, 0.1)',
+                    color: closeShiftResult.cashDifference === 0
+                      ? '#16A34A'
+                      : closeShiftResult.cashDifference > 0
+                        ? '#2563EB'
+                        : '#DC2626',
+                  }}>
+                    <span>Discrepancy (Diff)</span>
+                    <span>
+                      {closeShiftResult.cashDifference > 0 ? `+₹${closeShiftResult.cashDifference.toFixed(2)} (Surplus)` : closeShiftResult.cashDifference < 0 ? `-₹${Math.abs(closeShiftResult.cashDifference).toFixed(2)} (Short)` : '₹0.00 (Balanced)'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEndShiftModal(false);
+                      setCloseShiftResult(null);
+                      setActiveShift(null);
+                      router.push('/pos-login-2');
+                    }}
+                    style={{
+                      flex: 1,
+                      height: '42px',
+                      borderRadius: '0.75rem',
+                      backgroundColor: theme.posBtnBg,
+                      color: theme.posBtnText,
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Done & Log Out to Cashier Switch
+                  </button>
+                </div>
+              </div>
+            ) : !activeShift ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: theme.textSecondary, marginBottom: '1.25rem' }}>
+                  There is currently no active open shift for this register.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                  <Link
+                    href="/start-shift"
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '0.65rem',
+                      backgroundColor: theme.posBtnBg,
+                      color: theme.posBtnText,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Open New Shift
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowEndShiftModal(false)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Close Shift Form */
+              <form onSubmit={handleCloseShift} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                    <span style={{ fontSize: '13px', color: theme.textSecondary }}>Shift ID / Terminal</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>#{activeShift.shiftId} ({activeShift.terminalId})</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                    <span style={{ fontSize: '13px', color: theme.textSecondary }}>Cashier</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>{activeShift.cashierName || currentCashierName}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
+                    <span style={{ fontSize: '13px', color: theme.textSecondary }}>Opening Float</span>
+                    <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>₹{activeShift.openingFloat.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                    Actual Cash Count in Drawer (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={closingCashActual}
+                    onChange={(e) => setClosingCashActual(e.target.value)}
+                    placeholder="Enter total physical cash counted"
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                    Closing Shift Notes (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={closingNotes}
+                    onChange={(e) => setClosingNotes(e.target.value)}
+                    placeholder="Any handover comments, cash discrepancies or drawer notes..."
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.85rem',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      resize: 'none',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingCloseShift}
+                    className="button-20"
+                    style={{
+                      flex: 1,
+                      height: '42px',
+                      borderRadius: '0.75rem',
+                      backgroundColor: theme.posBtnBg,
+                      color: theme.posBtnText,
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: isSubmittingCloseShift ? 'not-allowed' : 'pointer',
+                      opacity: isSubmittingCloseShift ? 0.7 : 1,
+                    }}
+                  >
+                    {isSubmittingCloseShift ? 'Reconciling...' : 'Reconcile & Close Shift'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEndShiftModal(false)}
+                    style={{
+                      padding: '0 1rem',
+                      height: '42px',
+                      borderRadius: '0.75rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* QUICK ADD CUSTOMER MODAL (API 41: POST /api/customers) */}
+      {showAddCustomerModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
@@ -2455,76 +3485,182 @@ export default function PosMainScreen() {
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
             padding: '1.75rem',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                End Current Shift
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <PersonAddAltRoundedIcon sx={{ fontSize: 22, color: theme.posBtnBg }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Quick Add Customer
+                </h3>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowEndShiftModal(false)}
-                style={{ background: 'none', border: 'none', color: theme.textPrimary, cursor: 'pointer' }}
+                onClick={() => {
+                  setShowAddCustomerModal(false);
+                  setAddCustomerError(null);
+                }}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Cashier</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>Amit Patel</span>
+            {addCustomerError && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#EF4444',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>
+                {addCustomerError}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Expected Drawer Cash</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>₹28,450</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.65rem 0.85rem', backgroundColor: theme.bgCardSubtle, borderRadius: '0.65rem', border: `1px solid ${theme.border}` }}>
-                <span style={{ fontSize: '13px', color: theme.textSecondary }}>Total Sales in Shift</span>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#22C55E' }}>₹48,250</span>
-              </div>
-            </div>
+            )}
 
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  alert('Shift reconciled successfully. Printing Z-Report...');
-                  router.push('/pos-login');
-                }}
-                className="button-20"
-                style={{
-                  flex: 1,
-                  height: '42px',
-                  borderRadius: '0.75rem',
-                  backgroundColor: theme.posBtnBg,
-                  color: theme.posBtnText,
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Reconcile & Close Shift
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowEndShiftModal(false)}
-                style={{
-                  padding: '0 1rem',
-                  height: '42px',
-                  borderRadius: '0.75rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: theme.bgCardSubtle,
-                  color: theme.textPrimary,
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
+            <form onSubmit={handleCreateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                  Email Address (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={newCustomerEmail}
+                  onChange={(e) => setNewCustomerEmail(e.target.value)}
+                  placeholder="rahul@example.com"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                  Delivery / Billing Address (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
+                  placeholder="Flat 402, Sunshine Apts"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="submit"
+                  disabled={isCreatingCustomer}
+                  style={{
+                    flex: 1,
+                    height: '42px',
+                    borderRadius: '0.75rem',
+                    backgroundColor: theme.posBtnBg,
+                    color: theme.posBtnText,
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    border: 'none',
+                    cursor: isCreatingCustomer ? 'not-allowed' : 'pointer',
+                    opacity: isCreatingCustomer ? 0.7 : 1,
+                  }}
+                >
+                  {isCreatingCustomer ? 'Registering...' : 'Register Customer'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomerModal(false)}
+                  style={{
+                    padding: '0 1rem',
+                    height: '42px',
+                    borderRadius: '0.75rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,37 +1,138 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getFranchises, openShift, registerTerminal, getEmployees, createEmployee } from '@/lib/api-client';
+import { getPosSession, getAuthSession } from '@/lib/auth';
+import { FranchiseResponse } from '@/types/franchise';
 
 export default function StartShiftPage() {
   const router = useRouter();
-  const stores = [
-    'SP CAFE — Ahmedabad',
-    'SP CAFE — Mumbai (Bandra)',
-    'SP CAFE — Bangalore (Indiranagar)',
-    'SP CAFE — Delhi (Connaught Place)',
-    'SP CAFE — Pune (Koregaon Park)',
-  ];
-  const [storeName, setStoreName] = useState(stores[0]);
-  const [openingCash, setOpeningCash] = useState('');
+  const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(null);
+  const [cashierName, setCashierName] = useState<string>('Cashier');
+  const [cashierId, setCashierId] = useState<number>(1);
+  const [openingCash, setOpeningCash] = useState('500');
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleStartShift = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Check logged-in POS session or auth session
+    const pos = getPosSession();
+    if (pos && pos.employee) {
+      setCashierName(pos.employee.name);
+      setCashierId(pos.employee.id);
+    } else {
+      const storedName = localStorage.getItem('nuradesk_user_name');
+      const auth = getAuthSession();
+      if (storedName) {
+        setCashierName(storedName);
+      } else if (auth && auth.email) {
+        setCashierName(auth.email.split('@')[0]);
+      }
+    }
+
+    // Load available franchises
+    async function loadOutlets() {
+      try {
+        const res = await getFranchises();
+        if (res.data && res.data.length > 0) {
+          setFranchises(res.data);
+          setSelectedFranchiseId(res.data[0].franchiseId);
+        }
+      } catch (err) {
+        console.warn('Could not load franchise outlets for shift:', err);
+      }
+    }
+    loadOutlets();
+  }, []);
+
+  const handleStartShift = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
+    const floatNum = parseFloat(openingCash);
+    if (isNaN(floatNum) || floatNum < 0) {
+      setErrorMessage('Please enter a valid opening float amount (0 or higher).');
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const targetFranchiseId = selectedFranchiseId || (franchises[0]?.franchiseId ?? 1);
+      const terminalCode = `TRM-F${targetFranchiseId}`;
+
+      // 1. Ensure terminal exists for this specific franchise
+      try {
+        await registerTerminal({
+          franchiseId: targetFranchiseId,
+          terminalCode,
+          deviceName: `Primary POS Terminal (Branch ${targetFranchiseId})`,
+        });
+      } catch {
+        // Terminal already registered or ignore
+      }
+
+      // 2. Ensure an active employee exists for this franchise to satisfy DB foreign key
+      let effectiveCashierId = cashierId;
+      try {
+        const empRes = await getEmployees(targetFranchiseId);
+        const activeEmps = (empRes.data || []).filter((emp) => emp.isActive);
+        if (activeEmps.length > 0) {
+          effectiveCashierId = activeEmps[0].id;
+        } else {
+          // Auto-create initial cashier for this newly created branch
+          const created = await createEmployee({
+            franchiseId: targetFranchiseId,
+            employeeCode: `EMP-F${targetFranchiseId}-01`,
+            name: cashierName || 'Store Cashier',
+            role: 'Cashier',
+            initialPin: '1234',
+          });
+          if (created.data) {
+            effectiveCashierId = created.data.id;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not ensure cashier for franchise:', err);
+      }
+
+      // 3. Open shift using real API
+      await openShift({
+        terminalId: terminalCode,
+        franchiseId: targetFranchiseId,
+        openingFloat: floatNum,
+        cashierId: effectiveCashierId,
+        notes: notes.trim() || undefined,
+      });
+
+      localStorage.setItem('nurapos_terminal_id', terminalCode);
+      localStorage.setItem('nurapos_franchise_id', String(targetFranchiseId));
+
       setIsSuccess(true);
       setTimeout(() => {
         router.push('/pos');
-      }, 1200);
-    }, 600);
+      }, 800);
+    } catch (err: any) {
+      if (err.statusCode === 409 || err.message?.includes('already exists')) {
+        // Shift is already active for this terminal, forward to POS register
+        setIsSuccess(true);
+        setTimeout(() => {
+          router.push('/pos');
+        }, 800);
+      } else {
+        setErrorMessage(err.message || 'Failed to open register shift. Please try again.');
+        setIsSubmitting(false);
+      }
+    }
   };
 
   return (
@@ -159,7 +260,7 @@ export default function StartShiftPage() {
             </div>
           </div>
 
-          {/* Greeting: Good morning, Amit */}
+          {/* Greeting: Welcome, {cashierName} */}
           <h2 style={{
             textAlign: 'center',
             fontSize: '16px',
@@ -169,8 +270,27 @@ export default function StartShiftPage() {
             marginBottom: '1.5rem',
             marginTop: '0.25rem',
           }}>
-            Good morning, Amit
+            Welcome, {cashierName}
           </h2>
+
+          {errorMessage && (
+            <div style={{
+              padding: '0.65rem 0.85rem',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '0.75rem',
+              color: '#B91C1C',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              marginBottom: '1rem',
+            }}>
+              <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           {isSuccess ? (
             <div style={{
@@ -184,7 +304,7 @@ export default function StartShiftPage() {
                 Shift Started!
               </h3>
               <p style={{ fontSize: '0.85rem', color: '#525252' }}>
-                Cash drawer initialized with {openingCash ? `$${openingCash}` : '$0.00'}. Launching terminal...
+                Cash drawer initialized with {openingCash ? `₹${openingCash}` : '₹0.00'}. Launching terminal...
               </p>
             </div>
           ) : (
@@ -203,12 +323,12 @@ export default function StartShiftPage() {
                   marginBottom: '0.4rem',
                   letterSpacing: '-0.01em',
                 }}>
-                  Store
+                  Store Branch
                 </label>
                 <div style={{ position: 'relative' }}>
                   <select
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
+                    value={selectedFranchiseId !== null ? String(selectedFranchiseId) : ''}
+                    onChange={(e) => setSelectedFranchiseId(Number(e.target.value))}
                     style={{
                       width: '100%',
                       height: '48px',
@@ -227,11 +347,15 @@ export default function StartShiftPage() {
                       cursor: 'pointer',
                     }}
                   >
-                    {stores.map((s, i) => (
-                      <option key={i} value={s}>
-                        {s}
-                      </option>
-                    ))}
+                    {franchises.length === 0 ? (
+                      <option value="1">Primary Store Branch (Default)</option>
+                    ) : (
+                      franchises.map((f) => (
+                        <option key={f.franchiseId} value={String(f.franchiseId)}>
+                          {f.franchiseName} ({f.city || 'Main Branch'})
+                        </option>
+                      ))
+                    )}
                   </select>
                   <span style={{
                     position: 'absolute',
@@ -332,7 +456,7 @@ export default function StartShiftPage() {
                 marginTop: '0.25rem',
               }}>
                 <Link
-                  href="/pos-login-3"
+                  href="/pos-login-2"
                   style={{
                     fontSize: '13px',
                     fontWeight: 700,

@@ -17,7 +17,6 @@ import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
 import QrCodeRoundedIcon from '@mui/icons-material/QrCodeRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
-import BrandingWatermarkRoundedIcon from '@mui/icons-material/BrandingWatermarkRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PhotoCameraRoundedIcon from '@mui/icons-material/PhotoCameraRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
@@ -30,8 +29,18 @@ import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import PercentRoundedIcon from '@mui/icons-material/PercentRounded';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import {
+  getCatalogCategories,
+  createCatalogCategory,
+  updateCatalogCategory,
+  deleteCatalogCategory,
+  getCatalogProducts,
+  createCatalogProduct,
+  updateCatalogProduct,
+  deleteCatalogProduct,
+} from '@/lib/api-client';
+import { ProductRequest } from '@/types/catalog';
 
 export interface ProductVariant {
   id: string;
@@ -71,16 +80,9 @@ export interface CategoryItem {
   color: string;
 }
 
-export interface BrandItem {
-  id: string;
-  name: string;
-  description: string;
-  origin: string;
-}
-
 interface ProductManagementProps {
-  activeSubTab?: 'products' | 'categories' | 'brands' | 'add_product';
-  onSelectSubTab?: (tab: 'products' | 'categories' | 'brands' | 'add_product') => void;
+  activeSubTab?: 'products' | 'categories' | 'add_product';
+  onSelectSubTab?: (tab: 'products' | 'categories' | 'add_product') => void;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -113,7 +115,6 @@ const DEFAULT_PRODUCT_IMAGE =
 
 const INITIAL_CATEGORIES: CategoryItem[] = [];
 
-const INITIAL_BRANDS: BrandItem[] = [];
 
 const INITIAL_PRODUCTS: ProductItem[] = [];
 
@@ -123,7 +124,7 @@ export default function ProductManagement({
   theme,
 }: ProductManagementProps) {
   // Navigation & Sub-Tabs
-  const [currentSubTab, setCurrentSubTab] = useState<'products' | 'categories' | 'brands' | 'add_product'>(activeSubTab);
+  const [currentSubTab, setCurrentSubTab] = useState<'products' | 'categories' | 'add_product'>(activeSubTab);
   const [isProductFormOpen, setIsProductFormOpen] = useState(activeSubTab === 'add_product');
 
   useEffect(() => {
@@ -137,7 +138,7 @@ export default function ProductManagement({
     }
   }, [activeSubTab]);
 
-  const handleTabChange = (tab: 'products' | 'categories' | 'brands') => {
+  const handleTabChange = (tab: 'products' | 'categories') => {
     setIsProductFormOpen(false);
     setCurrentSubTab(tab);
     onSelectSubTab?.(tab);
@@ -146,26 +147,74 @@ export default function ProductManagement({
   // Main state
   const [products, setProducts] = useState<ProductItem[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<CategoryItem[]>(INITIAL_CATEGORIES);
-  const [brands, setBrands] = useState<BrandItem[]>(INITIAL_BRANDS);
+    const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryItem | null>(null);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
 
-  // Sync products with localStorage
-  useEffect(() => {
+  // Load catalog items from ASP.NET Web API (:5076)
+  const loadBackendCatalog = async () => {
+    setIsLoadingCatalog(true);
     try {
-      const saved = localStorage.getItem('nuradesk_products');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProducts(parsed);
+      const [catRes, prodRes] = await Promise.all([
+        getCatalogCategories().catch((err: any) => {
+          if (err?.statusCode === 401 || err?.statusCode === 403 || err?.message?.toLowerCase().includes('pin')) {
+            
+          }
+          return null;
+        }),
+        getCatalogProducts().catch(() => null),
+      ]);
+
+      let loadedCategories: CategoryItem[] = [];
+      if (catRes?.data && Array.isArray(catRes.data)) {
+        const colors = ['#EF4444', '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#111827'];
+        loadedCategories = catRes.data.map((c, idx) => ({
+          id: String(c.id),
+          name: c.name,
+          description: c.description || '',
+          color: colors[idx % colors.length],
+        }));
+        if (loadedCategories.length > 0) {
+          setCategories(loadedCategories);
         }
       }
-    } catch (e) {}
-  }, []);
+
+      if (prodRes?.data && Array.isArray(prodRes.data)) {
+        const categoryMap = new Map(loadedCategories.map((c) => [Number(c.id), c.name]));
+        const loadedProds: ProductItem[] = prodRes.data.map((p) => ({
+          id: String(p.id),
+          name: p.name,
+          description: p.description || '',
+          category: (p.categoryId ? categoryMap.get(p.categoryId) : undefined) || 'General',
+          sku: `SKU-${p.id}`,
+          barcode: `890${String(p.id).padStart(9, '0')}`,
+          sellingPrice: Number(p.sellingPrice ?? 0),
+          costPrice: Number(p.costPrice ?? 0),
+          taxRate: Number(p.taxRate ?? 0),
+          taxType: (p.taxType as any) || 'inclusive',
+          image: DEFAULT_PRODUCT_IMAGE,
+          hasVariants: false,
+          variants: [],
+          isActive: p.status === 'ACTIVE',
+          createdAt: new Date().toISOString().split('T')[0],
+        }));
+        if (loadedProds.length > 0) {
+          setProducts(loadedProds);
+        }
+      }
+    } catch (err: any) {
+      console.error('[Catalog] Error loading:', err);
+    } finally {
+      setIsLoadingCatalog(false);
+    }
+  };
 
   useEffect(() => {
-    try {
-      localStorage.setItem('nuradesk_products', JSON.stringify(products));
-    } catch (e) {}
-  }, [products]);
+    loadBackendCatalog();
+  }, []);
 
   // Search & Filtering
   const [searchQuery, setSearchQuery] = useState('');
@@ -190,12 +239,6 @@ export default function ProductManagement({
   const [newCatDesc, setNewCatDesc] = useState('');
   const [newCatColor, setNewCatColor] = useState('#3B82F6');
 
-  // Brand Modal
-  const [showBrandModal, setShowBrandModal] = useState(false);
-  const [newBrandName, setNewBrandName] = useState('');
-  const [newBrandDesc, setNewBrandDesc] = useState('');
-  const [newBrandOrigin, setNewBrandOrigin] = useState('');
-
   // Toast Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const showToast = (msg: string) => {
@@ -209,7 +252,7 @@ export default function ProductManagement({
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formCategory, setFormCategory] = useState(categories[0]?.name || 'General');
-  const [formBrand, setFormBrand] = useState(brands[0]?.name || '');
+  const [formBrand, setFormBrand] = useState('');
   const [formSku, setFormSku] = useState('');
   const [formBarcode, setFormBarcode] = useState('');
   const [formCostPrice, setFormCostPrice] = useState<number | ''>(100);
@@ -237,7 +280,7 @@ export default function ProductManagement({
     setFormName('');
     setFormDescription('');
     setFormCategory(categories[0]?.name || 'General');
-    setFormBrand(brands[0]?.name || '');
+    setFormBrand('');
     setFormSku(randomSku);
     setFormBarcode(randomBarcode);
     setFormCostPrice(100);
@@ -260,7 +303,7 @@ export default function ProductManagement({
     setFormName(prod.name);
     setFormDescription(prod.description);
     setFormCategory(prod.category);
-    setFormBrand(prod.brand || brands[0]?.name || '');
+    setFormBrand(prod.brand || '');
     setFormSku(prod.sku);
     setFormBarcode(prod.barcode);
     setFormCostPrice(prod.costPrice);
@@ -370,77 +413,103 @@ export default function ProductManagement({
     showToast(`Duplicated "${prod.name}" as "${newProduct.name}"`);
   };
 
-  // Delete Product
-  const handleConfirmDelete = () => {
+  // Delete Product (Calls DELETE /api/owner-catalog/products/{id})
+  const handleConfirmDelete = async () => {
     if (!productToDelete) return;
-    setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
-    setSelectedProductIds((prev) => prev.filter((id) => id !== productToDelete.id));
-    showToast(`Deleted product "${productToDelete.name}" from catalog.`);
-    setShowDeleteModal(false);
-    setProductToDelete(null);
+    try {
+      const prodIdNum = Number(productToDelete.id);
+      if (!isNaN(prodIdNum) && prodIdNum > 0) {
+        const res = await deleteCatalogProduct(prodIdNum);
+        showToast(res?.message || `Deleted product "${productToDelete.name}" from catalog.`);
+      } else {
+        setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
+        showToast(`Deleted product "${productToDelete.name}" from catalog.`);
+      }
+      setSelectedProductIds((prev) => prev.filter((id) => id !== productToDelete.id));
+      setShowDeleteModal(false);
+      setProductToDelete(null);
+      await loadBackendCatalog();
+    } catch (err: any) {
+      console.error('[Product] Delete error:', err);
+      if (err?.statusCode === 401 || err?.statusCode === 403 || err?.message?.toLowerCase().includes('pin')) {
+        
+      }
+      showToast(err?.message || 'Failed to delete product.');
+    }
   };
 
-  // Save Product (Add or Edit)
-  const handleSaveProduct = (e: React.FormEvent) => {
+  // Save Product (Calls POST /api/owner-catalog/products or PUT /api/owner-catalog/products/{id})
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
     const cost = typeof formCostPrice === 'number' ? formCostPrice : 0;
     const selling = typeof formSellingPrice === 'number' ? formSellingPrice : 0;
+    const matchedCategory = categories.find((c) => c.name === formCategory);
+    const categoryIdNum = matchedCategory ? Number(matchedCategory.id) : undefined;
+    const validCategoryId = categoryIdNum && !isNaN(categoryIdNum) && categoryIdNum > 0 ? categoryIdNum : undefined;
 
-    if (editingProduct) {
-      // Edit mode
-      setProducts((prev) =>
-        prev.map((p) => {
-          if (p.id === editingProduct.id) {
-            return {
-              ...p,
-              name: formName.trim(),
-              description: formDescription.trim(),
-              category: formCategory,
-              brand: formBrand,
-              sku: formSku.trim(),
-              barcode: formBarcode.trim(),
-              costPrice: cost,
-              sellingPrice: selling,
-              taxRate: formTaxRate,
-              taxType: formTaxType,
-              image: formImage.trim() || DEFAULT_PRODUCT_IMAGE,
-              hasVariants: formHasVariants,
-              variants: formHasVariants ? formVariantRows : [],
-              isActive: formIsActive,
-              updatedAt: new Date().toISOString().split('T')[0],
-            };
-          }
-          return p;
-        })
-      );
-      showToast(`Updated product "${formName.trim()}" successfully.`);
-    } else {
-      // Create mode
-      const newProduct: ProductItem = {
-        id: `prod-${Date.now()}`,
-        name: formName.trim(),
-        description: formDescription.trim(),
-        category: formCategory,
-        brand: formBrand,
-        sku: formSku.trim() || `SKU-${Date.now()}`,
-        barcode: formBarcode.trim() || `890${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-        costPrice: cost,
-        sellingPrice: selling,
-        taxRate: formTaxRate,
-        taxType: formTaxType,
-        image: formImage.trim() || DEFAULT_PRODUCT_IMAGE,
-        hasVariants: formHasVariants,
-        variants: formHasVariants ? formVariantRows : [],
-        isActive: formIsActive,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setProducts((prev) => [newProduct, ...prev]);
-      showToast(`Created new product "${formName.trim()}".`);
+    const productPayload: ProductRequest = {
+      name: formName.trim(),
+      categoryId: validCategoryId,
+      sellingPrice: selling,
+      costPrice: cost,
+      taxRate: Math.min(28, Math.max(0, formTaxRate)),
+      taxType: formTaxType,
+      unit: 'PIECE',
+      status: formIsActive ? 'ACTIVE' : 'INACTIVE',
+    };
+
+    setIsSavingProduct(true);
+    try {
+      if (editingProduct) {
+        const prodIdNum = Number(editingProduct.id);
+        if (!isNaN(prodIdNum) && prodIdNum > 0) {
+          const res = await updateCatalogProduct(prodIdNum, productPayload);
+          showToast(res?.message || `Updated product "${formName.trim()}" successfully.`);
+        } else {
+          setProducts((prev) =>
+            prev.map((p) => {
+              if (p.id === editingProduct.id) {
+                return {
+                  ...p,
+                  name: formName.trim(),
+                  description: formDescription.trim(),
+                  category: formCategory,
+                  brand: formBrand,
+                  sku: formSku.trim(),
+                  barcode: formBarcode.trim(),
+                  costPrice: cost,
+                  sellingPrice: selling,
+                  taxRate: formTaxRate,
+                  taxType: formTaxType,
+                  image: formImage.trim() || DEFAULT_PRODUCT_IMAGE,
+                  hasVariants: formHasVariants,
+                  variants: formHasVariants ? formVariantRows : [],
+                  isActive: formIsActive,
+                  updatedAt: new Date().toISOString().split('T')[0],
+                };
+              }
+              return p;
+            })
+          );
+          showToast(`Updated product "${formName.trim()}" successfully.`);
+        }
+      } else {
+        const res = await createCatalogProduct(productPayload);
+        showToast(res?.message || `Created new product "${formName.trim()}".`);
+      }
+      handleCloseProductForm();
+      await loadBackendCatalog();
+    } catch (err: any) {
+      console.error('[Product] Save error:', err);
+      if (err?.statusCode === 401 || err?.statusCode === 403 || err?.message?.toLowerCase().includes('pin')) {
+        
+      }
+      showToast(err?.message || 'Failed to save product.');
+    } finally {
+      setIsSavingProduct(false);
     }
-
-    handleCloseProductForm();
   };
 
   // Add a variant row in form
@@ -546,39 +615,94 @@ export default function ProductManagement({
     setSelectedProductIds([]);
   };
 
-  // Add Category Submit
-  const handleSaveCategory = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCatName.trim()) return;
-    const newCat: CategoryItem = {
-      id: `cat-${Date.now()}`,
-      name: newCatName.trim(),
-      description: newCatDesc.trim(),
-      color: newCatColor,
-    };
-    setCategories((prev) => [...prev, newCat]);
+  const handleOpenAddCategory = () => {
+    setEditingCategory(null);
     setNewCatName('');
     setNewCatDesc('');
-    setShowCategoryModal(false);
-    showToast(`Added category "${newCat.name}".`);
+    setNewCatColor('#3B82F6');
+    setShowCategoryModal(true);
   };
 
-  // Add Brand Submit
-  const handleSaveBrand = (e: React.FormEvent) => {
+  const handleOpenEditCategory = (cat: CategoryItem) => {
+    setEditingCategory(cat);
+    setNewCatName(cat.name);
+    setNewCatDesc(cat.description || '');
+    setNewCatColor(cat.color || '#3B82F6');
+    setShowCategoryModal(true);
+  };
+
+  // Add / Edit Category Submit (Calls POST /api/owner-catalog/categories or PUT /api/owner-catalog/categories/{id})
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBrandName.trim()) return;
-    const newBr: BrandItem = {
-      id: `br-${Date.now()}`,
-      name: newBrandName.trim(),
-      description: newBrandDesc.trim(),
-      origin: newBrandOrigin.trim() || 'India',
-    };
-    setBrands((prev) => [...prev, newBr]);
-    setNewBrandName('');
-    setNewBrandDesc('');
-    setNewBrandOrigin('');
-    setShowBrandModal(false);
-    showToast(`Added brand "${newBr.name}".`);
+    if (!newCatName.trim()) return;
+
+    setIsSavingCategory(true);
+    try {
+      if (editingCategory) {
+        const catIdNum = Number(editingCategory.id);
+        if (!isNaN(catIdNum) && catIdNum > 0) {
+          const res = await updateCatalogCategory(catIdNum, {
+            name: newCatName.trim(),
+            description: newCatDesc.trim() || undefined,
+            status: 'ACTIVE',
+          });
+          showToast(res?.message || `Updated category "${newCatName.trim()}".`);
+        } else {
+          setCategories((prev) =>
+            prev.map((c) =>
+              c.id === editingCategory.id
+                ? { ...c, name: newCatName.trim(), description: newCatDesc.trim(), color: newCatColor }
+                : c
+            )
+          );
+          showToast(`Updated category "${newCatName.trim()}".`);
+        }
+      } else {
+        const res = await createCatalogCategory({
+          name: newCatName.trim(),
+          description: newCatDesc.trim() || undefined,
+          status: 'ACTIVE',
+        });
+        showToast(res?.message || `Added category "${newCatName.trim()}".`);
+      }
+      setNewCatName('');
+      setNewCatDesc('');
+      setEditingCategory(null);
+      setShowCategoryModal(false);
+      await loadBackendCatalog();
+    } catch (err: any) {
+      console.error('[Category] Save error:', err);
+      if (err?.statusCode === 401 || err?.statusCode === 403 || err?.message?.toLowerCase().includes('pin')) {
+        
+      }
+      showToast(err?.message || 'Failed to save category.');
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  // Delete Category (Calls DELETE /api/owner-catalog/categories/{id})
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    try {
+      const catIdNum = Number(categoryToDelete.id);
+      if (!isNaN(catIdNum) && catIdNum > 0) {
+        const res = await deleteCatalogCategory(catIdNum);
+        showToast(res?.message || `Deleted category "${categoryToDelete.name}".`);
+      } else {
+        setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
+        showToast(`Deleted category "${categoryToDelete.name}".`);
+      }
+      setShowDeleteCategoryModal(false);
+      setCategoryToDelete(null);
+      await loadBackendCatalog();
+    } catch (err: any) {
+      console.error('[Category] Delete error:', err);
+      if (err?.statusCode === 401 || err?.statusCode === 403 || err?.message?.toLowerCase().includes('pin')) {
+        
+      }
+      showToast(err?.message || 'Failed to delete category.');
+    }
   };
 
   // Live profit margin calculation in form
@@ -724,6 +848,7 @@ export default function ProductManagement({
 
                 <button
                   type="submit"
+                  disabled={isSavingProduct}
                   className="button-20"
                   role="button"
                   style={{
@@ -735,10 +860,18 @@ export default function ProductManagement({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.35rem',
+                    opacity: isSavingProduct ? 0.7 : 1,
+                    cursor: isSavingProduct ? 'not-allowed' : 'pointer',
                   }}
                 >
                   <CheckRoundedIcon sx={{ fontSize: 18 }} />
-                  <span>{editingProduct ? 'Save Changes' : 'Save Product'}</span>
+                  <span>
+                    {isSavingProduct
+                      ? 'Saving...'
+                      : editingProduct
+                      ? 'Save Changes'
+                      : 'Save Product'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -806,68 +939,37 @@ export default function ProductManagement({
                     />
                   </div>
 
-                  {/* Category & Brand row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                        Category *
-                      </label>
-                      <select
-                        value={formCategory}
-                        onChange={(e) => setFormCategory(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '40px',
-                          padding: '0 0.75rem',
-                          borderRadius: '0.6rem',
-                          backgroundColor: theme.bgPage,
-                          border: `1px solid ${theme.border}`,
-                          color: theme.textPrimary,
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          boxSizing: 'border-box',
-                          outline: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {categories.length === 0 ? (
-                          <option value="General">General</option>
-                        ) : (
-                          categories.map((c) => (
-                            <option key={c.id} value={c.name}>{c.name}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                        Brand
-                      </label>
-                      <select
-                        value={formBrand}
-                        onChange={(e) => setFormBrand(e.target.value)}
-                        style={{
-                          width: '100%',
-                          height: '40px',
-                          padding: '0 0.75rem',
-                          borderRadius: '0.6rem',
-                          backgroundColor: theme.bgPage,
-                          border: `1px solid ${theme.border}`,
-                          color: theme.textPrimary,
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          boxSizing: 'border-box',
-                          outline: 'none',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <option value="">None / Unbranded</option>
-                        {brands.map((b) => (
-                          <option key={b.id} value={b.name}>{b.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                  {/* Category row */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      Category *
+                    </label>
+                    <select
+                      value={formCategory}
+                      onChange={(e) => setFormCategory(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '40px',
+                        padding: '0 0.75rem',
+                        borderRadius: '0.6rem',
+                        backgroundColor: theme.bgPage,
+                        border: `1px solid ${theme.border}`,
+                        color: theme.textPrimary,
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {categories.length === 0 ? (
+                        <option value="General">General</option>
+                      ) : (
+                        categories.map((c) => (
+                          <option key={c.id} value={c.name}>{c.name}</option>
+                        ))
+                      )}
+                    </select>
                   </div>
 
                   {/* Description */}
@@ -1542,7 +1644,7 @@ export default function ProductManagement({
               type="button"
               className="button-20"
               role="button"
-              onClick={() => setShowCategoryModal(true)}
+              onClick={handleOpenAddCategory}
               style={{
                 height: '38px',
                 padding: '0 1.15rem',
@@ -1555,27 +1657,6 @@ export default function ProductManagement({
             >
               <AddRoundedIcon sx={{ fontSize: 18 }} />
               <span>New Category</span>
-            </button>
-          )}
-
-          {currentSubTab === 'brands' && (
-            <button
-              type="button"
-              className="button-20"
-              role="button"
-              onClick={() => setShowBrandModal(true)}
-              style={{
-                height: '38px',
-                padding: '0 1.15rem',
-                fontSize: '13px',
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-              }}
-            >
-              <AddRoundedIcon sx={{ fontSize: 18 }} />
-              <span>New Brand</span>
             </button>
           )}
         </div>
@@ -2555,9 +2636,28 @@ export default function ProductManagement({
           }}>
             <CategoryRoundedIcon sx={{ fontSize: 42, color: theme.textSecondary, opacity: 0.4, marginBottom: '0.5rem' }} />
             <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary }}>No categories defined</div>
-            <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem' }}>
-              Click &quot;Add Category&quot; to create your first category.
+            <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem', marginBottom: '1rem' }}>
+              Create categories to organize your store items and set taxes.
             </div>
+            <button
+              type="button"
+              className="button-20"
+              role="button"
+              onClick={handleOpenAddCategory}
+              style={{
+                height: '36px',
+                padding: '0 1.15rem',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+              }}
+            >
+              <AddRoundedIcon sx={{ fontSize: 16 }} />
+              <span>Add First Category</span>
+            </button>
           </div>
         ) : (
           <div>
@@ -2611,7 +2711,7 @@ export default function ProductManagement({
                       </p>
                     </div>
 
-                    <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <button
                         type="button"
                         onClick={() => {
@@ -2631,101 +2731,46 @@ export default function ProductManagement({
                       >
                         View Products ({productCount})
                       </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )
-      )}
 
-      {/* ============================================================ */}
-      {/* SUBTAB 3: BRANDS                                             */}
-      {/* ============================================================ */}
-      {currentSubTab === 'brands' && (
-        brands.length === 0 ? (
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1rem',
-            padding: '3.5rem 1rem',
-            textAlign: 'center',
-          }}>
-            <BrandingWatermarkRoundedIcon sx={{ fontSize: 42, color: theme.textSecondary, opacity: 0.4, marginBottom: '0.5rem' }} />
-            <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary }}>No brands defined</div>
-            <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.2rem' }}>
-              Click &quot;Add Brand&quot; to create your first brand.
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '1.25rem',
-            }}>
-              {brands.map((brand) => {
-                const productCount = products.filter((p) => p.brand === brand.name).length;
-
-                return (
-                  <div
-                    key={brand.id}
-                    style={{
-                      backgroundColor: theme.bgCard,
-                      border: `1px solid ${theme.borderCard}`,
-                      borderRadius: '1rem',
-                      padding: '1.25rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          color: theme.textSecondary,
-                          backgroundColor: theme.hoverBg,
-                          padding: '2px 8px',
-                          borderRadius: '0.35rem',
-                        }}>
-                          Origin: {brand.origin}
-                        </span>
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary }}>
-                          {productCount} items
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCategory(cat)}
+                          title="Edit Category"
+                          style={{
+                            padding: '0.45rem 0.65rem',
+                            borderRadius: '0.5rem',
+                            border: `1px solid ${theme.border}`,
+                            backgroundColor: theme.hoverBg,
+                            color: theme.textPrimary,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <EditRoundedIcon sx={{ fontSize: 15 }} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCategoryToDelete(cat);
+                            setShowDeleteCategoryModal(true);
+                          }}
+                          title="Delete Category"
+                          style={{
+                            padding: '0.45rem 0.65rem',
+                            borderRadius: '0.5rem',
+                            border: '1px solid #FECACA',
+                            backgroundColor: '#FEF2F2',
+                            color: '#DC2626',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <DeleteOutlineRoundedIcon sx={{ fontSize: 15 }} />
+                        </button>
                       </div>
-
-                      <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.35rem 0' }}>
-                        {brand.name}
-                      </h3>
-                      <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
-                        {brand.description}
-                      </p>
-                    </div>
-
-                    <div style={{ marginTop: '1.25rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery(brand.name);
-                          handleTabChange('products');
-                        }}
-                        style={{
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '0.5rem',
-                          border: `1px solid ${theme.border}`,
-                          backgroundColor: theme.hoverBg,
-                          color: theme.textPrimary,
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Filter by Brand
-                      </button>
                     </div>
                   </div>
                 );
@@ -2734,7 +2779,6 @@ export default function ProductManagement({
           </div>
         )
       )}
-
       {/* ============================================================ */}
       {/* MODAL: DELETE PRODUCT CONFIRMATION                           */}
       {/* ============================================================ */}
@@ -2838,11 +2882,14 @@ export default function ProductManagement({
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Add New Category
+                {editingCategory ? 'Edit Category' : 'Add New Category'}
               </h3>
               <button
                 type="button"
-                onClick={() => setShowCategoryModal(false)}
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setEditingCategory(null);
+                }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textSecondary }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
@@ -2929,7 +2976,10 @@ export default function ProductManagement({
                   type="button"
                   className="button-20-secondary"
                   role="button"
-                  onClick={() => setShowCategoryModal(false)}
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setEditingCategory(null);
+                  }}
                   style={{
                     height: '38px',
                     padding: '0 1.15rem',
@@ -2942,6 +2992,7 @@ export default function ProductManagement({
                 </button>
                 <button
                   type="submit"
+                  disabled={isSavingCategory}
                   className="button-20"
                   role="button"
                   style={{
@@ -2949,21 +3000,21 @@ export default function ProductManagement({
                     padding: '0 1.25rem',
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: isSavingCategory ? 'not-allowed' : 'pointer',
+                    opacity: isSavingCategory ? 0.7 : 1,
                   }}
                 >
-                  Save Category
+                  {isSavingCategory ? 'Saving...' : editingCategory ? 'Update Category' : 'Save Category'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
       {/* ============================================================ */}
-      {/* MODAL: ADD BRAND                                             */}
+      {/* MODAL: DELETE CATEGORY CONFIRMATION                           */}
       {/* ============================================================ */}
-      {showBrandModal && (
+      {showDeleteCategoryModal && categoryToDelete && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -2987,129 +3038,54 @@ export default function ProductManagement({
             padding: '1.5rem',
             boxShadow: '0 20px 48px rgba(0,0,0,0.25)',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Add New Brand
-              </h3>
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', margin: '0 0 0.5rem 0' }}>
+              Delete Category?
+            </h3>
+            <p style={{ fontSize: '13px', color: theme.textSecondary, margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
+              Are you sure you want to delete <strong style={{ color: theme.textPrimary }}>&quot;{categoryToDelete.name}&quot;</strong>?
+              If products are assigned to this category, deletion may be prevented by the database.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem' }}>
               <button
                 type="button"
-                onClick={() => setShowBrandModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textSecondary }}
+                className="button-20-secondary"
+                role="button"
+                onClick={() => {
+                  setShowDeleteCategoryModal(false);
+                  setCategoryToDelete(null);
+                }}
+                style={{
+                  height: '38px',
+                  padding: '0 1.15rem',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
               >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="button-20-danger"
+                role="button"
+                onClick={handleConfirmDeleteCategory}
+                style={{
+                  height: '38px',
+                  padding: '0 1.25rem',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Delete Category
               </button>
             </div>
-
-            <form onSubmit={handleSaveBrand} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Brand Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newBrandName}
-                  onChange={(e) => setNewBrandName(e.target.value)}
-                  placeholder="e.g. San Pellegrino"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 700,
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Description
-                </label>
-                <input
-                  type="text"
-                  value={newBrandDesc}
-                  onChange={(e) => setNewBrandDesc(e.target.value)}
-                  placeholder="e.g. Sparkling mineral water and citrus sodas"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Origin Location
-                </label>
-                <input
-                  type="text"
-                  value={newBrandOrigin}
-                  onChange={(e) => setNewBrandOrigin(e.target.value)}
-                  placeholder="e.g. San Pellegrino Terme, Italy"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="button-20-secondary"
-                  role="button"
-                  onClick={() => setShowBrandModal(false)}
-                  style={{
-                    height: '38px',
-                    padding: '0 1.15rem',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="button-20"
-                  role="button"
-                  style={{
-                    height: '38px',
-                    padding: '0 1.25rem',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Save Brand
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
+
+
 
     </div>
   );

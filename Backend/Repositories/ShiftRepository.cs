@@ -80,7 +80,7 @@ public sealed class ShiftRepository(NpgsqlConnection connection) : IShiftReposit
             SELECT c_shift_id,c_franchise_id,c_terminal_code,c_cashier_id,c_opened_at,c_closed_at,c_status,c_opening_float,c_expected_cash,c_actual_cash,c_cash_difference,c_notes,
                    c_total_sales,c_cash_sales,c_card_sales,c_upi_sales
             FROM t_register_shift WHERE c_user_id=@owner AND c_status='OPEN'
-              AND (@terminal IS NULL OR c_terminal_code=@terminal) AND (@cashier IS NULL OR c_cashier_id=@cashier)
+              AND (@terminal::text IS NULL OR c_terminal_code=@terminal) AND (@cashier::integer IS NULL OR c_cashier_id=@cashier)
             ORDER BY c_opened_at DESC LIMIT 1;
             """;
         await OpenConnectionAsync();
@@ -98,7 +98,7 @@ public sealed class ShiftRepository(NpgsqlConnection connection) : IShiftReposit
             INSERT INTO t_shift_cash_movement(c_shift_id,c_type,c_amount,c_reason)
             SELECT c_shift_id,@type,@amount,@reason FROM t_register_shift
             WHERE c_shift_id=@shift AND c_user_id=@owner AND c_status='OPEN'
-              AND (@employee IS NULL OR c_cashier_id=@employee) AND (@terminal IS NULL OR c_terminal_code=@terminal)
+              AND (@employee::integer IS NULL OR c_cashier_id=@employee) AND (@terminal::text IS NULL OR c_terminal_code=@terminal)
             FOR UPDATE;
             """;
         await OpenConnectionAsync();
@@ -119,7 +119,7 @@ public sealed class ShiftRepository(NpgsqlConnection connection) : IShiftReposit
             WITH target AS MATERIALIZED (
                 SELECT s.c_shift_id,s.c_opening_float,s.c_cash_sales
                 FROM t_register_shift s WHERE s.c_shift_id=@shift AND s.c_user_id=@owner AND s.c_status='OPEN'
-                  AND (@employee IS NULL OR s.c_cashier_id=@employee) AND (@terminal IS NULL OR s.c_terminal_code=@terminal)
+                  AND (@employee::integer IS NULL OR s.c_cashier_id=@employee) AND (@terminal::text IS NULL OR s.c_terminal_code=@terminal)
                 FOR UPDATE
             ), movement AS MATERIALIZED (
                 SELECT COALESCE(SUM(CASE WHEN m.c_type='PAY_IN' THEN m.c_amount ELSE -m.c_amount END),0) AS amount

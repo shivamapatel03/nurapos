@@ -17,7 +17,10 @@ public static class PostgresConnectionString
             Host = uri.Host,
             Port = uri.IsDefaultPort ? 5432 : uri.Port,
             Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
-            SslMode = SslMode.Require
+            SslMode = SslMode.Require,
+            Timeout = 45,
+            CommandTimeout = 45,
+            KeepAlive = 30
         };
 
         var credentials = uri.UserInfo.Split(':', 2);

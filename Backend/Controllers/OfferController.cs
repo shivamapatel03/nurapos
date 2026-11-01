@@ -32,9 +32,11 @@ public sealed class OfferController(IOfferService service):ControllerBase
         catch(KeyNotFoundException ex){return NotFound(Error(404,ex.Message));}
         catch(PostgresException ex)when(ex.SqlState=="23505"){return Conflict(Error(409,"Offer code already exists in this franchise."));}
     }
-    private bool TryOwnerId(out int id)=>User.IsInRole("FRANCHISE_OWNER")
-        ?int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),out id)
-        :int.TryParse(User.FindFirstValue("owner_id"),out id);
+    private bool TryOwnerId(out int id)
+    {
+        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
+        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+    }
     private static ApiResponse<object?> Error(int code,string message)=>new(){StatusCode=code,Message=message};
 }
 

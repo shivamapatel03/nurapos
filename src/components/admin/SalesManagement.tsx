@@ -4,7 +4,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 
 // Material Rounded Icons
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import AssignmentReturnRoundedIcon from '@mui/icons-material/AssignmentReturnRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import FilterListRoundedIcon from '@mui/icons-material/FilterListRounded';
@@ -57,26 +56,6 @@ export interface SalesOrder {
   paymentNote?: string;
 }
 
-export interface ReturnRecord {
-  id: string; // e.g. RET-104
-  orderId: string;
-  timestamp: string;
-  date: string;
-  customerName: string;
-  returnedItems: {
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    refundTotal: number;
-  }[];
-  refundAmount: number;
-  refundMethod: 'Original Payment' | 'Cash' | 'Store Credit';
-  reason: 'Wrong Item Given' | 'Quality / Taste Issue' | 'Customer Changed Mind' | 'Defective Packaging' | 'Kitchen Cancellation';
-  approvedBy: string;
-  status: 'Refunded' | 'Pending Approval' | 'Rejected';
-  notes?: string;
-}
-
 export interface PaymentTransaction {
   id: string; // e.g. TXN-89210
   orderId: string;
@@ -95,8 +74,8 @@ export interface PaymentTransaction {
 }
 
 export interface SalesManagementProps {
-  activeSubTab?: 'orders' | 'returns' | 'payments';
-  onSelectSubTab?: (tab: 'orders' | 'returns' | 'payments') => void;
+  activeSubTab?: 'orders' | 'payments';
+  onSelectSubTab?: (tab: 'orders' | 'payments') => void;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -145,8 +124,6 @@ const getYesterdayDateStr = () => {
 // Initial Orders (default empty, loaded from live store or localStorage)
 const INITIAL_ORDERS: SalesOrder[] = [];
 
-// Initial Returns (default empty)
-const INITIAL_RETURNS: ReturnRecord[] = [];
 
 // Initial Payments (default empty)
 const INITIAL_PAYMENTS: PaymentTransaction[] = [];
@@ -157,7 +134,7 @@ export default function SalesManagement({
   theme,
 }: SalesManagementProps) {
   // Sync tab with sidebar prop
-  const [currentTab, setCurrentTab] = useState<'orders' | 'returns' | 'payments'>(activeSubTab);
+  const [currentTab, setCurrentTab] = useState<'orders' | 'payments'>(activeSubTab);
 
   useEffect(() => {
     if (activeSubTab) {
@@ -167,8 +144,7 @@ export default function SalesManagement({
 
   // Main State
   const [orders, setOrders] = useState<SalesOrder[]>(INITIAL_ORDERS);
-  const [returns, setReturns] = useState<ReturnRecord[]>(INITIAL_RETURNS);
-  const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
+    const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,11 +157,6 @@ export default function SalesManagement({
   // Modals state
   const [viewingOrder, setViewingOrder] = useState<SalesOrder | null>(null);
   const [viewingPayment, setViewingPayment] = useState<PaymentTransaction | null>(null);
-  const [showProcessReturnModal, setShowProcessReturnModal] = useState(false);
-  const [returnTargetOrder, setReturnTargetOrder] = useState<SalesOrder | null>(null);
-  const [returnReasonSelect, setReturnReasonSelect] = useState<ReturnRecord['reason']>('Wrong Item Given');
-  const [returnRefundMethod, setReturnRefundMethod] = useState<ReturnRecord['refundMethod']>('Original Payment');
-  const [returnNotes, setReturnNotes] = useState('');
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -214,21 +185,6 @@ export default function SalesManagement({
     });
   }, [orders, searchQuery, orderStatusFilter, paymentMethodFilter]);
 
-  // Filtered Returns
-  const filteredReturns = useMemo(() => {
-    return returns.filter((ret) => {
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchId = ret.id.toLowerCase().includes(q);
-        const matchOrder = ret.orderId.toLowerCase().includes(q);
-        const matchCust = ret.customerName.toLowerCase().includes(q);
-        const matchReason = ret.reason.toLowerCase().includes(q);
-        if (!matchId && !matchOrder && !matchCust && !matchReason) return false;
-      }
-      return true;
-    });
-  }, [returns, searchQuery]);
-
   // Filtered Payments
   const filteredPayments = useMemo(() => {
     return payments.filter((txn) => {
@@ -252,77 +208,12 @@ export default function SalesManagement({
   const totalGrossRevenue = useMemo(() => orders.filter((o) => o.orderStatus === 'Completed').reduce((acc, o) => acc + o.totalAmount, 0), [orders]);
   const avgOrderValue = totalOrdersCount > 0 ? (totalGrossRevenue / orders.filter((o) => o.orderStatus === 'Completed').length || 1).toFixed(0) : 0;
 
-  // Top KPIs for Returns
-  const totalRefundAmount = useMemo(() => returns.reduce((acc, r) => acc + r.refundAmount, 0), [returns]);
-
   // Top KPIs for Payments
   const totalCollected = useMemo(() => payments.filter((p) => p.status === 'Success').reduce((acc, p) => acc + p.amount, 0), [payments]);
   const upiCollected = useMemo(() => payments.filter((p) => p.status === 'Success' && p.method === 'UPI').reduce((acc, p) => acc + p.amount, 0), [payments]);
   const cardCollected = useMemo(() => payments.filter((p) => p.status === 'Success' && p.method === 'Card').reduce((acc, p) => acc + p.amount, 0), [payments]);
   const cashCollected = useMemo(() => payments.filter((p) => p.status === 'Success' && p.method === 'Cash').reduce((acc, p) => acc + p.amount, 0), [payments]);
   const failedOrRefunded = useMemo(() => payments.filter((p) => p.status === 'Failed' || p.status === 'Refunded').reduce((acc, p) => acc + p.amount, 0), [payments]);
-
-  // Open Return Modal from an order
-  const handleInitiateReturn = (ord: SalesOrder) => {
-    setReturnTargetOrder(ord);
-    setReturnReasonSelect('Wrong Item Given');
-    setReturnRefundMethod('Original Payment');
-    setReturnNotes('');
-    setShowProcessReturnModal(true);
-  };
-
-  // Submit Process Return
-  const handleSubmitReturn = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!returnTargetOrder) return;
-
-    const newReturnRecord: ReturnRecord = {
-      id: `RET-${Math.floor(100 + Math.random() * 900)}`,
-      orderId: returnTargetOrder.id,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toISOString().split('T')[0],
-      customerName: returnTargetOrder.customerName,
-      returnedItems: returnTargetOrder.items.map((i) => ({
-        name: i.name,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        refundTotal: i.totalPrice,
-      })),
-      refundAmount: returnTargetOrder.totalAmount,
-      refundMethod: returnRefundMethod,
-      reason: returnReasonSelect,
-      approvedBy: 'Rahul Patel (Store Manager)',
-      status: 'Refunded',
-      notes: returnNotes.trim() || 'Processed via Admin Sales Returns portal.',
-    };
-
-    // Update order status
-    setOrders((prev) =>
-      prev.map((o) => (o.id === returnTargetOrder.id ? { ...o, orderStatus: 'Refunded', paymentStatus: 'Refunded' } : o))
-    );
-
-    // Update payments list
-    setPayments((prev) => [
-      {
-        id: `TXN-REF-${Math.floor(10000 + Math.random() * 90000)}`,
-        orderId: returnTargetOrder.id,
-        timestamp: newReturnRecord.timestamp,
-        date: newReturnRecord.date,
-        customerName: returnTargetOrder.customerName,
-        method: returnTargetOrder.paymentMethod,
-        amount: returnTargetOrder.totalAmount,
-        status: 'Refunded',
-        gatewayRef: `REFUND-${returnTargetOrder.id}`,
-        terminalId: returnTargetOrder.terminalId,
-      },
-      ...prev,
-    ]);
-
-    setReturns((prev) => [newReturnRecord, ...prev]);
-    setShowProcessReturnModal(false);
-    setReturnTargetOrder(null);
-    showToast(`Refund of ₹${newReturnRecord.refundAmount} issued for ${returnTargetOrder.id}.`);
-  };
 
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative' }}>
@@ -376,7 +267,6 @@ export default function SalesManagement({
             margin: '0 0 0.25rem 0',
           }}>
             {currentTab === 'orders' && 'Sales Orders Management'}
-            {currentTab === 'returns' && 'Returns & Refunds Ledger'}
             {currentTab === 'payments' && 'Payments & Tender Transactions'}
           </h1>
           <p style={{
@@ -386,7 +276,6 @@ export default function SalesManagement({
             fontWeight: 500,
           }}>
             {currentTab === 'orders' && 'Track live customer order tickets, line items, order statuses, discounts and print receipts.'}
-            {currentTab === 'returns' && 'Review return requests, process customer refunds, and analyze return reason trends.'}
             {currentTab === 'payments' && 'Monitor Cash, UPI, and Card transactions, tender change, and failed or refunded payments.'}
           </p>
         </div>
@@ -702,149 +591,6 @@ export default function SalesManagement({
                     </tr>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 2. RETURNS VIEW                                                      */}
-      {/* ==================================================================== */}
-      {currentTab === 'returns' && (
-        <>
-          {/* Top KPI Card: Total Return Items */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 340px))',
-            gap: '1.25rem',
-            marginBottom: '1.5rem',
-          }}>
-            {/* Total Return Items */}
-            <div style={{
-              backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: theme.sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Total Return Items
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {returns.reduce((acc, r) => acc + r.returnedItems.reduce((sum, item) => sum + item.quantity, 0), 0)}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  items returned ({returns.length} tickets)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Returns Ledger Table */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1rem',
-            overflow: 'hidden',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: `1px solid ${theme.border}` }}>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Return ID & Date
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Order ID
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Customer
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Returned Items
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Refund Total
-                  </th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>
-                    Reason
-                  </th>
-                  <th style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>
-                    Authorized By
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReturns.map((ret, idx) => (
-                  <tr
-                    key={ret.id}
-                    style={{
-                      borderBottom: idx < filteredReturns.length - 1 ? `1px solid ${theme.border}` : 'none',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.tableRowHover; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <div style={{ fontWeight: 800, color: '#DC2626', fontFamily: 'monospace' }}>
-                        {ret.id}
-                      </div>
-                      <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                        {ret.date} • {ret.timestamp}
-                      </div>
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1rem', fontFamily: 'monospace', fontWeight: 700, color: theme.textPrimary }}>
-                      {ret.orderId}
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
-                      {ret.customerName}
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1rem', fontSize: '12px', color: theme.textPrimary }}>
-                      {ret.returnedItems.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <div style={{ fontWeight: 800, color: '#991B1B', fontSize: '13.5px' }}>
-                        ₹{ret.refundAmount.toLocaleString('en-IN')}
-                      </div>
-                      <div style={{ fontSize: '10.5px', color: theme.textSecondary }}>
-                        via {ret.refundMethod}
-                      </div>
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        backgroundColor: '#FEE2E2',
-                        color: '#991B1B',
-                        padding: '2px 8px',
-                        borderRadius: '0.35rem',
-                      }}>
-                        {ret.reason}
-                      </span>
-                    </td>
-
-                    <td style={{ padding: '0.85rem 1.25rem', textAlign: 'right', fontSize: '12px', color: theme.textSecondary }}>
-                      {ret.approvedBy}
-                    </td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>
@@ -1339,28 +1085,6 @@ export default function SalesManagement({
               alignItems: 'center',
             }}>
               <div>
-                {viewingOrder.orderStatus === 'Completed' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ord = viewingOrder;
-                      setViewingOrder(null);
-                      handleInitiateReturn(ord);
-                    }}
-                    style={{
-                      padding: '0.5rem 0.85rem',
-                      borderRadius: '0.55rem',
-                      border: '1px solid #FECACA',
-                      backgroundColor: '#FEF2F2',
-                      color: '#DC2626',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Initiate Refund / Return
-                  </button>
-                )}
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1405,206 +1129,6 @@ export default function SalesManagement({
           </div>
         </div>
       )}
-
-      {/* ==================================================================== */}
-      {/* MODAL 2: PROCESS RETURN / REFUND MODAL                              */}
-      {/* ==================================================================== */}
-      {showProcessReturnModal && returnTargetOrder && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(3px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: theme.bgPage,
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            width: '100%',
-            maxWidth: '500px',
-            padding: '1.5rem',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#DC2626', margin: 0 }}>
-                  Process Order Return & Refund
-                </h3>
-                <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
-                  Target Order: <strong>{returnTargetOrder.id}</strong> • {returnTargetOrder.customerName}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowProcessReturnModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textSecondary }}
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitReturn} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Order Items to Return */}
-              <div style={{
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '0.75rem',
-                padding: '0.75rem',
-                fontSize: '12px',
-              }}>
-                <div style={{ fontWeight: 700, color: theme.textSecondary, marginBottom: '0.4rem' }}>
-                  Items Being Refunded (Full Ticket):
-                </div>
-                {returnTargetOrder.items.map((it) => (
-                  <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <span style={{ fontWeight: 700, color: theme.textPrimary }}>{it.quantity}x {it.name}</span>
-                    <span style={{ color: theme.textSecondary }}>₹{it.totalPrice}</span>
-                  </div>
-                ))}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  borderTop: `1px solid ${theme.border}`,
-                  paddingTop: '0.4rem',
-                  marginTop: '0.4rem',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                }}>
-                  <span>Total Refund Amount:</span>
-                  <span style={{ color: '#DC2626' }}>₹{returnTargetOrder.totalAmount.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Reason */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Return Reason *
-                </label>
-                <select
-                  value={returnReasonSelect}
-                  onChange={(e) => setReturnReasonSelect(e.target.value as any)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="Wrong Item Given">Wrong Item Given by Kitchen / Cashier</option>
-                  <option value="Quality / Taste Issue">Quality / Food Preparation Issue</option>
-                  <option value="Customer Changed Mind">Customer Changed Mind / Refused</option>
-                  <option value="Defective Packaging">Defective Packaging / Spillage</option>
-                  <option value="Kitchen Cancellation">Kitchen Out of Stock / Cancelled</option>
-                </select>
-              </div>
-
-              {/* Refund Method */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Refund Payout Method *
-                </label>
-                <select
-                  value={returnRefundMethod}
-                  onChange={(e) => setReturnRefundMethod(e.target.value as any)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="Original Payment">Original Payment Method ({returnTargetOrder.paymentMethod})</option>
-                  <option value="Cash">Cash Payout at Counter</option>
-                  <option value="Store Credit">Store Credit Voucher</option>
-                </select>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Manager Authorization Notes
-                </label>
-                <textarea
-                  rows={2}
-                  value={returnNotes}
-                  onChange={(e) => setReturnNotes(e.target.value)}
-                  placeholder="Optional notes regarding reason, customer feedback, or cashier mistake..."
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.85rem',
-                    borderRadius: '0.6rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    fontSize: '12.5px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    resize: 'none',
-                    fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowProcessReturnModal(false)}
-                  style={{
-                    padding: '0.55rem 1rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '0.55rem 1.25rem',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    backgroundColor: '#DC2626',
-                    color: '#FFFFFF',
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Authorize Refund (₹{returnTargetOrder.totalAmount})
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* ==================================================================== */}
       {/* MODAL 3: PAYMENT TRANSACTION AUDIT MODAL                             */}
       {/* ==================================================================== */}

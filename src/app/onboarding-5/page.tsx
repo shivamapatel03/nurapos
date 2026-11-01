@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getOnboardingStatus, saveOnboardingDraft } from '@/lib/api-client';
 
 export default function OnboardingScreen5() {
   const router = useRouter();
@@ -23,14 +25,53 @@ export default function OnboardingScreen5() {
   // Hardware state
   const [hasCashDrawer, setHasCashDrawer] = useState<'yes' | 'no'>('yes');
   const [printerStatus, setPrinterStatus] = useState<'connected' | 'later'>('later');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadDraft() {
+      try {
+        const res = await getOnboardingStatus();
+        const draft = res.data?.draft;
+        if (draft) {
+          if (draft.paymentMethods) {
+            setPayments({
+              cash: draft.paymentMethods.cash ?? true,
+              card: draft.paymentMethods.card ?? true,
+              upi: draft.paymentMethods.upi ?? true,
+            });
+          }
+          if (draft.hasCashDrawer) setHasCashDrawer(draft.hasCashDrawer);
+          if (draft.printerStatus) setPrinterStatus(draft.printerStatus);
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadDraft();
+  }, []);
 
   const togglePayment = (key: keyof typeof payments) => {
     setPayments((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/onboarding-6');
+    setErrorMessage(null);
+    setIsLoading(true);
+
+    try {
+      await saveOnboardingDraft({
+        paymentMethods: payments,
+        hasCashDrawer,
+        printerStatus,
+      });
+      router.push('/onboarding-6');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to save payments and hardware settings.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -153,6 +194,27 @@ export default function OnboardingScreen5() {
           display: 'flex',
           flexDirection: 'column',
         }}>
+          {/* Error Message */}
+          {errorMessage && (
+            <div style={{
+              padding: '0.6rem 0.85rem',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '0.75rem',
+              color: '#B91C1C',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+              marginBottom: '1rem',
+            }}>
+              <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Section 1: How will you accept payments? */}
           <div style={{ marginBottom: '1.4rem' }}>
             <label style={{
@@ -472,6 +534,7 @@ export default function OnboardingScreen5() {
             {/* Continue Button */}
             <button
               type="submit"
+              disabled={isLoading}
               className="button-20-3d"
               role="button"
               style={{
@@ -481,10 +544,15 @@ export default function OnboardingScreen5() {
                 fontWeight: 700,
                 letterSpacing: '-0.01em',
                 borderRadius: '0.85rem',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.8 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
               }}
             >
-              Continue
+              {isLoading ? 'Saving...' : 'Continue'}
             </button>
 
             {/* Back Button */}

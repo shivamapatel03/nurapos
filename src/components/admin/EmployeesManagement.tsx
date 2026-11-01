@@ -27,14 +27,37 @@ import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import StoreRoundedIcon from '@mui/icons-material/StoreRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import BlockRoundedIcon from '@mui/icons-material/BlockRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+
+import {
+  getEmployees,
+  createEmployee,
+  updateEmployee,
+  deactivateEmployee,
+  resetEmployeePin,
+  getFranchises,
+} from '@/lib/api-client';
+import {
+  EmployeeDto,
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  ResetEmployeePinRequest,
+  FranchiseDto,
+} from '@/types/employee';
 
 // ============================================================================
 // DATA STRUCTURES
 // ============================================================================
 export interface Employee {
   id: string; // e.g. EMP-101
+  numericId?: number;
+  franchiseId?: number;
+  employeeCode?: string;
   name: string;
-  role: 'Store Manager' | 'Shift Supervisor' | 'Senior Cashier' | 'Cashier' | 'Barista' | 'Kitchen Lead' | 'Inventory Clerk';
+  role: 'Admin' | 'Store Manager' | 'Shift Supervisor' | 'Senior Cashier' | 'Cashier' | 'Barista' | 'Kitchen Lead' | 'Inventory Clerk';
   department: 'Operations' | 'Front of House' | 'Kitchen' | 'Inventory & Store';
   email: string;
   phone: string;
@@ -50,6 +73,7 @@ export interface Employee {
 export interface CashierAccount {
   id: string;
   employeeId: string;
+  numericId?: number;
   name: string;
   terminalId: string;
   pinMasked: string; // '****'
@@ -63,6 +87,7 @@ export interface CashierAccount {
 export interface ManagerAccount {
   id: string;
   employeeId: string;
+  numericId?: number;
   name: string;
   title: 'Store Manager' | 'Shift Supervisor' | 'Assistant Store Manager';
   branch: string;
@@ -93,38 +118,9 @@ export interface ShiftRecord {
   notes?: string;
 }
 
-export interface AttendanceRecord {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  role: string;
-  date: string;
-  scheduledShift: string; // e.g. '08:00 - 16:30'
-  clockInTime: string;
-  clockOutTime: string;
-  totalHours: number;
-  overtimeHours: number;
-  status: 'Present' | 'Late' | 'Half Day' | 'Absent' | 'On Leave';
-  approvalStatus: 'Approved' | 'Pending Review' | 'Flagged';
-}
-
-export interface PerformanceRecord {
-  employeeId: string;
-  employeeName: string;
-  role: string;
-  totalSales: number;
-  ordersCount: number;
-  aov: number;
-  shiftsWorked: number;
-  speedSec: number;
-  discountsAuthorized: number;
-  refundsProcessed: number;
-  rating: number; // 1.0 to 5.0
-}
-
 export interface EmployeesManagementProps {
-  activeSubTab?: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts' | 'emp_attendance' | 'emp_performance';
-  onSelectSubTab?: (tab: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts' | 'emp_attendance' | 'emp_performance') => void;
+  activeSubTab?: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts';
+  onSelectSubTab?: (tab: 'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts') => void;
   isManagerView?: boolean;
   theme: {
     bgPage: string;
@@ -163,9 +159,7 @@ const INITIAL_MANAGERS: ManagerAccount[] = [];
 
 const INITIAL_SHIFTS: ShiftRecord[] = [];
 
-const INITIAL_ATTENDANCE: AttendanceRecord[] = [];
 
-const INITIAL_PERFORMANCE: PerformanceRecord[] = [];
 
 interface RolePermissionDef {
   key: string;
@@ -240,7 +234,7 @@ export default function EmployeesManagement({
   theme,
 }: EmployeesManagementProps) {
   // Navigation State
-  const [currentTab, setCurrentTab] = useState<'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts' | 'emp_attendance' | 'emp_performance'>(activeSubTab);
+  const [currentTab, setCurrentTab] = useState<'emp_all' | 'emp_cashiers' | 'emp_managers' | 'emp_roles' | 'emp_shifts'>(activeSubTab);
 
   // Sync with prop changes from sidebar navigation
   React.useEffect(() => {
@@ -248,6 +242,16 @@ export default function EmployeesManagement({
       setCurrentTab(activeSubTab);
     }
   }, [activeSubTab]);
+
+  // Loading & Feedback State
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [pinSuccessNotice, setPinSuccessNotice] = useState<string | null>(null);
+
+  // State: Franchises
+  const [franchises, setFranchises] = useState<FranchiseDto[]>([]);
+  const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | undefined>(undefined);
 
   // State: Employees Directory
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES);
@@ -258,6 +262,8 @@ export default function EmployeesManagement({
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
 
   // New Employee Form State
+  const [newEmpCode, setNewEmpCode] = useState('');
+  const [newEmpFranchiseId, setNewEmpFranchiseId] = useState<number>(1);
   const [newEmpName, setNewEmpName] = useState('');
   const [newEmpRole, setNewEmpRole] = useState<Employee['role']>('Cashier');
   const [newEmpDept, setNewEmpDept] = useState<Employee['department']>('Front of House');
@@ -266,16 +272,35 @@ export default function EmployeesManagement({
   const [newEmpTerminal, setNewEmpTerminal] = useState('POS-Ahmedabad-01');
   const [newEmpBasePay, setNewEmpBasePay] = useState('₹22,000/mo');
   const [newEmpEmergency, setNewEmpEmergency] = useState('');
-  const [newEmpPin, setNewEmpPin] = useState('1234');
+  const [newEmpPin, setNewEmpPin] = useState('');
+
+  // Edit Employee State
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState<Employee['role']>('Cashier');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editIsActive, setEditIsActive] = useState(true);
+
+  // Deactivate Employee State
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<Employee | null>(null);
 
   // State: Cashiers
   const [cashiers, setCashiers] = useState<CashierAccount[]>(INITIAL_CASHIERS);
+
+  // Unified Reset PIN State (supports both Employee & Cashier)
+  const [resetPinTarget, setResetPinTarget] = useState<{
+    id: number;
+    name: string;
+    codeOrTerminal: string;
+    role?: string;
+  } | null>(null);
   const [resetPinCashier, setResetPinCashier] = useState<CashierAccount | null>(null);
   const [newPinValue, setNewPinValue] = useState('');
-  const [pinSuccessNotice, setPinSuccessNotice] = useState<string | null>(null);
+  const [confirmPinValue, setConfirmPinValue] = useState('');
 
   // State: Managers
-  const [managers] = useState<ManagerAccount[]>(INITIAL_MANAGERS);
+  const [managers, setManagers] = useState<ManagerAccount[]>(INITIAL_MANAGERS);
   const [editingManager, setEditingManager] = useState<ManagerAccount | null>(null);
 
   // State: Roles & Permissions
@@ -287,15 +312,131 @@ export default function EmployeesManagement({
   const [shifts] = useState<ShiftRecord[]>(INITIAL_SHIFTS);
   const [shiftFilterStatus, setShiftFilterStatus] = useState('ALL');
   const [viewingShift, setViewingShift] = useState<ShiftRecord | null>(null);
-
-  // State: Attendance
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE);
-  const [adjustingAttendance, setAdjustingAttendance] = useState<AttendanceRecord | null>(null);
   const [adjustedClockIn, setAdjustedClockIn] = useState('');
   const [adjustedClockOut, setAdjustedClockOut] = useState('');
 
-  // State: Performance
-  const [performanceRecords] = useState<PerformanceRecord[]>(INITIAL_PERFORMANCE);
+  // Helper mapping functions
+  const mapRoleToDept = (role: Employee['role']): Employee['department'] => {
+    if (role === 'Cashier' || role === 'Senior Cashier' || role === 'Barista') return 'Front of House';
+    if (role === 'Kitchen Lead') return 'Kitchen';
+    if (role === 'Inventory Clerk') return 'Inventory & Store';
+    return 'Operations';
+  };
+
+  const AVATAR_COLORS = ['#1E293B', '#047857', '#B45309', '#6D28D9', '#BE185D', '#0369A1', '#4338CA', '#0D9488'];
+
+  const mapDtoToEmployee = (dto: EmployeeDto): Employee => {
+    const color = AVATAR_COLORS[Math.abs(dto.id) % AVATAR_COLORS.length];
+    return {
+      id: dto.employeeCode || `EMP-${dto.id}`,
+      numericId: dto.id,
+      franchiseId: dto.franchiseId,
+      employeeCode: dto.employeeCode,
+      name: dto.name,
+      role: dto.role,
+      department: mapRoleToDept(dto.role),
+      email: dto.email || `${dto.name.toLowerCase().replace(/\s+/g, '.')}@nuradesk.pos`,
+      phone: dto.phone || '+91 98000 00000',
+      assignedTerminal: 'POS-Ahmedabad-01',
+      basePay: '₹24,000/mo',
+      status: dto.isActive ? 'Active' : 'Suspended',
+      joinedDate: dto.createdAtUtc ? dto.createdAtUtc.substring(0, 10) : '2026-09-20',
+      emergencyContact: 'Not specified',
+      pinSet: dto.pinConfigured,
+      avatarColor: color,
+    };
+  };
+
+  const mapDtoToCashier = (dto: EmployeeDto, index: number): CashierAccount => {
+    return {
+      id: `CSH-${String(index + 1).padStart(2, '0')}`,
+      employeeId: dto.employeeCode || `EMP-${dto.id}`,
+      numericId: dto.id,
+      name: dto.name,
+      terminalId: 'POS-Ahmedabad-01',
+      pinMasked: dto.pinConfigured ? '••••' : 'None',
+      maxDiscountPercent: dto.role === 'Senior Cashier' ? 15 : 10,
+      canOpenDrawerNoSale: dto.role === 'Senior Cashier',
+      canReprintReceipts: true,
+      shiftStatus: dto.isActive ? 'On Register' : 'Off Duty',
+      status: dto.isActive ? 'Active' : 'Suspended',
+    };
+  };
+
+  const mapDtoToManager = (dto: EmployeeDto): ManagerAccount => {
+    return {
+      id: `MGR-${dto.id}`,
+      employeeId: dto.employeeCode || `EMP-${dto.id}`,
+      numericId: dto.id,
+      name: dto.name,
+      title: dto.role === 'Shift Supervisor' ? 'Shift Supervisor' : 'Store Manager',
+      branch: 'Ahmedabad Hub',
+      approvalLimit: dto.role === 'Admin' ? 50000 : 15000,
+      canApproveReturns: true,
+      canPerformZReport: true,
+      canModifyCatalog: dto.role === 'Admin' || dto.role === 'Store Manager',
+      canAccessAuditLogs: true,
+      twoFactorEnabled: true,
+      overridePinSet: dto.pinConfigured,
+    };
+  };
+
+  // Sync / Load Employees and Franchises from Backend API
+  const fetchEmployeesData = React.useCallback(async () => {
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      // 1. Fetch franchises
+      try {
+        const fRes = await getFranchises();
+        const fData = fRes?.data;
+        if (fData && Array.isArray(fData) && fData.length > 0) {
+          setFranchises(fData);
+          const firstId = fData[0].franchiseId;
+          setNewEmpFranchiseId((prev) => prev || firstId);
+        }
+      } catch (fErr) {
+        console.warn('Franchises fetch notice:', fErr);
+      }
+
+      // 2. Fetch employees for selected franchise
+      const empRes = await getEmployees(selectedFranchiseId);
+      if (empRes?.data && Array.isArray(empRes.data)) {
+        const dtos = empRes.data;
+        if (dtos.length > 0) {
+          setEmployees(dtos.map(mapDtoToEmployee));
+          try {
+            localStorage.setItem('nurapos_registered_employees', JSON.stringify(dtos));
+          } catch {
+            // ignore
+          }
+
+          const cashierDtos = dtos.filter((d) => ['Cashier', 'Senior Cashier', 'Barista'].includes(d.role));
+          if (cashierDtos.length > 0) {
+            setCashiers(cashierDtos.map(mapDtoToCashier));
+          }
+
+          const managerDtos = dtos.filter((d) => ['Store Manager', 'Shift Supervisor', 'Admin'].includes(d.role));
+          if (managerDtos.length > 0) {
+            setManagers(managerDtos.map(mapDtoToManager));
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn('Backend fetch employees notice:', err);
+      if (err?.statusCode === 401) {
+        setApiError('Session required to sync live staff accounts from server. Please log in.');
+      } else if (err?.message) {
+        setApiError(err.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedFranchiseId]);
+
+  React.useEffect(() => {
+    fetchEmployeesData();
+  }, [fetchEmployeesData]);
 
   // Filtered Employees
   const filteredEmployees = useMemo(() => {
@@ -314,51 +455,266 @@ export default function EmployeesManagement({
     });
   }, [employees, empSearch, empRoleFilter, empStatusFilter]);
 
-  // Handle Add Employee
-  const handleSaveNewEmployee = (e: React.FormEvent) => {
+  // Handle Add Employee (POST /api/employees)
+  const handleSaveNewEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmpName.trim()) return;
 
-    const newId = `EMP-${100 + employees.length + 1}`;
-    const newEmp: Employee = {
-      id: newId,
-      name: newEmpName.trim(),
-      role: newEmpRole,
-      department: newEmpDept,
-      email: newEmpEmail.trim() || `${newEmpName.toLowerCase().replace(/\s+/g, '.')}@nuradesk.pos`,
-      phone: newEmpPhone.trim() || '+91 98000 00000',
-      assignedTerminal: newEmpTerminal,
-      basePay: newEmpBasePay.trim(),
-      status: 'Active',
-      joinedDate: '2026-09-20',
-      emergencyContact: newEmpEmergency.trim() || 'Not specified',
-      pinSet: Boolean(newEmpPin.trim()),
-      avatarColor: '#1E293B',
-    };
-
-    setEmployees((prev) => [newEmp, ...prev]);
-
-    if (newEmpRole === 'Cashier' || newEmpRole === 'Senior Cashier') {
-      const newCashier: CashierAccount = {
-        id: `CSH-0${cashiers.length + 1}`,
-        employeeId: newId,
-        name: newEmp.name,
-        terminalId: newEmpTerminal,
-        pinMasked: '****',
-        maxDiscountPercent: newEmpRole === 'Senior Cashier' ? 15 : 10,
-        canOpenDrawerNoSale: false,
-        canReprintReceipts: true,
-        shiftStatus: 'Off Duty',
-        status: 'Active',
-      };
-      setCashiers((prev) => [newCashier, ...prev]);
+    const trimmedCode = newEmpCode.trim().toUpperCase() || `EMP-${100 + employees.length + 1}`;
+    const pinTrimmed = newEmpPin.trim();
+    if (pinTrimmed && !/^[0-9]{4}$/.test(pinTrimmed)) {
+      setApiError('Initial PIN must be exactly 4 numeric digits.');
+      return;
     }
 
-    setNewEmpName('');
-    setNewEmpEmail('');
-    setNewEmpPhone('');
-    setNewEmpEmergency('');
-    setShowAddEmployeeModal(false);
+    setIsSubmitting(true);
+    setApiError(null);
+
+    const fId = newEmpFranchiseId || (franchises[0]?.franchiseId ?? 1);
+
+    const payload: CreateEmployeeRequest = {
+      franchiseId: fId,
+      employeeCode: trimmedCode,
+      name: newEmpName.trim(),
+      role: newEmpRole,
+      phone: newEmpPhone.trim() || undefined,
+      email: newEmpEmail.trim() || undefined,
+      initialPin: newEmpPin.trim() || undefined,
+    };
+
+    try {
+      const res = await createEmployee(payload);
+      const created = res.data;
+      if (created) {
+        setEmployees((prev) => [mapDtoToEmployee(created), ...prev]);
+        try {
+          const raw = localStorage.getItem('nurapos_registered_employees');
+          const list = raw ? JSON.parse(raw) : [];
+          list.unshift(created);
+          localStorage.setItem('nurapos_registered_employees', JSON.stringify(list));
+        } catch {
+          // ignore
+        }
+      }
+      setPinSuccessNotice(`Employee ${payload.name} (${payload.employeeCode}) registered successfully.`);
+      setShowAddEmployeeModal(false);
+      setNewEmpCode('');
+      setNewEmpName('');
+      setNewEmpEmail('');
+      setNewEmpPhone('');
+      setNewEmpEmergency('');
+      setNewEmpPin('');
+      await fetchEmployeesData();
+    } catch (err: any) {
+      console.error('Failed to create employee:', err);
+      // Fallback local save if offline / demo mode
+      const newId = trimmedCode;
+      const newEmp: Employee = {
+        id: newId,
+        numericId: 100 + employees.length + 1,
+        franchiseId: fId,
+        employeeCode: trimmedCode,
+        name: newEmpName.trim(),
+        role: newEmpRole,
+        department: newEmpDept,
+        email: newEmpEmail.trim() || `${newEmpName.toLowerCase().replace(/\s+/g, '.')}@nuradesk.pos`,
+        phone: newEmpPhone.trim() || '+91 98000 00000',
+        assignedTerminal: newEmpTerminal,
+        basePay: newEmpBasePay.trim(),
+        status: 'Active',
+        joinedDate: '2026-09-20',
+        emergencyContact: newEmpEmergency.trim() || 'Not specified',
+        pinSet: Boolean(newEmpPin.trim()),
+        avatarColor: '#1E293B',
+      };
+      setEmployees((prev) => [newEmp, ...prev]);
+
+      try {
+        const raw = localStorage.getItem('nurapos_registered_employees');
+        const list = raw ? JSON.parse(raw) : [];
+        list.unshift({
+          id: 100 + employees.length + 1,
+          numericId: 100 + employees.length + 1,
+          franchiseId: fId,
+          employeeCode: trimmedCode,
+          name: newEmpName.trim(),
+          role: newEmpRole,
+          email: newEmp.email,
+          phone: newEmp.phone,
+          isActive: true,
+          pinConfigured: Boolean(newEmpPin.trim()),
+        });
+        localStorage.setItem('nurapos_registered_employees', JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+      setShowAddEmployeeModal(false);
+      setApiError(err?.message || 'Failed to register employee on server. Saved locally.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Open Edit Employee Modal
+  const openEditModal = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setEditName(emp.name);
+    setEditRole(emp.role);
+    setEditPhone(emp.phone);
+    setEditEmail(emp.email);
+    setEditIsActive(emp.status === 'Active');
+    setApiError(null);
+  };
+
+  // Handle Update Employee (PUT /api/employees/{id})
+  const handleSaveEditEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEmployee) return;
+
+    if (!editName.trim() || editName.trim().length < 2) {
+      setApiError('Full name must be at least 2 characters.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setApiError(null);
+
+    const payload: UpdateEmployeeRequest = {
+      name: editName.trim(),
+      role: editRole,
+      phone: editPhone.trim() || undefined,
+      email: editEmail.trim() || undefined,
+      isActive: editIsActive,
+    };
+
+    try {
+      if (editingEmployee.numericId) {
+        await updateEmployee(editingEmployee.numericId, payload);
+      }
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === editingEmployee.id
+            ? {
+                ...emp,
+                name: editName.trim(),
+                role: editRole,
+                department: mapRoleToDept(editRole),
+                phone: editPhone.trim(),
+                email: editEmail.trim(),
+                status: editIsActive ? 'Active' : 'Suspended',
+              }
+            : emp
+        )
+      );
+      setPinSuccessNotice(`Employee ${payload.name} updated successfully.`);
+      setEditingEmployee(null);
+      await fetchEmployeesData();
+    } catch (err: any) {
+      console.error('Failed to update employee:', err);
+      setApiError(err?.message || 'Failed to update employee on server.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Deactivate Employee (DELETE /api/employees/{id})
+  const handleConfirmDeactivate = async () => {
+    if (!deactivatingEmployee) return;
+
+    setIsSubmitting(true);
+    setApiError(null);
+    try {
+      if (deactivatingEmployee.numericId) {
+        await deactivateEmployee(deactivatingEmployee.numericId);
+      }
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === deactivatingEmployee.id ? { ...emp, status: 'Suspended' } : emp
+        )
+      );
+      setPinSuccessNotice(`Employee ${deactivatingEmployee.name} deactivated successfully.`);
+      setDeactivatingEmployee(null);
+      await fetchEmployeesData();
+    } catch (err: any) {
+      console.error('Failed to deactivate employee:', err);
+      setApiError(err?.message || 'Failed to deactivate employee on server.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Open Reset PIN Dialog
+  const openResetPinForEmployee = (emp: Employee) => {
+    setResetPinTarget({
+      id: emp.numericId || 0,
+      name: emp.name,
+      codeOrTerminal: emp.id,
+      role: emp.role,
+    });
+    setNewPinValue('');
+    setConfirmPinValue('');
+    setApiError(null);
+  };
+
+  const openResetPinForCashier = (c: CashierAccount) => {
+    setResetPinTarget({
+      id: c.numericId || 0,
+      name: c.name,
+      codeOrTerminal: `Terminal ${c.terminalId}`,
+      role: 'Cashier',
+    });
+    setNewPinValue('');
+    setConfirmPinValue('');
+    setApiError(null);
+  };
+
+  // Handle Reset PIN (PUT /api/employees/{id}/reset-pin)
+  const handleConfirmPinReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetPinTarget) return;
+
+    const pinTrimmed = newPinValue.trim();
+    if (!/^[0-9]{4}$/.test(pinTrimmed)) {
+      setApiError('PIN must be exactly 4 numeric digits.');
+      return;
+    }
+
+    if (newPinValue !== confirmPinValue) {
+      setApiError('New PIN and Confirm PIN do not match.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setApiError(null);
+
+    const payload: ResetEmployeePinRequest = {
+      pin: newPinValue,
+      confirmPin: confirmPinValue,
+    };
+
+    try {
+      if (resetPinTarget.id) {
+        await resetEmployeePin(resetPinTarget.id, payload);
+      }
+      setPinSuccessNotice(`PIN for ${resetPinTarget.name} successfully updated to new 4-digit credential.`);
+      setResetPinTarget(null);
+      setResetPinCashier(null);
+      setNewPinValue('');
+      setConfirmPinValue('');
+      await fetchEmployeesData();
+      setTimeout(() => {
+        setPinSuccessNotice(null);
+      }, 4000);
+    } catch (err: any) {
+      console.error('Failed to reset PIN:', err);
+      if (err?.statusCode === 429) {
+        setApiError('Rate limit exceeded: Maximum 5 PIN resets allowed within 15 minutes. Please try again later.');
+      } else {
+        setApiError(err?.message || 'Failed to reset PIN on server.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Toggle permission for a role
@@ -384,40 +740,6 @@ export default function EmployeesManagement({
     }, 3000);
   };
 
-  // Handle Reset PIN
-  const handleConfirmPinReset = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetPinCashier || !newPinValue.trim()) return;
-
-    setPinSuccessNotice(`PIN for ${resetPinCashier.name} successfully updated to new 4-digit credential.`);
-    setResetPinCashier(null);
-    setNewPinValue('');
-    setTimeout(() => {
-      setPinSuccessNotice(null);
-    }, 4000);
-  };
-
-  // Handle Adjust Attendance Punch
-  const handleConfirmAdjustAttendance = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adjustingAttendance) return;
-
-    setAttendance((prev) =>
-      prev.map((att) =>
-        att.id === adjustingAttendance.id
-          ? {
-              ...att,
-              clockInTime: adjustedClockIn || att.clockInTime,
-              clockOutTime: adjustedClockOut || att.clockOutTime,
-              status: 'Present',
-              approvalStatus: 'Approved',
-            }
-          : att
-      )
-    );
-    setAdjustingAttendance(null);
-  };
-
   return (
     <div style={{ maxWidth: '1280px', margin: '0 auto', color: theme.textPrimary }}>
       {/* Toast Notice Banner */}
@@ -437,6 +759,36 @@ export default function EmployeesManagement({
         }}>
           <CheckCircleRoundedIcon sx={{ fontSize: 20, color: '#34D399' }} />
           <span>{pinSuccessNotice}</span>
+        </div>
+      )}
+
+      {/* Error Alert Banner */}
+      {apiError && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.65rem',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '0.75rem',
+          backgroundColor: '#450A0A',
+          color: '#FEF2F2',
+          border: '1px solid #DC2626',
+          marginBottom: '1.25rem',
+          fontSize: '13.5px',
+          fontWeight: 600,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <WarningAmberRoundedIcon sx={{ fontSize: 20, color: '#F87171' }} />
+            <span>{apiError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setApiError(null)}
+            style={{ background: 'none', border: 'none', color: '#FEF2F2', cursor: 'pointer', padding: '2px' }}
+          >
+            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+          </button>
         </div>
       )}
 
@@ -465,33 +817,100 @@ export default function EmployeesManagement({
             margin: 0,
             fontWeight: 500,
           }}>
-            Staff directory, cashier PIN credentials, manager permissions, shifts, attendance, and performance analytics.
+            Staff directory, cashier PIN credentials, manager permissions, and shifts.
           </p>
         </div>
 
-        {/* Global Action: Add Employee (Hidden for Manager role) */}
-        {!isManagerView && (
+        {/* Global Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          {/* Franchise selector if available */}
+          {franchises.length > 0 && (
+            <select
+              value={selectedFranchiseId || ''}
+              onChange={(e) => setSelectedFranchiseId(e.target.value ? Number(e.target.value) : undefined)}
+              style={{
+                height: '38px',
+                borderRadius: '0.55rem',
+                backgroundColor: theme.bgCard,
+                color: theme.textPrimary,
+                border: `1px solid ${theme.border}`,
+                padding: '0 0.75rem',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">All Franchises</option>
+              {franchises.map((f) => (
+                <option key={f.franchiseId} value={f.franchiseId}>
+                  {f.franchiseName}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Sync / Refresh Button */}
           <button
             type="button"
-            className="button-20"
+            className="button-20-secondary"
             role="button"
-            onClick={() => setShowAddEmployeeModal(true)}
+            title="Sync staff from backend server"
+            onClick={() => fetchEmployeesData()}
+            disabled={isLoading}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
-              padding: '0 1.15rem',
+              padding: '0 0.95rem',
               height: '38px',
               fontSize: '13px',
               fontWeight: 700,
-              cursor: 'pointer',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1,
               fontFamily: 'inherit',
             }}
           >
-            <AddRoundedIcon sx={{ fontSize: 18 }} />
-            <span>Add Employee</span>
+            <RefreshRoundedIcon
+              sx={{
+                fontSize: 18,
+                animation: isLoading ? 'spin 1s linear infinite' : 'none',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' },
+                },
+              }}
+            />
+            <span>{isLoading ? 'Syncing...' : 'Refresh'}</span>
           </button>
-        )}
+
+          {/* Global Action: Add Employee (Hidden for Manager role) */}
+          {!isManagerView && (
+            <button
+              type="button"
+              className="button-20"
+              role="button"
+              onClick={() => {
+                setApiError(null);
+                setShowAddEmployeeModal(true);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0 1.15rem',
+                height: '38px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              <AddRoundedIcon sx={{ fontSize: 18 }} />
+              <span>Add Employee</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ==================================================================== */}
@@ -831,25 +1250,84 @@ export default function EmployeesManagement({
 
                       {/* Actions */}
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEmployee(emp)}
-                          title="View Staff Profile"
-                          style={{
-                            width: '30px',
-                            height: '30px',
-                            borderRadius: '0.45rem',
-                            border: `1px solid ${theme.border}`,
-                            backgroundColor: 'transparent',
-                            color: theme.textPrimary,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <VisibilityRoundedIcon sx={{ fontSize: 16 }} />
-                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEmployee(emp)}
+                            title="View Staff Profile"
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '0.45rem',
+                              border: `1px solid ${theme.border}`,
+                              backgroundColor: 'transparent',
+                              color: theme.textPrimary,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <VisibilityRoundedIcon sx={{ fontSize: 16 }} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(emp)}
+                            title="Edit Employee (Role, Info, Status)"
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '0.45rem',
+                              border: `1px solid ${theme.border}`,
+                              backgroundColor: 'transparent',
+                              color: theme.textPrimary,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <EditRoundedIcon sx={{ fontSize: 16 }} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openResetPinForEmployee(emp)}
+                            title="Reset 4-Digit POS PIN"
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '0.45rem',
+                              border: `1px solid ${theme.border}`,
+                              backgroundColor: 'transparent',
+                              color: theme.textPrimary,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <LockResetRoundedIcon sx={{ fontSize: 16 }} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeactivatingEmployee(emp)}
+                            title="Deactivate Account"
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '0.45rem',
+                              border: `1px solid ${theme.border}`,
+                              backgroundColor: 'transparent',
+                              color: emp.status === 'Active' ? '#DC2626' : theme.textSecondary,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1106,7 +1584,7 @@ export default function EmployeesManagement({
                           type="button"
                           className="button-20-secondary"
                           role="button"
-                          onClick={() => setResetPinCashier(c)}
+                          onClick={() => openResetPinForCashier(c)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -1854,502 +2332,6 @@ export default function EmployeesManagement({
       )}
 
       {/* ==================================================================== */}
-      {/* 6. ATTENDANCE VIEW                                                   */}
-      {/* ==================================================================== */}
-      {currentTab === 'emp_attendance' && (
-        <>
-          {/* Top KPI Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* Today Attendance */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Today Attendance
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {attendance.length > 0 ? `${((attendance.filter((a) => a.status === 'Present').length / attendance.length) * 100).toFixed(0)}%` : '0%'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {attendance.filter((a) => a.status === 'Present').length} on duty
-                </span>
-              </div>
-            </div>
-
-            {/* Punctuality Rate */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Punctuality Rate
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {attendance.length > 0 ? `${((attendance.filter((a) => a.status === 'Present').length / attendance.length) * 100).toFixed(0)}% On-Time` : '0% On-Time'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {attendance.filter((a) => a.status === 'Late').length} late clock-in logged
-                </span>
-              </div>
-            </div>
-
-            {/* Weekly Overtime */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Weekly Overtime
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {attendance.reduce((acc, a) => acc + (a.overtimeHours || 0), 0)} hrs
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Approved supervisor hours
-                </span>
-              </div>
-            </div>
-
-            {/* Active Leaves */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Active Leaves
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {employees.filter((e) => e.status === 'On Leave').length} Staff
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {employees.filter((e) => e.status === 'On Leave').length > 0 ? 'On approved leave' : 'No staff on leave'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Attendance Table */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            overflow: 'hidden',
-            marginBottom: '1.75rem',
-          }}>
-            <div style={{ padding: '1.25rem', borderBottom: `1px solid ${theme.border}` }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                Daily Timecard & Attendance Records
-              </h3>
-              <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                Working hours, scheduled vs. actual clock punch times, and manager approvals.
-              </p>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Employee</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Date</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Scheduled Shift</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Clock In</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Clock Out</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Hours Worked</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance.map((att) => (
-                    <tr key={att.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: theme.textPrimary }}>{att.employeeName}</div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary }}>{att.role}</div>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textSecondary, fontWeight: 600 }}>
-                        {att.date}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textPrimary, fontWeight: 600 }}>
-                        {att.scheduledShift}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
-                        {att.clockInTime}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
-                        {att.clockOutTime}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: theme.textPrimary }}>
-                        {att.totalHours} hrs {att.overtimeHours > 0 && <span style={{ fontSize: '11px', color: '#B45309' }}>(+{att.overtimeHours} OT)</span>}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          padding: '3px 8px',
-                          borderRadius: '9999px',
-                          fontSize: '11.5px',
-                          fontWeight: 800,
-                          backgroundColor:
-                            att.status === 'Present' ? '#DCFCE7' :
-                            att.status === 'Late' ? '#FEF3C7' :
-                            att.status === 'On Leave' ? '#E0E7FF' : '#FEE2E2',
-                          color:
-                            att.status === 'Present' ? '#166534' :
-                            att.status === 'Late' ? '#92400E' :
-                            att.status === 'On Leave' ? '#3730A3' : '#991B1B',
-                        }}>
-                          {att.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          className="button-20-secondary"
-                          role="button"
-                          onClick={() => {
-                            setAdjustingAttendance(att);
-                            setAdjustedClockIn(att.clockInTime !== '—' ? att.clockInTime : '08:00');
-                            setAdjustedClockOut(att.clockOutTime !== '—' ? att.clockOutTime : '16:00');
-                          }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '4px 10px',
-                            height: '28px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontFamily: 'inherit',
-                          }}
-                        >
-                          <EditRoundedIcon sx={{ fontSize: 14 }} />
-                          <span>Adjust</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {attendance.length === 0 && (
-                    <tr>
-                      <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
-                        No attendance logs recorded yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 7. EMPLOYEE PERFORMANCE VIEW                                         */}
-      {/* ==================================================================== */}
-      {currentTab === 'emp_performance' && (
-        <>
-          {/* Top KPI Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* Total Team Sales */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Total Team Sales
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {performanceRecords.reduce((acc, p) => acc + p.totalSales, 0) > 0 ? '₹' + performanceRecords.reduce((acc, p) => acc + p.totalSales, 0).toLocaleString('en-IN') : '₹0'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {performanceRecords.length > 0 ? `Across ${performanceRecords.length} cashiers` : 'No sales recorded'}
-                </span>
-              </div>
-            </div>
-
-            {/* Orders Processed */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Orders Processed
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {performanceRecords.reduce((acc, p) => acc + p.ordersCount, 0)}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  {performanceRecords.length > 0 ? `Avg ~${Math.round(performanceRecords.reduce((acc, p) => acc + p.ordersCount, 0) / performanceRecords.length)} orders / cashier` : 'No orders handled'}
-                </span>
-              </div>
-            </div>
-
-            {/* Speed of Service */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Speed of Service
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  {performanceRecords.length > 0 ? `${(performanceRecords.reduce((acc, p) => acc + p.speedSec, 0) / performanceRecords.length).toFixed(0)}s` : '0s'}
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Avg checkout duration
-                </span>
-              </div>
-            </div>
-
-            {/* Refund Discrepancy Rate */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Refund Discrepancy Rate
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0.0%
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  Cashier integrity score
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Performance Table */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            overflow: 'hidden',
-            marginBottom: '1.75rem',
-          }}>
-            <div style={{ padding: '1.25rem', borderBottom: `1px solid ${theme.border}` }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: theme.textPrimary }}>
-                Cashier Performance, Orders & Refund Integrity
-              </h3>
-              <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                Tracking sales rung, average order ticket size, checkout speed, and discounts authorized.
-              </p>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Employee</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Total Sales</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Orders Handled</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>AOV</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Shifts</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Service Speed</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Discounts Given</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Refunds Done</th>
-                    <th style={{ padding: '0.75rem 1rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Rating</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {performanceRecords.map((perf) => (
-                    <tr key={perf.employeeId} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <div style={{ fontWeight: 800, color: theme.textPrimary }}>{perf.employeeName}</div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary }}>{perf.role}</div>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#166534' }}>
-                        ₹{perf.totalSales.toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textPrimary }}>
-                        {perf.ordersCount} orders
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: theme.textSecondary }}>
-                        ₹{perf.aov}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textPrimary }}>
-                        {perf.shiftsWorked}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{
-                          padding: '2px 7px',
-                          borderRadius: '0.35rem',
-                          backgroundColor: perf.speedSec < 50 ? '#DCFCE7' : '#F3F4F6',
-                          color: perf.speedSec < 50 ? '#166534' : theme.textPrimary,
-                          fontWeight: 800,
-                          fontSize: '11.5px',
-                        }}>
-                          {perf.speedSec}s
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textSecondary, fontWeight: 600 }}>
-                        ₹{perf.discountsAuthorized.toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: theme.textSecondary, fontWeight: 600 }}>
-                        ₹{perf.refundsProcessed.toLocaleString('en-IN')}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.2rem',
-                          fontWeight: 800,
-                          color: '#B45309',
-                          backgroundColor: '#FEF3C7',
-                          padding: '2px 7px',
-                          borderRadius: '0.35rem',
-                          fontSize: '12px',
-                        }}>
-                          <StarRoundedIcon sx={{ fontSize: 13, color: '#F59E0B' }} />
-                          {perf.rating}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {performanceRecords.length === 0 && (
-                    <tr>
-                      <td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
-                        No performance records logged yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
       {/* MODAL 1: ADD EMPLOYEE MODAL                                          */}
       {/* ==================================================================== */}
       {showAddEmployeeModal && (
@@ -2381,7 +2363,7 @@ export default function EmployeesManagement({
                   Add New Employee
                 </h3>
                 <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '3px 0 0 0' }}>
-                  Register staff details, assign store role, terminal station, and initial PIN.
+                  Register staff details, assign store role, employee code, terminal, and initial PIN.
                 </p>
               </div>
               <button
@@ -2394,32 +2376,93 @@ export default function EmployeesManagement({
             </div>
 
             <form onSubmit={handleSaveNewEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                  FULL NAME *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newEmpName}
-                  onChange={(e) => setNewEmpName(e.target.value)}
-                  placeholder="e.g. Maya Verma"
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0 0.85rem',
-                    fontSize: '13px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    EMPLOYEE CODE *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={32}
+                    value={newEmpCode}
+                    onChange={(e) => setNewEmpCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. EMP-101"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.85rem',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    FRANCHISE STORE *
+                  </label>
+                  <select
+                    value={newEmpFranchiseId}
+                    onChange={(e) => setNewEmpFranchiseId(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.75rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {franchises.length > 0 ? (
+                      franchises.map((f) => (
+                        <option key={f.franchiseId} value={f.franchiseId}>
+                          {f.franchiseName} (#{f.franchiseId})
+                        </option>
+                      ))
+                    ) : (
+                      <option value={1}>Main Flagship (Franchise #1)</option>
+                    )}
+                  </select>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    FULL NAME *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newEmpName}
+                    onChange={(e) => setNewEmpName(e.target.value)}
+                    placeholder="e.g. Maya Verma"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.85rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
                     ROLE *
@@ -2447,16 +2490,21 @@ export default function EmployeesManagement({
                     <option value="Store Manager">Store Manager</option>
                     <option value="Kitchen Lead">Kitchen Lead</option>
                     <option value="Inventory Clerk">Inventory Clerk</option>
+                    <option value="Admin">Admin</option>
                   </select>
                 </div>
+              </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                    DEPARTMENT *
+                    EMAIL ADDRESS
                   </label>
-                  <select
-                    value={newEmpDept}
-                    onChange={(e) => setNewEmpDept(e.target.value as any)}
+                  <input
+                    type="email"
+                    value={newEmpEmail}
+                    onChange={(e) => setNewEmpEmail(e.target.value)}
+                    placeholder="user@example.com"
                     style={{
                       width: '100%',
                       height: '38px',
@@ -2464,21 +2512,14 @@ export default function EmployeesManagement({
                       backgroundColor: theme.hoverBg,
                       border: `1px solid ${theme.border}`,
                       color: theme.textPrimary,
-                      padding: '0 0.75rem',
+                      padding: '0 0.85rem',
                       fontSize: '13px',
                       outline: 'none',
                       boxSizing: 'border-box',
                     }}
-                  >
-                    <option value="Front of House">Front of House</option>
-                    <option value="Kitchen">Kitchen</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Inventory & Store">Inventory & Store</option>
-                  </select>
+                  />
                 </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
                     PHONE NUMBER
@@ -2502,96 +2543,18 @@ export default function EmployeesManagement({
                     }}
                   />
                 </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                    ASSIGNED TERMINAL
-                  </label>
-                  <select
-                    value={newEmpTerminal}
-                    onChange={(e) => setNewEmpTerminal(e.target.value)}
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
-                      border: `1px solid ${theme.border}`,
-                      color: theme.textPrimary,
-                      padding: '0 0.75rem',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="POS-Ahmedabad-01">POS-Ahmedabad-01 (Main)</option>
-                    <option value="POS-Ahmedabad-02">POS-Ahmedabad-02 (Barista)</option>
-                    <option value="POS-Ahmedabad-03">POS-Ahmedabad-03 (Express)</option>
-                    <option value="KDS-Kitchen-01">KDS-Kitchen-01</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                    INITIAL 4-DIGIT PIN
-                  </label>
-                  <input
-                    type="password"
-                    maxLength={4}
-                    value={newEmpPin}
-                    onChange={(e) => setNewEmpPin(e.target.value)}
-                    placeholder="1234"
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
-                      border: `1px solid ${theme.border}`,
-                      color: theme.textPrimary,
-                      padding: '0 0.85rem',
-                      fontSize: '14px',
-                      letterSpacing: '0.2em',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                    BASE PAY
-                  </label>
-                  <input
-                    type="text"
-                    value={newEmpBasePay}
-                    onChange={(e) => setNewEmpBasePay(e.target.value)}
-                    placeholder="e.g. ₹24,000/mo"
-                    style={{
-                      width: '100%',
-                      height: '38px',
-                      borderRadius: '0.55rem',
-                      backgroundColor: theme.hoverBg,
-                      border: `1px solid ${theme.border}`,
-                      color: theme.textPrimary,
-                      padding: '0 0.85rem',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
               </div>
 
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
-                  EMERGENCY CONTACT
+                  INITIAL 4-DIGIT PIN (e.g. 8871)
                 </label>
                 <input
-                  type="text"
-                  value={newEmpEmergency}
-                  onChange={(e) => setNewEmpEmergency(e.target.value)}
-                  placeholder="e.g. +91 98980 12345 (Parent)"
+                  type="password"
+                  maxLength={4}
+                  value={newEmpPin}
+                  onChange={(e) => setNewEmpPin(e.target.value.replace(/\D/g, ''))}
+                  placeholder="8871"
                   style={{
                     width: '100%',
                     height: '38px',
@@ -2600,7 +2563,8 @@ export default function EmployeesManagement({
                     border: `1px solid ${theme.border}`,
                     color: theme.textPrimary,
                     padding: '0 0.85rem',
-                    fontSize: '13px',
+                    fontSize: '14px',
+                    letterSpacing: '0.2em',
                     outline: 'none',
                     boxSizing: 'border-box',
                   }}
@@ -2628,16 +2592,18 @@ export default function EmployeesManagement({
                   type="submit"
                   className="button-20"
                   role="button"
+                  disabled={isSubmitting}
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: 'pointer',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1,
                     fontFamily: 'inherit',
                   }}
                 >
-                  Save Employee
+                  {isSubmitting ? 'Saving...' : 'Save Employee'}
                 </button>
               </div>
             </form>
@@ -2775,9 +2741,9 @@ export default function EmployeesManagement({
       )}
 
       {/* ==================================================================== */}
-      {/* MODAL 3: RESET CASHIER PIN MODAL                                     */}
+      {/* MODAL 3: RESET POS ACCESS PIN MODAL                                   */}
       {/* ==================================================================== */}
-      {resetPinCashier && (
+      {(resetPinTarget || resetPinCashier) && (
         <div style={{
           position: 'fixed',
           inset: 0,
@@ -2801,22 +2767,25 @@ export default function EmployeesManagement({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
               <div>
                 <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Reset Cashier PIN
+                  Reset POS Access PIN
                 </h3>
                 <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                  Set a new 4-digit numeric login PIN for {resetPinCashier.name}.
+                  {resetPinTarget?.name || resetPinCashier?.name} • {resetPinTarget?.codeOrTerminal || resetPinCashier?.terminalId}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setResetPinCashier(null)}
+                onClick={() => {
+                  setResetPinTarget(null);
+                  setResetPinCashier(null);
+                }}
                 style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
-            <form onSubmit={handleConfirmPinReset} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form onSubmit={handleConfirmPinReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
                   NEW 4-DIGIT PIN *
@@ -2831,7 +2800,7 @@ export default function EmployeesManagement({
                   placeholder="••••"
                   style={{
                     width: '100%',
-                    height: '44px',
+                    height: '42px',
                     borderRadius: '0.55rem',
                     backgroundColor: theme.hoverBg,
                     border: `1px solid ${theme.border}`,
@@ -2846,8 +2815,41 @@ export default function EmployeesManagement({
                 />
               </div>
 
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
+                  CONFIRM 4-DIGIT PIN *
+                </label>
+                <input
+                  type="password"
+                  required
+                  maxLength={4}
+                  value={confirmPinValue}
+                  onChange={(e) => setConfirmPinValue(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    borderRadius: '0.55rem',
+                    backgroundColor: theme.hoverBg,
+                    border: `1px solid ${newPinValue && confirmPinValue && newPinValue !== confirmPinValue ? '#DC2626' : theme.border}`,
+                    color: theme.textPrimary,
+                    padding: '0 1rem',
+                    fontSize: '18px',
+                    letterSpacing: '0.3em',
+                    textAlign: 'center',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {newPinValue && confirmPinValue && newPinValue !== confirmPinValue && (
+                  <p style={{ fontSize: '11px', color: '#DC2626', margin: '4px 0 0 0', fontWeight: 600 }}>
+                    PIN values do not match.
+                  </p>
+                )}
+              </div>
+
               <p style={{ fontSize: '11.5px', color: theme.textSecondary, margin: 0, lineHeight: 1.4 }}>
-                This PIN will instantly update on Terminal {resetPinCashier.terminalId}. The cashier must input this PIN for order processing and drawer kicks.
+                This PIN will be immediately encrypted and synchronized for register logins. Rate limit: 5 resets per 15 minutes.
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -2855,7 +2857,10 @@ export default function EmployeesManagement({
                   type="button"
                   className="button-20-secondary"
                   role="button"
-                  onClick={() => setResetPinCashier(null)}
+                  onClick={() => {
+                    setResetPinTarget(null);
+                    setResetPinCashier(null);
+                  }}
                   style={{
                     padding: '0 1rem',
                     height: '38px',
@@ -2871,21 +2876,329 @@ export default function EmployeesManagement({
                   type="submit"
                   className="button-20"
                   role="button"
-                  disabled={newPinValue.length !== 4}
+                  disabled={newPinValue.length !== 4 || confirmPinValue.length !== 4 || isSubmitting}
                   style={{
                     padding: '0 1.25rem',
                     height: '38px',
                     fontSize: '13px',
                     fontWeight: 700,
-                    cursor: newPinValue.length === 4 ? 'pointer' : 'not-allowed',
-                    opacity: newPinValue.length === 4 ? 1 : 0.5,
+                    cursor: (newPinValue.length === 4 && confirmPinValue.length === 4 && !isSubmitting) ? 'pointer' : 'not-allowed',
+                    opacity: (newPinValue.length === 4 && confirmPinValue.length === 4 && !isSubmitting) ? 1 : 0.5,
                     fontFamily: 'inherit',
                   }}
                 >
-                  Update PIN
+                  {isSubmitting ? 'Updating...' : 'Update PIN'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL 4: EDIT EMPLOYEE MODAL (PUT /api/employees/{id})              */}
+      {/* ==================================================================== */}
+      {editingEmployee && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: theme.bgCard,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            width: '100%',
+            maxWidth: '480px',
+            padding: '1.75rem',
+            boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Edit Employee
+                </h3>
+                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                  {editingEmployee.id} • {editingEmployee.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingEmployee(null)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                  FULL NAME *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    borderRadius: '0.55rem',
+                    backgroundColor: theme.hoverBg,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    padding: '0 0.85rem',
+                    fontSize: '13px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    ROLE *
+                  </label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as any)}
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.75rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="Cashier">Cashier</option>
+                    <option value="Senior Cashier">Senior Cashier</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Shift Supervisor">Shift Supervisor</option>
+                    <option value="Store Manager">Store Manager</option>
+                    <option value="Kitchen Lead">Kitchen Lead</option>
+                    <option value="Inventory Clerk">Inventory Clerk</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    ACCOUNT STATUS *
+                  </label>
+                  <select
+                    value={editIsActive ? 'Active' : 'Suspended'}
+                    onChange={(e) => setEditIsActive(e.target.value === 'Active')}
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.75rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <option value="Active">Active (Enabled)</option>
+                    <option value="Suspended">Suspended (Disabled)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    PHONE NUMBER
+                  </label>
+                  <input
+                    type="text"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="+91 98000 00000"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.85rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.35rem' }}>
+                    EMAIL ADDRESS
+                  </label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="staff@nuradesk.pos"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      borderRadius: '0.55rem',
+                      backgroundColor: theme.hoverBg,
+                      border: `1px solid ${theme.border}`,
+                      color: theme.textPrimary,
+                      padding: '0 0.85rem',
+                      fontSize: '13px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  className="button-20-secondary"
+                  role="button"
+                  onClick={() => setEditingEmployee(null)}
+                  style={{
+                    padding: '0 1rem',
+                    height: '38px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="button-20"
+                  role="button"
+                  disabled={isSubmitting}
+                  style={{
+                    padding: '0 1.25rem',
+                    height: '38px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL 5: DEACTIVATE EMPLOYEE MODAL (DELETE /api/employees/{id})       */}
+      {/* ==================================================================== */}
+      {deactivatingEmployee && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: theme.bgCard,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '1.75rem',
+            boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#FEE2E2',
+                color: '#DC2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <DeleteOutlineRoundedIcon sx={{ fontSize: 22 }} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Deactivate Employee
+                </h3>
+                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                  Revoke staff POS privileges
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '13px', color: theme.textSecondary, lineHeight: 1.5, margin: '0 0 1.25rem 0' }}>
+              Are you sure you want to deactivate <strong style={{ color: theme.textPrimary }}>{deactivatingEmployee.name}</strong> ({deactivatingEmployee.id})? They will no longer be able to log in to registers or view store tools.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="button-20-secondary"
+                role="button"
+                onClick={() => setDeactivatingEmployee(null)}
+                style={{
+                  padding: '0 1rem',
+                  height: '38px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeactivate}
+                disabled={isSubmitting}
+                style={{
+                  padding: '0 1.25rem',
+                  height: '38px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  backgroundColor: '#DC2626',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '0.55rem',
+                  fontFamily: 'inherit',
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
+              >
+                {isSubmitting ? 'Deactivating...' : 'Deactivate Staff'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -3133,136 +3446,6 @@ export default function EmployeesManagement({
             </div>
           </div>
         </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL 6: ADJUST ATTENDANCE PUNCH MODAL                               */}
-      {/* ==================================================================== */}
-      {adjustingAttendance && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '1rem',
-        }}>
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.border}`,
-            borderRadius: '1.25rem',
-            width: '100%',
-            maxWidth: '440px',
-            padding: '1.75rem',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.28)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Adjust Attendance Punch
-                </h3>
-                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                  {adjustingAttendance.employeeName} • {adjustingAttendance.date}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAdjustingAttendance(null)}
-                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
-              >
-                <CloseRoundedIcon sx={{ fontSize: 20 }} />
-              </button>
-            </div>
-
-            <form onSubmit={handleConfirmAdjustAttendance} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
-                  ACTUAL CLOCK IN TIME
-                </label>
-                <input
-                  type="time"
-                  required
-                  value={adjustedClockIn}
-                  onChange={(e) => setAdjustedClockIn(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0 0.85rem',
-                    fontSize: '13px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: theme.textSecondary, display: 'block', marginBottom: '0.45rem' }}>
-                  ACTUAL CLOCK OUT TIME
-                </label>
-                <input
-                  type="time"
-                  required
-                  value={adjustedClockOut}
-                  onChange={(e) => setAdjustedClockOut(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.hoverBg,
-                    border: `1px solid ${theme.border}`,
-                    color: theme.textPrimary,
-                    padding: '0 0.85rem',
-                    fontSize: '13px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  className="button-20-secondary"
-                  role="button"
-                  onClick={() => setAdjustingAttendance(null)}
-                  style={{
-                    padding: '0 1rem',
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="button-20"
-                  role="button"
-                  style={{
-                    padding: '0 1.25rem',
-                    height: '38px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Save Timecard
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      )}    </div>
   );
 }

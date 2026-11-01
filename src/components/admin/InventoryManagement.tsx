@@ -1,7 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
+import {
+  getCatalogSuppliers,
+  createCatalogSupplier,
+  getFranchiseInventory,
+  updateFranchiseInventory,
+  getOwnerPurchases,
+  createOwnerPurchase,
+  getFranchises,
+} from '@/lib/api-client';
+import { SupplierRequest } from '@/types/catalog';
 
 // Material Rounded Icons
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
@@ -106,6 +116,23 @@ const INITIAL_ADJUSTMENTS: StockAdjustment[] = [];
 
 const INITIAL_POS: PurchaseOrder[] = [];
 
+export interface SupplierItem {
+  id: string;
+  name: string;
+  contact?: string;
+  email?: string;
+  address?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+const INITIAL_SUPPLIERS: SupplierItem[] = [
+  { id: '1', name: 'Amul Dairy Cooperative', contact: '9876543210', email: 'orders@amul.coop', address: 'Anand, Gujarat', status: 'ACTIVE' },
+  { id: '2', name: 'Coorg Estate Coffee Co.', contact: '9822334455', email: 'info@coorgcoffee.com', address: 'Madikeri, Coorg', status: 'ACTIVE' },
+  { id: '3', name: 'Metro Wholesale Depot', contact: '9811223344', email: 'b2b@metro.in', address: 'Yeshwanthpur, Bengaluru', status: 'ACTIVE' },
+  { id: '4', name: 'Fresh Bakes Gujarat', contact: '9899887766', email: 'supplies@freshbakes.com', address: 'Ahmedabad, Gujarat', status: 'ACTIVE' },
+  { id: '5', name: 'GreenPack Solutions', contact: '9833445566', email: 'sales@greenpack.in', address: 'Mumbai, Maharashtra', status: 'ACTIVE' },
+];
+
 export default function InventoryManagement({
   activeSubTab,
   onSelectSubTab,
@@ -141,10 +168,82 @@ export default function InventoryManagement({
     setItemToDelete(null);
   };
 
+  // Suppliers Management (Phase 2 Batch 2)
+  const [suppliers, setSuppliers] = useState<SupplierItem[]>(INITIAL_SUPPLIERS);
+  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
+  const [newSupplierName, setNewSupplierName] = useState('');
+  const [newSupplierContact, setNewSupplierContact] = useState('');
+  const [newSupplierEmail, setNewSupplierEmail] = useState('');
+  const [newSupplierAddress, setNewSupplierAddress] = useState('');
+  const [isSavingSupplier, setIsSavingSupplier] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev));
+    }, 3500);
+  };
+
+  // Load Wholesale Suppliers from ASP.NET Web API (GET /api/owner-catalog/suppliers)
+  const loadBackendSuppliers = async () => {
+    try {
+      const res = await getCatalogSuppliers();
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        setSuppliers(res.data.map((s) => ({
+          id: String(s.id),
+          name: s.name,
+          contact: s.contact,
+          email: s.email,
+          address: s.address,
+          status: s.status,
+        })));
+      }
+    } catch (err: any) {
+      console.error('[Inventory] Error loading suppliers:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadBackendSuppliers();
+  }, []);
+
+  // Register Wholesale Supplier (POST /api/owner-catalog/suppliers)
+  const handleSaveSupplier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSupplierName.trim()) return;
+
+    setIsSavingSupplier(true);
+    try {
+      const payload: SupplierRequest = {
+        name: newSupplierName.trim(),
+        contact: newSupplierContact.trim() || undefined,
+        email: newSupplierEmail.trim() || undefined,
+        address: newSupplierAddress.trim() || undefined,
+        status: 'ACTIVE',
+      };
+      const res = await createCatalogSupplier(payload);
+      showToast(res?.message || `Registered supplier "${newSupplierName.trim()}".`);
+      setNewPoSupplier(newSupplierName.trim());
+      setNewItemSupplier(newSupplierName.trim());
+      setNewSupplierName('');
+      setNewSupplierContact('');
+      setNewSupplierEmail('');
+      setNewSupplierAddress('');
+      setShowAddSupplierModal(false);
+      await loadBackendSuppliers();
+    } catch (err: any) {
+      console.error('[Supplier] Create error:', err);
+      showToast(err?.message || 'Failed to register supplier.');
+    } finally {
+      setIsSavingSupplier(false);
+    }
+  };
+
   // PO Modals
   const [showPoModal, setShowPoModal] = useState(false);
   const [viewingPo, setViewingPo] = useState<PurchaseOrder | null>(null);
-  const [newPoSupplier, setNewPoSupplier] = useState('');
+  const [newPoSupplier, setNewPoSupplier] = useState(INITIAL_SUPPLIERS[0]?.name || '');
   const [newPoExpectedDate, setNewPoExpectedDate] = useState('');
   const [newPoItems, setNewPoItems] = useState<{ itemId: string; quantity: number }[]>([]);
   const [newPoNotes, setNewPoNotes] = useState('');
@@ -159,7 +258,7 @@ export default function InventoryManagement({
   const [newItemMinThreshold, setNewItemMinThreshold] = useState(5);
   const [newItemUnitCost, setNewItemUnitCost] = useState(0);
   const [newItemRetailPrice, setNewItemRetailPrice] = useState(0);
-  const [newItemSupplier, setNewItemSupplier] = useState('');
+  const [newItemSupplier, setNewItemSupplier] = useState(INITIAL_SUPPLIERS[0]?.name || '');
 
   // Categories extraction
   const categories = useMemo(() => {
@@ -208,6 +307,16 @@ export default function InventoryManagement({
 
     const delta = adjustType === 'increase' ? adjustQty : -adjustQty;
     const newStockQty = Math.max(0, selectedStockItem.inStock + delta);
+
+    // Sync live stock adjustment to backend API
+    const numericProductId = Number(selectedStockItem.id);
+    if (!isNaN(numericProductId) && numericProductId > 0) {
+      const storedFranchiseId = Number(localStorage.getItem('nurapos_selected_franchise_id')) || 1;
+      updateFranchiseInventory(storedFranchiseId, numericProductId, {
+        stockQuantity: newStockQty,
+        reorderLevel: selectedStockItem.minThreshold,
+      }).catch((err) => console.warn('Could not sync stock adjustment to server:', err));
+    }
 
     // 1. Update stock
     setStockItems((prev) =>
@@ -1939,11 +2048,27 @@ export default function InventoryManagement({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Supplier / Vendor
-                </label>
-                <input
-                  type="text"
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary }}>
+                    Supplier / Vendor
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSupplierModal(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#3B82F6',
+                      fontSize: '11.5px',
+                      fontWeight: 750,
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    + Add New Supplier
+                  </button>
+                </div>
+                <select
                   value={newItemSupplier}
                   onChange={(e) => setNewItemSupplier(e.target.value)}
                   style={{
@@ -1958,8 +2083,15 @@ export default function InventoryManagement({
                     boxSizing: 'border-box',
                     outline: 'none',
                     fontFamily: 'inherit',
+                    cursor: 'pointer',
                   }}
-                />
+                >
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
@@ -2044,9 +2176,26 @@ export default function InventoryManagement({
 
             <form onSubmit={handleCreatePO} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
-                  Supplier / Vendor
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: theme.textSecondary }}>
+                    Supplier / Vendor
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSupplierModal(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#3B82F6',
+                      fontSize: '11.5px',
+                      fontWeight: 750,
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    + Add New Supplier
+                  </button>
+                </div>
                 <select
                   value={newPoSupplier}
                   onChange={(e) => setNewPoSupplier(e.target.value)}
@@ -2066,11 +2215,11 @@ export default function InventoryManagement({
                     fontFamily: 'inherit',
                   }}
                 >
-                  <option value="Amul Dairy Cooperative">Amul Dairy Cooperative</option>
-                  <option value="Coorg Estate Coffee Co.">Coorg Estate Coffee Co.</option>
-                  <option value="Metro Wholesale Depot">Metro Wholesale Depot</option>
-                  <option value="Fresh Bakes Gujarat">Fresh Bakes Gujarat</option>
-                  <option value="GreenPack Solutions">GreenPack Solutions</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -2503,6 +2652,215 @@ export default function InventoryManagement({
           </div>
         </div>
       )}
+
+      {/* ============================================================ */}
+      {/* MODAL: ADD SUPPLIER                                          */}
+      {/* ============================================================ */}
+      {showAddSupplierModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(3px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem',
+        }}>
+          <div style={{
+            backgroundColor: theme.bgPage,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            width: '100%',
+            maxWidth: '440px',
+            padding: '1.5rem',
+            boxShadow: '0 20px 48px rgba(0,0,0,0.25)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                Register New Supplier
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddSupplierModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.textSecondary }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
+                  Supplier / Vendor Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newSupplierName}
+                  onChange={(e) => setNewSupplierName(e.target.value)}
+                  placeholder="e.g. Blue Tokai Roasters"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.6rem',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
+                  Contact Phone (10-15 digits)
+                </label>
+                <input
+                  type="text"
+                  value={newSupplierContact}
+                  onChange={(e) => setNewSupplierContact(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.6rem',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={newSupplierEmail}
+                  onChange={(e) => setNewSupplierEmail(e.target.value)}
+                  placeholder="e.g. orders@bluetokai.com"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.6rem',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.3rem' }}>
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={newSupplierAddress}
+                  onChange={(e) => setNewSupplierAddress(e.target.value)}
+                  placeholder="e.g. DLF Cybercity, Gurugram"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 0.85rem',
+                    borderRadius: '0.6rem',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="button-20-secondary"
+                  role="button"
+                  onClick={() => setShowAddSupplierModal(false)}
+                  style={{
+                    height: '38px',
+                    padding: '0 1.15rem',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSupplier}
+                  className="button-20"
+                  role="button"
+                  style={{
+                    height: '38px',
+                    padding: '0 1.25rem',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: isSavingSupplier ? 'not-allowed' : 'pointer',
+                    opacity: isSavingSupplier ? 0.7 : 1,
+                  }}
+                >
+                  {isSavingSupplier ? 'Saving...' : 'Register Supplier'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification Alert */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          backgroundColor: '#111827',
+          color: '#F9FAFB',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '0.85rem',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.65rem',
+          zIndex: 9999,
+          fontSize: '13px',
+          fontWeight: 700,
+          border: '1px solid #374151',
+        }}>
+          <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#10B981' }} />
+          <span>{toastMessage}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 0 }}
+          >
+            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

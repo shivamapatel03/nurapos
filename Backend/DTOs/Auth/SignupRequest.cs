@@ -23,12 +23,12 @@ public class SignupRequest
     [Required(ErrorMessage = "Password is required.")]
     [StringLength(
         64,
-        MinimumLength = 8,
-        ErrorMessage = "Password must be between 8 and 64 characters."
+        MinimumLength = 6,
+        ErrorMessage = "Password must be between 6 and 64 characters."
     )]
     [RegularExpression(
-        @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).+$",
-        ErrorMessage = "Password must contain uppercase, lowercase, number, and special character."
+        @"^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z\d]).+$",
+        ErrorMessage = "Password must contain uppercase, lowercase, and special character."
     )]
     public string Password { get; set; } = string.Empty;
 

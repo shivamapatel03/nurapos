@@ -9,6 +9,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import { forgotPassword, verifyPasswordCode, resetPassword } from '@/lib/api-client';
 
 type ResetStep = 'email' | 'code' | 'success';
 
@@ -21,12 +22,14 @@ export default function ForgotPasswordPage() {
   // Form states
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '']);
+  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   // Countdown timer for OTP resend
   const [timeLeft, setTimeLeft] = useState<number>(30);
@@ -40,25 +43,29 @@ export default function ForgotPasswordPage() {
     return () => clearInterval(timer);
   }, [step, timeLeft]);
 
-  // Handle Step 1: Send Email
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Handle Step 1: Send Email via POST /api/auth/password/forgot
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrorMessage('Please enter a valid email address.');
       return;
     }
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await forgotPassword(email.trim());
       setStep('code');
       setTimeLeft(30);
       setOtp(['', '', '', '']);
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
-    }, 500);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to send reset code. Please verify your email.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle OTP Inputs
@@ -67,6 +74,7 @@ export default function ForgotPasswordPage() {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
+    if (errorMessage) setErrorMessage('');
 
     // Auto focus next input
     if (value && index < 3) {
@@ -80,25 +88,34 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleResend = (e: React.MouseEvent) => {
+  const handleResend = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (timeLeft > 0) return;
-    setTimeLeft(30);
-    setOtp(['', '', '', '']);
+    if (timeLeft > 0 || isResending) return;
+    setIsResending(true);
     setErrorMessage('');
-    inputRefs.current[0]?.focus();
+
+    try {
+      await forgotPassword(email.trim());
+      setTimeLeft(30);
+      setOtp(['', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to resend code. Please try again.');
+    } finally {
+      setIsResending(false);
+    }
   };
 
-  // Handle Step 2: Verify Code & Reset Password
-  const handleResetSubmit = (e: React.FormEvent) => {
+  // Handle Step 2: Verify Code (POST /api/auth/password/verify-code) & Reset Password (POST /api/auth/password/reset)
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fullCode = otp.join('');
     if (fullCode.length < 4) {
       setErrorMessage('Please enter the 4-digit verification code.');
       return;
     }
-    if (newPassword.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
+    if (newPassword.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -109,10 +126,29 @@ export default function ForgotPasswordPage() {
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Step A: Verify 4-digit code and obtain resetToken
+      let token = resetToken;
+      if (!token) {
+        const codeRes = await verifyPasswordCode({ email: email.trim(), code: fullCode });
+        token = codeRes.data?.resetToken || '';
+        setResetToken(token);
+      }
+
+      // Step B: Reset password with verified resetToken
+      await resetPassword({
+        email: email.trim(),
+        resetToken: token,
+        newPassword,
+        confirmPassword,
+      });
+
       setStep('success');
-    }, 600);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to reset password. Please check your verification code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Modern retail / cafe POS checkout hero image matching signin and signup

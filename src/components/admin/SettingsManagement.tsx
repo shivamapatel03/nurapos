@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 // Material Rounded Icons
@@ -30,7 +30,6 @@ import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import MonetizationOnRoundedIcon from '@mui/icons-material/MonetizationOnRounded';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
 import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
@@ -41,25 +40,35 @@ import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRound
 import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
 import ChairRoundedIcon from '@mui/icons-material/ChairRounded';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
-import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import ApartmentRoundedIcon from '@mui/icons-material/ApartmentRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { ThemeId, APP_THEMES } from '@/lib/themeConfig';
+import { clearAuthSession } from '@/lib/auth';
+import {
+  logoutUser,
+  getFranchises,
+  getFranchiseById,
+  createFranchise,
+  updateFranchise,
+  deleteFranchise,
+  getStoreSettings,
+  saveStoreSettings,
+  getHardwareSettings,
+  saveHardwareSettings,
+} from '@/lib/api-client';
+import {
+  FranchiseResponse,
+  CreateFranchiseRequest,
+  UpdateFranchiseRequest,
+} from '@/types/franchise';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 export type SettingsSubTab =
   | 'set_store'
-  | 'set_business'
   | 'set_tables'
-  | 'set_tax'
-  | 'set_payments'
-  | 'set_hardware'
-  | 'set_pos'
-  | 'set_notifications'
-  | 'set_users'
-  | 'set_security'
-  | 'set_appearance';
+  | 'set_hardware';
 
 export interface RestaurantTable {
   id: string;
@@ -81,6 +90,7 @@ interface SettingsManagementProps {
   theme: any;
   currentThemeId?: ThemeId;
   onSelectTheme?: (themeId: ThemeId) => void;
+  onLogout?: () => void;
 }
 
 export default function SettingsManagement({
@@ -89,7 +99,29 @@ export default function SettingsManagement({
   theme,
   currentThemeId = 'bw_light',
   onSelectTheme,
+  onLogout,
 }: SettingsManagementProps) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSettingsLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      clearAuthSession();
+      if (typeof window !== 'undefined') {
+        window.location.replace('/signin');
+      }
+    }
+  };
+
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -98,6 +130,271 @@ export default function SettingsManagement({
     setTimeout(() => {
       setToastMessage(null);
     }, 3200);
+  };
+
+  // ============================================================================
+  // FRANCHISE OUTLETS STATE & HANDLERS (PHASE 3 BATCH 2)
+  // ============================================================================
+  const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+  const [isLoadingFranchises, setIsLoadingFranchises] = useState<boolean>(true);
+  const [franchiseError, setFranchiseError] = useState<string | null>(null);
+  const [activeFranchiseId, setActiveFranchiseId] = useState<number | null>(null);
+
+  // Add Franchise Modal State
+  const [showAddFranchiseModal, setShowAddFranchiseModal] = useState<boolean>(false);
+  const [isSubmittingAddFranchise, setIsSubmittingAddFranchise] = useState<boolean>(false);
+  const [addFranchiseForm, setAddFranchiseForm] = useState<CreateFranchiseRequest>({
+    franchiseName: '',
+    ownerName: '',
+    contact: '',
+    city: '',
+    address: '',
+  });
+  const [addFranchiseErrors, setAddFranchiseErrors] = useState<Record<string, string>>({});
+
+  // Edit Franchise Modal State
+  const [editingFranchise, setEditingFranchise] = useState<FranchiseResponse | null>(null);
+  const [isLoadingEditDetails, setIsLoadingEditDetails] = useState<boolean>(false);
+  const [isSubmittingEditFranchise, setIsSubmittingEditFranchise] = useState<boolean>(false);
+  const [editFranchiseForm, setEditFranchiseForm] = useState<UpdateFranchiseRequest>({
+    franchiseName: '',
+    ownerName: '',
+    contact: '',
+    city: '',
+    address: '',
+    status: 'ACTIVE',
+  });
+  const [editFranchiseErrors, setEditFranchiseErrors] = useState<Record<string, string>>({});
+
+  // Delete Franchise Modal State
+  const [deletingFranchise, setDeletingFranchise] = useState<FranchiseResponse | null>(null);
+  const [isDeletingFranchise, setIsDeletingFranchise] = useState<boolean>(false);
+  const [deleteConflictError, setDeleteConflictError] = useState<string | null>(null);
+
+  // Load Franchises (API 1: GET /api/franchises)
+  const fetchFranchisesList = async () => {
+    setIsLoadingFranchises(true);
+    setFranchiseError(null);
+    try {
+      const res = await getFranchises();
+      if (res.data) {
+        setFranchises(res.data);
+        if (!activeFranchiseId && res.data.length > 0) {
+          setActiveFranchiseId(res.data[0].franchiseId);
+        }
+      }
+      try {
+        const storeRes = await getStoreSettings();
+        if (storeRes?.data?.storeName) setStoreName(storeRes.data.storeName);
+      } catch {
+        // ignore
+      }
+      try {
+        const hwRes = await getHardwareSettings();
+        if (hwRes?.data?.printerIp) setPrinterIp(hwRes.data.printerIp);
+      } catch {
+        // ignore
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch franchises:', err);
+      setFranchiseError(err.message || 'Failed to fetch franchises');
+    } finally {
+      setIsLoadingFranchises(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFranchisesList();
+  }, []);
+
+  // Open Edit Franchise (API 2: GET /api/franchises/{id})
+  const handleOpenEditFranchise = async (franchise: FranchiseResponse) => {
+    setEditingFranchise(franchise);
+    setEditFranchiseErrors({});
+    setIsLoadingEditDetails(true);
+    setEditFranchiseForm({
+      franchiseName: franchise.franchiseName,
+      ownerName: franchise.ownerName || '',
+      contact: franchise.contact || '',
+      city: franchise.city || '',
+      address: franchise.address || '',
+      status: (franchise.status as 'ACTIVE' | 'INACTIVE') || 'ACTIVE',
+    });
+
+    try {
+      const fresh = await getFranchiseById(franchise.franchiseId);
+      if (fresh.data) {
+        setEditFranchiseForm({
+          franchiseName: fresh.data.franchiseName,
+          ownerName: fresh.data.ownerName || '',
+          contact: fresh.data.contact || '',
+          city: fresh.data.city || '',
+          address: fresh.data.address || '',
+          status: (fresh.data.status as 'ACTIVE' | 'INACTIVE') || 'ACTIVE',
+        });
+      }
+    } catch (err) {
+      console.warn('Could not fetch latest franchise details, using cached card info:', err);
+    } finally {
+      setIsLoadingEditDetails(false);
+    }
+  };
+
+  // Submit Add Franchise (API 3: POST /api/franchises)
+  const handleAddFranchise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors: Record<string, string> = {};
+
+    if (!addFranchiseForm.franchiseName.trim()) {
+      errors.franchiseName = 'Franchise name is required.';
+    } else if (addFranchiseForm.franchiseName.trim().length < 2 || addFranchiseForm.franchiseName.trim().length > 100) {
+      errors.franchiseName = 'Franchise name must be between 2 and 100 characters.';
+    }
+
+    if (addFranchiseForm.contact && addFranchiseForm.contact.trim()) {
+      if (!/^[0-9]{10,15}$/.test(addFranchiseForm.contact.trim())) {
+        errors.contact = 'Contact must contain 10 to 15 numeric digits.';
+      }
+    }
+
+    if (addFranchiseForm.ownerName && addFranchiseForm.ownerName.trim().length > 100) {
+      errors.ownerName = 'Owner name cannot exceed 100 characters.';
+    }
+
+    if (addFranchiseForm.city && addFranchiseForm.city.trim().length > 50) {
+      errors.city = 'City cannot exceed 50 characters.';
+    }
+
+    if (addFranchiseForm.address && addFranchiseForm.address.trim().length > 500) {
+      errors.address = 'Address cannot exceed 500 characters.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAddFranchiseErrors(errors);
+      return;
+    }
+
+    setIsSubmittingAddFranchise(true);
+    setAddFranchiseErrors({});
+
+    try {
+      const res = await createFranchise({
+        franchiseName: addFranchiseForm.franchiseName.trim(),
+        ownerName: addFranchiseForm.ownerName?.trim() || undefined,
+        contact: addFranchiseForm.contact?.trim() || undefined,
+        city: addFranchiseForm.city?.trim() || undefined,
+        address: addFranchiseForm.address?.trim() || undefined,
+      });
+
+      showToast(`Outlet "${res.data?.franchiseName || addFranchiseForm.franchiseName}" created successfully!`);
+      setShowAddFranchiseModal(false);
+      setAddFranchiseForm({
+        franchiseName: '',
+        ownerName: '',
+        contact: '',
+        city: '',
+        address: '',
+      });
+      await fetchFranchisesList();
+    } catch (err: any) {
+      console.error('Create franchise failed:', err);
+      setAddFranchiseErrors({
+        submit: err.message || 'Failed to create franchise outlet. Please try again.',
+      });
+    } finally {
+      setIsSubmittingAddFranchise(false);
+    }
+  };
+
+  // Submit Update Franchise (API 4: PUT /api/franchises/{id})
+  const handleUpdateFranchise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFranchise) return;
+    const errors: Record<string, string> = {};
+
+    if (!editFranchiseForm.franchiseName.trim()) {
+      errors.franchiseName = 'Franchise name is required.';
+    } else if (editFranchiseForm.franchiseName.trim().length < 2 || editFranchiseForm.franchiseName.trim().length > 100) {
+      errors.franchiseName = 'Franchise name must be between 2 and 100 characters.';
+    }
+
+    if (editFranchiseForm.contact && editFranchiseForm.contact.trim()) {
+      if (!/^[0-9]{10,15}$/.test(editFranchiseForm.contact.trim())) {
+        errors.contact = 'Contact must contain 10 to 15 numeric digits.';
+      }
+    }
+
+    if (editFranchiseForm.ownerName && editFranchiseForm.ownerName.trim().length > 100) {
+      errors.ownerName = 'Owner name cannot exceed 100 characters.';
+    }
+
+    if (editFranchiseForm.city && editFranchiseForm.city.trim().length > 50) {
+      errors.city = 'City cannot exceed 50 characters.';
+    }
+
+    if (editFranchiseForm.address && editFranchiseForm.address.trim().length > 500) {
+      errors.address = 'Address cannot exceed 500 characters.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditFranchiseErrors(errors);
+      return;
+    }
+
+    setIsSubmittingEditFranchise(true);
+    setEditFranchiseErrors({});
+
+    try {
+      const res = await updateFranchise(editingFranchise.franchiseId, {
+        franchiseName: editFranchiseForm.franchiseName.trim(),
+        ownerName: editFranchiseForm.ownerName?.trim() || undefined,
+        contact: editFranchiseForm.contact?.trim() || undefined,
+        city: editFranchiseForm.city?.trim() || undefined,
+        address: editFranchiseForm.address?.trim() || undefined,
+        status: editFranchiseForm.status,
+      });
+
+      showToast(`Outlet "${res.data?.franchiseName || editFranchiseForm.franchiseName}" updated successfully!`);
+      setEditingFranchise(null);
+      await fetchFranchisesList();
+    } catch (err: any) {
+      console.error('Update franchise failed:', err);
+      setEditFranchiseErrors({
+        submit: err.message || 'Failed to update franchise outlet. Please try again.',
+      });
+    } finally {
+      setIsSubmittingEditFranchise(false);
+    }
+  };
+
+  // Submit Delete Franchise (API 5: DELETE /api/franchises/{id})
+  const handleDeleteFranchise = async () => {
+    if (!deletingFranchise) return;
+    setIsDeletingFranchise(true);
+    setDeleteConflictError(null);
+
+    try {
+      await deleteFranchise(deletingFranchise.franchiseId);
+      showToast(`Outlet "${deletingFranchise.franchiseName}" deleted successfully.`);
+      if (activeFranchiseId === deletingFranchise.franchiseId) {
+        setActiveFranchiseId(null);
+      }
+      setDeletingFranchise(null);
+      await fetchFranchisesList();
+    } catch (err: any) {
+      console.error('Delete franchise failed:', err);
+      const isConflict =
+        err.statusCode === 409 ||
+        err.message?.includes('already being used') ||
+        err.message?.includes('foreign key');
+      setDeleteConflictError(
+        isConflict
+          ? 'This franchise cannot be deleted because it is already being used by other records (such as active employees, sales orders, or inventory items).'
+          : (err.message || 'Failed to delete franchise outlet.')
+      );
+    } finally {
+      setIsDeletingFranchise(false);
+    }
   };
 
   // Modern animated Toggle Switch component
@@ -141,6 +438,59 @@ export default function SettingsManagement({
   );
 
   // Dedicated Save Button Footer for each settings component card
+
+  // Save Store Profile (wired to PUT /api/settings/store)
+  const handleSaveStoreProfile = async () => {
+    try {
+      const res = await saveStoreSettings({
+        storeName: storeName || '',
+        storeCode: storeCode || '',
+        currencyCode: 'INR',
+        currencySymbol: '₹',
+        defaultTaxRate: 5,
+        taxInclusive: true,
+        roundingRule: 'none',
+        address: [storeAddressStreet, storeCity, storeState, storePincode].filter(Boolean).join(', '),
+        phone: storePhone || '',
+        email: storeEmail || '',
+        website: storeWebsite || '',
+      });
+      if (res?.data) {
+        showToast('Store Profile saved successfully!');
+      } else {
+        showToast('Store Profile updated.');
+      }
+    } catch (err: any) {
+      console.error('Failed to save store settings:', err);
+      showToast('Error saving Store Profile');
+    }
+  };
+
+  // Save Hardware Settings (wired to PUT /api/settings/hardware)
+  const handleSaveHardware = async () => {
+    try {
+      const res = await saveHardwareSettings({
+        printerIp: printerIp || '192.168.1.200:9100',
+        printerHost: printerIp || '192.168.1.200',
+        printerPort: 9100,
+        paperWidth: paperWidth === '80mm' ? 80 : 58,
+        characterWidth: paperWidth === '80mm' ? 48 : 32,
+        autoKickDrawer: cashDrawerPulseOnCash,
+        cashDrawerKickCode: '27,112,0,25,250',
+        scannerContinuousRead: true,
+        customerDisplayEnabled: false,
+      });
+      if (res?.data) {
+        showToast('Hardware settings saved successfully!');
+      } else {
+        showToast('Hardware settings updated.');
+      }
+    } catch (err: any) {
+      console.error('Failed to save hardware settings:', err);
+      showToast('Error saving Hardware settings');
+    }
+  };
+
   const renderCardFooter = (sectionName: string, onSaveCustom?: () => void) => (
     <div
       style={{
@@ -193,16 +543,7 @@ export default function SettingsManagement({
   const [storeCity, setStoreCity] = useState('Ahmedabad');
   const [storeState, setStoreState] = useState('Gujarat');
   const [storePincode, setStorePincode] = useState('380009');
-  const [operatingHours, setOperatingHours] = useState([
-    { day: 'Monday', open: '08:00', close: '23:00', isOpen: true },
-    { day: 'Tuesday', open: '08:00', close: '23:00', isOpen: true },
-    { day: 'Wednesday', open: '08:00', close: '23:00', isOpen: true },
-    { day: 'Thursday', open: '08:00', close: '23:00', isOpen: true },
-    { day: 'Friday', open: '08:00', close: '00:00', isOpen: true },
-    { day: 'Saturday', open: '08:00', close: '00:00', isOpen: true },
-    { day: 'Sunday', open: '08:00', close: '23:30', isOpen: true },
-  ]);
-
+  
   // 2. BUSINESS SETTINGS STATE
   const [currencySymbol, setCurrencySymbol] = useState('₹');
   const [currencyCode, setCurrencyCode] = useState('INR');
@@ -498,6 +839,411 @@ export default function SettingsManagement({
       {/* SUB-TAB 1: STORE PROFILE */}
       {activeSubTab === 'set_store' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Card: Franchise Outlets Directory (Phase 3 Batch 2) */}
+          <div
+            style={{
+              padding: '1.5rem',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '0.85rem',
+              border: `1px solid ${theme.border}`,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                marginBottom: '1.25rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '0.65rem',
+                    backgroundColor: theme.activeBg,
+                    color: theme.activeText,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ApartmentRoundedIcon sx={{ fontSize: 22 }} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                      Franchise Outlets & Store Branches
+                    </h2>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '9999px',
+                        backgroundColor: theme.badgeBg,
+                        color: theme.badgeText,
+                      }}
+                    >
+                      {franchises.length} {franchises.length === 1 ? 'Outlet' : 'Outlets'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                    Provision branch locations, manage store contact info, and designate active registers.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={fetchFranchisesList}
+                  disabled={isLoadingFranchises}
+                  className="button-20-secondary"
+                  style={{
+                    height: '34px',
+                    padding: '0 0.85rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <RefreshRoundedIcon
+                    sx={{
+                      fontSize: 16,
+                      animation: isLoadingFranchises ? 'spin 1s linear infinite' : 'none',
+                    }}
+                  />
+                  <span>Refresh</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddFranchiseForm({
+                      franchiseName: '',
+                      ownerName: '',
+                      contact: '',
+                      city: '',
+                      address: '',
+                    });
+                    setAddFranchiseErrors({});
+                    setShowAddFranchiseModal(true);
+                  }}
+                  className="button-20"
+                  style={{
+                    height: '34px',
+                    padding: '0 1rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <AddRoundedIcon sx={{ fontSize: 16 }} />
+                  <span>Add Franchise Outlet</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Error Alert */}
+            {franchiseError && (
+              <div
+                style={{
+                  marginBottom: '1rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.55rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  color: '#DC2626',
+                  fontSize: '12.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>{franchiseError}</span>
+                <button
+                  type="button"
+                  onClick={fetchFranchisesList}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#DC2626',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {/* Loading Skeleton */}
+            {isLoadingFranchises ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[1, 2].map((n) => (
+                  <div
+                    key={n}
+                    style={{
+                      height: '78px',
+                      borderRadius: '0.65rem',
+                      backgroundColor: theme.hoverBg,
+                      opacity: 0.6,
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }}
+                  />
+                ))}
+              </div>
+            ) : franchises.length === 0 ? (
+              /* Empty State */
+              <div
+                style={{
+                  padding: '2.5rem 1rem',
+                  textAlign: 'center',
+                  borderRadius: '0.65rem',
+                  backgroundColor: theme.bgPage,
+                  border: `1px dashed ${theme.border}`,
+                }}
+              >
+                <StoreRoundedIcon sx={{ fontSize: 36, color: theme.textSecondary, opacity: 0.5, marginBottom: '0.5rem' }} />
+                <h3 style={{ fontSize: '14px', fontWeight: 700, color: theme.textPrimary, margin: '0 0 0.25rem 0' }}>
+                  No Franchise Outlets Registered
+                </h3>
+                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '0 0 1rem 0' }}>
+                  Provision your primary outlet or multi-city branches to configure registers and track sales.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddFranchiseForm({
+                      franchiseName: '',
+                      ownerName: '',
+                      contact: '',
+                      city: '',
+                      address: '',
+                    });
+                    setAddFranchiseErrors({});
+                    setShowAddFranchiseModal(true);
+                  }}
+                  className="button-20"
+                  style={{
+                    height: '32px',
+                    padding: '0 0.95rem',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  + Add First Outlet
+                </button>
+              </div>
+            ) : (
+              /* Outlet Grid / Cards */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {franchises.map((f) => {
+                  const isSelected = activeFranchiseId === f.franchiseId;
+                  const isActive = f.status === 'ACTIVE';
+
+                  return (
+                    <div
+                      key={f.franchiseId}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem',
+                        padding: '1.15rem',
+                        borderRadius: '0.65rem',
+                        backgroundColor: theme.bgPage,
+                        border: `1px solid ${isSelected ? theme.activeBg : theme.border}`,
+                        boxShadow: isSelected ? '0 0 0 1px ' + theme.activeBg : 'none',
+                        transition: 'border-color 0.15s ease',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <span
+                            style={{
+                              padding: '0.3rem 0.6rem',
+                              borderRadius: '0.45rem',
+                              backgroundColor: (theme as any).sidebarIsDark ? '#27272A' : '#E4E4E7',
+                              color: theme.textSecondary,
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              fontFamily: 'monospace',
+                              border: `1px solid ${theme.border}`,
+                            }}
+                          >
+                            ID #{f.franchiseId}
+                          </span>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary }}>
+                                {f.franchiseName}
+                              </span>
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    fontSize: '10.5px',
+                                    fontWeight: 800,
+                                    padding: '2px 7px',
+                                    borderRadius: '4px',
+                                    backgroundColor: theme.activeBg,
+                                    color: theme.activeText,
+                                  }}
+                                >
+                                  Active Branch
+                                </span>
+                              )}
+                              <span
+                                style={{
+                                  fontSize: '10.5px',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  backgroundColor: isActive ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                                  color: isActive ? '#16A34A' : '#DC2626',
+                                  border: `1px solid ${isActive ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                                }}
+                              >
+                                {f.status}
+                              </span>
+                            </div>
+                            {f.ownerName && (
+                              <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                                Manager: <strong>{f.ownerName}</strong>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {!isSelected && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveFranchiseId(f.franchiseId);
+                                showToast(`Active store set to "${f.franchiseName}".`);
+                              }}
+                              className="button-20-secondary"
+                              style={{
+                                height: '30px',
+                                padding: '0 0.75rem',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              Set Active
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditFranchise(f)}
+                            className="button-20-secondary"
+                            style={{
+                              height: '30px',
+                              padding: '0 0.75rem',
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              fontFamily: 'inherit',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                            }}
+                          >
+                            <EditRoundedIcon sx={{ fontSize: 14 }} />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeletingFranchise(f);
+                              setDeleteConflictError(null);
+                            }}
+                            style={{
+                              height: '30px',
+                              padding: '0 0.75rem',
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              fontFamily: 'inherit',
+                              backgroundColor: 'transparent',
+                              color: '#DC2626',
+                              border: '1px solid rgba(220, 38, 38, 0.3)',
+                              borderRadius: '0.45rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                            }}
+                          >
+                            <DeleteOutlineRoundedIcon sx={{ fontSize: 14 }} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Outlet Meta Info */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                          gap: '0.65rem',
+                          paddingTop: '0.65rem',
+                          borderTop: `1px solid ${theme.border}`,
+                        }}
+                      >
+                        <div>
+                          <span style={{ fontSize: '11px', color: theme.textSecondary, display: 'block' }}>City</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textPrimary }}>
+                            {f.city || 'Not specified'}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: theme.textSecondary, display: 'block' }}>Address</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textPrimary }}>
+                            {f.address || 'Not specified'}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: theme.textSecondary, display: 'block' }}>Contact Phone</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textPrimary }}>
+                            {f.contact || 'No phone recorded'}
+                          </span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: theme.textSecondary, display: 'block' }}>Provisioned On</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textPrimary }}>
+                            {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Card: Basic Info & Branding */}
           <div
             style={{
@@ -608,7 +1354,7 @@ export default function SettingsManagement({
               </div>
             </div>
 
-            {renderCardFooter('Store Identity & Branding')}
+            {renderCardFooter('Store Identity & Branding', handleSaveStoreProfile)}
           </div>
 
           {/* Card: Address & Contact Details */}
@@ -790,971 +1536,10 @@ export default function SettingsManagement({
               </div>
             </div>
 
-            {renderCardFooter('Location & Contact Information')}
+            {renderCardFooter('Location & Contact Information', handleSaveStoreProfile)}
           </div>
 
-          {/* Card: Operating Hours */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <ScheduleRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Weekly Operating Hours
-              </h2>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {operatingHours.map((sched, idx) => (
-                <div
-                  key={sched.day}
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.65rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                    gap: '0.75rem',
-                  }}
-                >
-                  <div style={{ width: '120px', fontSize: '13.5px', fontWeight: 700, color: theme.textPrimary }}>
-                    {sched.day}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <span style={{ fontSize: '12px', color: theme.textSecondary }}>Opens:</span>
-                      <input
-                        type="time"
-                        value={sched.open}
-                        disabled={!sched.isOpen}
-                        onChange={(e) => {
-                          const updated = [...operatingHours];
-                          updated[idx].open = e.target.value;
-                          setOperatingHours(updated);
-                        }}
-                        style={{
-                          padding: '0.35rem 0.55rem',
-                          borderRadius: '0.45rem',
-                          border: `1px solid ${theme.border}`,
-                          backgroundColor: sched.isOpen ? ((theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF') : theme.hoverBg,
-                          color: theme.textPrimary,
-                          fontSize: '12.5px',
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <span style={{ fontSize: '12px', color: theme.textSecondary }}>Closes:</span>
-                      <input
-                        type="time"
-                        value={sched.close}
-                        disabled={!sched.isOpen}
-                        onChange={(e) => {
-                          const updated = [...operatingHours];
-                          updated[idx].close = e.target.value;
-                          setOperatingHours(updated);
-                        }}
-                        style={{
-                          padding: '0.35rem 0.55rem',
-                          borderRadius: '0.45rem',
-                          border: `1px solid ${theme.border}`,
-                          backgroundColor: sched.isOpen ? ((theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF') : theme.hoverBg,
-                          color: theme.textPrimary,
-                          fontSize: '12.5px',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={sched.isOpen ? "button-20" : "button-20-secondary"}
-                    role="button"
-                    onClick={() => {
-                      const updated = [...operatingHours];
-                      updated[idx].isOpen = !updated[idx].isOpen;
-                      setOperatingHours(updated);
-                    }}
-                    style={{
-                      height: '32px',
-                      padding: '0 0.85rem',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                      minWidth: '70px',
-                    }}
-                  >
-                    {sched.isOpen ? 'Open' : 'Closed'}
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {renderCardFooter('Weekly Operating Hours')}
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 2: BUSINESS SETTINGS */}
-      {activeSubTab === 'set_business' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <TuneRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Regional & Financial Parameters
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Base Currency
-                </label>
-                <select
-                  value={currencyCode}
-                  onChange={(e) => {
-                    setCurrencyCode(e.target.value);
-                    if (e.target.value === 'INR') setCurrencySymbol('₹');
-                    if (e.target.value === 'USD') setCurrencySymbol('$');
-                    if (e.target.value === 'EUR') setCurrencySymbol('€');
-                    if (e.target.value === 'GBP') setCurrencySymbol('£');
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="INR">Indian Rupee (₹ INR)</option>
-                  <option value="USD">US Dollar ($ USD)</option>
-                  <option value="EUR">Euro (€ EUR)</option>
-                  <option value="GBP">British Pound (£ GBP)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Timezone
-                </label>
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="Asia/Kolkata (GMT+5:30)">Asia/Kolkata (IST - GMT+5:30)</option>
-                  <option value="Asia/Dubai (GMT+4:00)">Asia/Dubai (GST - GMT+4:00)</option>
-                  <option value="Europe/London (GMT+0:00)">Europe/London (BST/GMT)</option>
-                  <option value="America/New_York (GMT-5:00)">America/New_York (EST)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Financial Year Cycle Starts
-                </label>
-                <select
-                  value={financialYearStart}
-                  onChange={(e) => setFinancialYearStart(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="April">April (India Standard FY 2026-27)</option>
-                  <option value="January">January (Calendar Year)</option>
-                  <option value="July">July (Mid-Year Cycle)</option>
-                  <option value="October">October (Q4 Cycle)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Business Vertical
-                </label>
-                <select
-                  value={businessVertical}
-                  onChange={(e) => setBusinessVertical(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="Cafe & Bistro">Cafe & Bistro</option>
-                  <option value="Quick Service Restaurant">Quick Service Restaurant (QSR)</option>
-                  <option value="Bakery & Confectionery">Bakery & Confectionery</option>
-                  <option value="Retail & Grocery">Retail & Grocery Store</option>
-                  <option value="Fine Dining">Fine Dining Restaurant</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Inventory Valuation Method
-                </label>
-                <select
-                  value={inventoryValuation}
-                  onChange={(e) => setInventoryValuation(e.target.value as any)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="FIFO">First In, First Out (FIFO)</option>
-                  <option value="Weighted Average">Weighted Average Cost (WAC)</option>
-                </select>
-              </div>
-            </div>
-
-            {renderCardFooter('Regional & Financial Parameters')}
-          </div>
-
-          {/* Multi-Outlet Management Card */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.25rem 0' }}>
-                  Multi-Store / Multi-Branch System
-                </h2>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0 }}>
-                  Synchronize central inventory catalogs while maintaining branch-specific registers, pricing, and shift ledgers.
-                </p>
-              </div>
-              {renderToggle(isMultiOutletEnabled, () => setIsMultiOutletEnabled(!isMultiOutletEnabled))}
-            </div>
-
-            {isMultiOutletEnabled && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      SP CAFE - CG Road (Headquarters)
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      STR-AHM-01 • 4 Active Registers • Primary Hub
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: '9999px',
-                      backgroundColor: theme.badgeBg,
-                      color: theme.badgeText,
-                    }}
-                  >
-                    Current Active Branch
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      SP CAFE - Bodakdev (Satellite)
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      STR-AHM-02 • 2 Active Registers • Sync Active
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: '9999px',
-                      backgroundColor: theme.hoverBg,
-                      color: theme.textPrimary,
-                      border: `1px solid ${theme.border}`,
-                    }}
-                  >
-                    Online
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      SP CAFE - Prahlad Nagar (Upcoming)
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      STR-AHM-03 • Setup in Progress
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      padding: '3px 8px',
-                      borderRadius: '9999px',
-                      backgroundColor: theme.hoverBg,
-                      color: theme.textSecondary,
-                    }}
-                  >
-                    Pending Setup
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {renderCardFooter('Multi-Store Branch Settings')}
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 3: TAX & INVOICING */}
-      {activeSubTab === 'set_tax' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* GST & Invoice Format */}
-          {/* GST & Invoice Format */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <ReceiptLongRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                GST Identification & Invoice Numbering
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  GSTIN / Tax ID
-                </label>
-                <input
-                  type="text"
-                  value={gstin}
-                  onChange={(e) => setGstin(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Pricing Calculation Mode
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem', height: '38px' }}>
-                  <button
-                    type="button"
-                    className={pricingMode === 'inclusive' ? "button-20" : "button-20-secondary"}
-                    role="button"
-                    onClick={() => setPricingMode('inclusive')}
-                    style={{
-                      flex: 1,
-                      height: '38px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    Tax Inclusive
-                  </button>
-                  <button
-                    type="button"
-                    className={pricingMode === 'exclusive' ? "button-20" : "button-20-secondary"}
-                    role="button"
-                    onClick={() => setPricingMode('exclusive')}
-                    style={{
-                      flex: 1,
-                      height: '38px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    Tax Exclusive
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Invoice Serial Prefix
-                </label>
-                <input
-                  type="text"
-                  value={invoicePrefix}
-                  onChange={(e) => setInvoicePrefix(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Next Invoice Sequence
-                </label>
-                <input
-                  type="text"
-                  value={nextInvoiceNumber}
-                  onChange={(e) => setNextInvoiceNumber(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Default F&B SAC Code
-                </label>
-                <input
-                  type="text"
-                  value={defaultHsnFnb}
-                  onChange={(e) => setDefaultHsnFnb(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Default Goods HSN Code
-                </label>
-                <input
-                  type="text"
-                  value={defaultHsnGoods}
-                  onChange={(e) => setDefaultHsnGoods(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-            </div>
-
-            {renderCardFooter('GST & Invoice Settings')}
-          </div>
-
-          {/* Standard Tax Slabs Table */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Standard GST Rate Slabs
-              </h2>
-              <button
-                type="button"
-                className="button-20"
-                role="button"
-                onClick={() => showToast('New custom tax slab added.')}
-                style={{
-                  height: '32px',
-                  padding: '0 0.85rem',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <AddRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Add Tax Slab</span>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              {taxSlabs.map((slab) => (
-                <div
-                  key={slab.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      {slab.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      {slab.desc}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: theme.textPrimary }}>
-                      {slab.rate}%
-                    </span>
-                    <button
-                      type="button"
-                      className="button-20-secondary"
-                      role="button"
-                      onClick={() => showToast(`Edit configuration for ${slab.name}`)}
-                      style={{
-                        height: '26px',
-                        padding: '0 8px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        fontFamily: 'inherit',
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {renderCardFooter('GST Tax Slabs')}
-          </div>
-
-          {/* Receipt Custom Header & Footer */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 1.25rem 0' }}>
-              Thermal Receipt Header & Footer Text
-            </h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Receipt Header Title
-                </label>
-                <input
-                  type="text"
-                  value={receiptHeader}
-                  onChange={(e) => setReceiptHeader(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Receipt Footer & FSSAI Disclosure
-                </label>
-                <textarea
-                  rows={2}
-                  value={receiptFooter}
-                  onChange={(e) => setReceiptFooter(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    fontFamily: 'inherit',
-                  }}
-                />
-              </div>
-            </div>
-
-            {renderCardFooter('Receipt Header & Footer')}
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 4: PAYMENTS */}
-      {activeSubTab === 'set_payments' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-
-          {/* Active Tender Methods */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <PaymentsRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Enabled Checkout Tender Types
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
-              {[
-                { key: 'cash', label: 'Cash Payment', desc: 'Accept physical cash at register till', icon: <MonetizationOnRoundedIcon sx={{ fontSize: 18 }} /> },
-                { key: 'upi', label: 'Dynamic UPI QR', desc: 'Auto-generated QR code per transaction', icon: <QrCode2RoundedIcon sx={{ fontSize: 18 }} /> },
-                { key: 'card', label: 'Card Terminal (EDC)', desc: 'Integrated swipe & chip card machine', icon: <CreditCardRoundedIcon sx={{ fontSize: 18 }} /> },
-                { key: 'khata', label: 'Store Credit / Khata', desc: 'Postpaid credit ledger for VIP patrons', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} /> },
-              ].map((tender) => {
-                const isEnabled = (paymentMethods as any)[tender.key];
-                return (
-                  <div
-                    key={tender.key}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '1rem',
-                      borderRadius: '0.65rem',
-                      backgroundColor: theme.bgPage,
-                      border: `1px solid ${theme.border}`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                      <span style={{ color: theme.textPrimary }}>{tender.icon}</span>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
-                          {tender.label}
-                        </div>
-                        <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                          {tender.desc}
-                        </div>
-                      </div>
-                    </div>
-                    {renderToggle(isEnabled, () =>
-                      setPaymentMethods((prev) => ({
-                        ...prev,
-                        [tender.key]: !(prev as any)[tender.key],
-                      }))
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {renderCardFooter('Tender Types')}
-          </div>
-
-          {/* Dynamic UPI & Merchant VPA */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <QrCode2RoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Dynamic UPI Merchant Configuration
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Merchant VPA / UPI ID
-                </label>
-                <input
-                  type="text"
-                  value={upiVpa}
-                  onChange={(e) => setUpiVpa(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Merchant Legal Registered Name
-                </label>
-                <input
-                  type="text"
-                  value={upiMerchantName}
-                  onChange={(e) => setUpiMerchantName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: theme.textPrimary }}>
-                Auto-generate bill-amount embedded dynamic QR code on checkout screen
-              </span>
-              {renderToggle(autoDynamicUpiQr, () => setAutoDynamicUpiQr(!autoDynamicUpiQr))}
-            </div>
-
-            {renderCardFooter('UPI Configuration')}
-          </div>
-
-          {/* Card POS & Auto Round-off */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <CreditCardRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Integrated Card Machine & Checkout Rules
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Card EDC Terminal Hardware
-                </label>
-                <select
-                  value={cardTerminalModel}
-                  onChange={(e) => setCardTerminalModel(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="PineLabs Plutus Smart Android EDC">PineLabs Plutus Smart Android EDC</option>
-                  <option value="Mswipe WisePOS Plus">Mswipe WisePOS Plus</option>
-                  <option value="Paytm All-In-One Smart POS">Paytm All-In-One Smart POS</option>
-                  <option value="Razorpay POS Terminal">Razorpay POS Terminal</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Terminal Network Address / Port
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input
-                    type="text"
-                    value={cardTerminalIp}
-                    onChange={(e) => setCardTerminalIp(e.target.value)}
-                    style={{
-                      flex: 1,
-                      padding: '0.65rem 0.85rem',
-                      borderRadius: '0.55rem',
-                      border: `1px solid ${theme.border}`,
-                      backgroundColor: theme.bgPage,
-                      color: theme.textPrimary,
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      outline: 'none',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="button-20-secondary"
-                    role="button"
-                    onClick={() => showToast('Terminal ping response: 18ms (Online)')}
-                    style={{
-                      height: '38px',
-                      padding: '0 0.85rem',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                    }}
-                  >
-                    Test Ping
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
-                  Auto Round-off Cash Totals
-                </div>
-                <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                  Round fractional bill totals to nearest ₹1.00 (e.g. ₹249.75 to ₹250.00)
-                </div>
-              </div>
-              {renderToggle(autoRoundOff, () => setAutoRoundOff(!autoRoundOff))}
-            </div>
-
-            {renderCardFooter('Card Terminal & Rules')}
-          </div>
+          
         </div>
       )}
 
@@ -1877,7 +1662,7 @@ export default function SettingsManagement({
               </div>
             </div>
 
-            {renderCardFooter('Thermal Printer Settings')}
+            {renderCardFooter('Thermal Printer Settings', handleSaveHardware)}
           </div>
 
           {/* Barcode Scanner & Cash Drawer */}
@@ -1947,7 +1732,7 @@ export default function SettingsManagement({
                 </div>
               </div>
 
-              {renderCardFooter('Barcode Scanner')}
+              {renderCardFooter('Barcode Scanner', handleSaveHardware)}
             </div>
 
             {/* Cash Drawer */}
@@ -1998,95 +1783,8 @@ export default function SettingsManagement({
                 </div>
               </div>
 
-              {renderCardFooter('Cash Drawer Settings')}
+              {renderCardFooter('Cash Drawer Settings', handleSaveHardware)}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 6: POS SETTINGS */}
-      {activeSubTab === 'set_pos' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <PointOfSaleRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Point of Sale Terminal Workflow Rules
-              </h2>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[
-                {
-                  title: 'Express / Quick Billing Mode',
-                  desc: 'Skip customer phone & loyalty lookup for instant checkout during rush hours.',
-                  state: expressBillingMode,
-                  toggle: () => setExpressBillingMode(!expressBillingMode),
-                },
-                {
-                  title: 'Auto-Print Receipt on Settlement',
-                  desc: 'Immediately send customer receipt to thermal printer when payment is verified.',
-                  state: autoPrintReceipt,
-                  toggle: () => setAutoPrintReceipt(!autoPrintReceipt),
-                },
-                {
-                  title: 'Kitchen Display System (KDS) & KOT Auto-Dispatch',
-                  desc: 'Automatically route food tickets to chef KDS screen upon order placement.',
-                  state: kdsAutoDispatch,
-                  toggle: () => setKdsAutoDispatch(!kdsAutoDispatch),
-                },
-                {
-                  title: 'Audio Sound Effects',
-                  desc: 'Play crisp audio cues on product barcode scan, item remove, and checkout.',
-                  state: audioFeedback,
-                  toggle: () => setAudioFeedback(!audioFeedback),
-                },
-                {
-                  title: 'Dine-In Table Floor Plan Management',
-                  desc: 'Enable table assignment, table shifting, and running tab management on POS.',
-                  state: tableManagementEnabled,
-                  toggle: () => setTableManagementEnabled(!tableManagementEnabled),
-                },
-                {
-                  title: 'Block Sale of Out-of-Stock Items',
-                  desc: 'Strictly prevent cashiers from adding items with 0 inventory count to order.',
-                  state: blockOutOfStockSales,
-                  toggle: () => setBlockOutOfStockSales(!blockOutOfStockSales),
-                },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      {item.title}
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      {item.desc}
-                    </div>
-                  </div>
-                  {renderToggle(item.state, item.toggle)}
-                </div>
-              ))}
-            </div>
-
-            {renderCardFooter('POS Terminal Rules')}
           </div>
         </div>
       )}
@@ -2513,1020 +2211,10 @@ export default function SettingsManagement({
 
             {renderCardFooter('Tables & Floor Plan')}
           </div>
-
-          {/* Card 2: Order Token & Ticket Number Setting */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-              <ConfirmationNumberRoundedIcon sx={{ fontSize: 22, color: theme.textPrimary }} />
-              <div>
-                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
-                  Order Token & Kitchen Ticket (KOT) Sequence Settings
-                </h2>
-                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
-                  Customize order ticket numbering, daily reset cycles, dine-in table prefixes, and kitchen print rules.
-                </p>
-              </div>
-            </div>
-
-            {/* Side-by-side Configuration & Live Thermal Ticket Preview */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '1.5rem',
-                alignItems: 'start',
-              }}
-            >
-              {/* Left Column: Ticket Controls */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Dine-In Ticket Prefix
-                    </label>
-                    <input
-                      type="text"
-                      value={ticketPrefix}
-                      onChange={(e) => setTicketPrefix(e.target.value)}
-                      placeholder="e.g. T- or KOT-"
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '0.55rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgPage,
-                        color: theme.textPrimary,
-                        fontSize: '13.5px',
-                        fontWeight: 700,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Takeaway / Pickup Prefix
-                    </label>
-                    <input
-                      type="text"
-                      value={takeawayPrefix}
-                      onChange={(e) => setTakeawayPrefix(e.target.value)}
-                      placeholder="e.g. TO- or Q-"
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '0.55rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgPage,
-                        color: theme.textPrimary,
-                        fontSize: '13.5px',
-                        fontWeight: 700,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Starting Ticket Number
-                    </label>
-                    <input
-                      type="number"
-                      value={ticketStartingNumber}
-                      onChange={(e) => setTicketStartingNumber(e.target.value)}
-                      min={1}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '0.55rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgPage,
-                        color: theme.textPrimary,
-                        fontSize: '13.5px',
-                        fontWeight: 700,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Current Active Queue Token
-                    </label>
-                    <div style={{ display: 'flex', gap: '0.45rem' }}>
-                      <input
-                        type="number"
-                        value={currentTicketNumber}
-                        onChange={(e) => setCurrentTicketNumber(e.target.value)}
-                        min={1}
-                        style={{
-                          width: '100%',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: '0.55rem',
-                          border: `1px solid ${theme.border}`,
-                          backgroundColor: theme.bgPage,
-                          color: theme.textPrimary,
-                          fontSize: '13.5px',
-                          fontWeight: 700,
-                          outline: 'none',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCurrentTicketNumber(ticketStartingNumber);
-                          showToast(`Token sequence reset to ${ticketStartingNumber}`);
-                        }}
-                        className="button-20-secondary"
-                        title="Reset current sequence to starting number"
-                        style={{
-                          padding: '0 0.75rem',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap',
-                          borderRadius: '0.55rem',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Sequence Reset Cycle
-                    </label>
-                    <select
-                      value={ticketResetCycle}
-                      onChange={(e) => setTicketResetCycle(e.target.value as any)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '0.55rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgPage,
-                        color: theme.textPrimary,
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      <option value="daily">Daily Reset (Midnight 00:00)</option>
-                      <option value="continuous">Continuous (Never reset)</option>
-                      <option value="shift">Per Cashier Register Shift</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                      Token Zero-Padding
-                    </label>
-                    <select
-                      value={ticketDigitsPadding}
-                      onChange={(e) => setTicketDigitsPadding(e.target.value as any)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '0.55rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgPage,
-                        color: theme.textPrimary,
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      <option value="3">3 Digits (e.g. #001)</option>
-                      <option value="4">4 Digits (e.g. #0001)</option>
-                      <option value="2">2 Digits (e.g. #01)</option>
-                      <option value="none">No Padding (e.g. #1)</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Print & Notification Toggles */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
-                  {[
-                    {
-                      title: 'Print Large Token # at top of Customer Bill',
-                      desc: 'Prominently display token number so waiting customers know their queue position.',
-                      state: printLargeTokenOnBill,
-                      toggle: () => setPrintLargeTokenOnBill(!printLargeTokenOnBill),
-                    },
-                    {
-                      title: 'Print Table Number on Kitchen Order Ticket (KOT)',
-                      desc: 'Print table code and dining room section clearly on chef food preparation slip.',
-                      state: printTableOnKot,
-                      toggle: () => setPrintTableOnKot(!printTableOnKot),
-                    },
-                    {
-                      title: 'Include Server / Waiter Name on KOT',
-                      desc: 'Print server name on kitchen dispatch slips for swift table runner routing.',
-                      state: printServerNameOnKot,
-                      toggle: () => setPrintServerNameOnKot(!printServerNameOnKot),
-                    },
-                    {
-                      title: 'Auto-Increment Token on Order Dispatch',
-                      desc: 'Automatically advance to next ticket number whenever an order is printed or paid.',
-                      state: autoIncrementOnDispatch,
-                      toggle: () => setAutoIncrementOnDispatch(!autoIncrementOnDispatch),
-                    },
-                    {
-                      title: 'Audio Chime on Ticket Dispatch',
-                      desc: 'Play a notification chime on the cashier register when a ticket is generated.',
-                      state: ticketSoundChime,
-                      toggle: () => setTicketSoundChime(!ticketSoundChime),
-                    },
-                  ].map((rule, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.75rem 0.95rem',
-                        borderRadius: '0.55rem',
-                        backgroundColor: theme.bgPage,
-                        border: `1px solid ${theme.border}`,
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary }}>
-                          {rule.title}
-                        </div>
-                        <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                          {rule.desc}
-                        </div>
-                      </div>
-                      {renderToggle(rule.state, rule.toggle)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Column: Live KOT Thermal Ticket Preview */}
-              <div
-                style={{
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                  borderRadius: '0.75rem',
-                  padding: '1.25rem',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Live Thermal KOT Ticket Preview
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      color: '#16A34A',
-                      backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                      padding: '2px 7px',
-                      borderRadius: '9999px',
-                    }}
-                  >
-                    REALTIME 80mm
-                  </span>
-                </div>
-
-                {/* Thermal Ticket Paper Effect */}
-                <div
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    color: '#111827',
-                    borderRadius: '0.5rem',
-                    padding: '1.25rem',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    fontSize: '12px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                    border: '1px dashed #D1D5DB',
-                  }}
-                >
-                  <div style={{ textAlign: 'center', borderBottom: '1px dashed #9CA3AF', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '0.05em' }}>
-                      *** KITCHEN ORDER TICKET ***
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#4B5563', marginTop: '2px' }}>
-                      {storeName || 'SP CAFE & Bistro'} · Main Floor
-                    </div>
-                  </div>
-
-                  {/* Prominent Token Display */}
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      backgroundColor: '#F3F4F6',
-                      padding: '0.5rem',
-                      borderRadius: '0.35rem',
-                      marginBottom: '0.75rem',
-                    }}
-                  >
-                    <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.08em', color: '#4B5563' }}>
-                      ORDER TOKEN NUMBER
-                    </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, color: '#111827', letterSpacing: '0.05em' }}>
-                      {formatTicketNumber(currentTicketNumber, ticketPrefix, ticketDigitsPadding)}
-                    </div>
-                  </div>
-
-                  {/* Table & Server Details */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11.5px', marginBottom: '0.65rem' }}>
-                    {printTableOnKot && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: 700 }}>TABLE: T-04 (Indoor)</span>
-                        <span>DINE-IN</span>
-                      </div>
-                    )}
-                    {printServerNameOnKot && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4B5563' }}>
-                        <span>SERVER: Alex M.</span>
-                        <span>GUESTS: 4 Covers</span>
-                      </div>
-                    )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6B7280', fontSize: '10.5px' }}>
-                      <span>TIME: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span>RESET: {ticketResetCycle.toUpperCase()}</span>
-                    </div>
-                  </div>
-
-                  {/* Order Items Table */}
-                  <div style={{ borderTop: '1px dashed #9CA3AF', borderBottom: '1px dashed #9CA3AF', padding: '0.5rem 0', margin: '0.65rem 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '11px', marginBottom: '4px' }}>
-                      <span>QTY  ITEM</span>
-                      <span>NOTES</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
-                      <span>2x   Artisanal Flat White</span>
-                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Oat Milk</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
-                      <span>1x   Truffle Risotto</span>
-                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Less spicy</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', marginTop: '3px' }}>
-                      <span>1x   Avocado Sourdough</span>
-                      <span style={{ color: '#4B5563', fontSize: '10.5px' }}>Extra toast</span>
-                    </div>
-                  </div>
-
-                  <div style={{ textAlign: 'center', fontSize: '10px', color: '#6B7280', marginTop: '0.5rem' }}>
-                    *** END OF KOT #{formatTicketNumber(currentTicketNumber, ticketPrefix, ticketDigitsPadding)} ***
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {renderCardFooter('Ticket & Token Settings')}
-          </div>
-
-          {/* Card 3: Dine-In Service Rules */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <TuneRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Dine-In Service & Floor Plan Policies
-              </h2>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {[
-                {
-                  title: 'Auto-Release Table on Payment Settlement',
-                  desc: 'Automatically release and mark table as Available immediately after cashier settles the final bill.',
-                  state: autoReleaseTableOnBill,
-                  toggle: () => setAutoReleaseTableOnBill(!autoReleaseTableOnBill),
-                },
-                {
-                  title: 'Allow Table Merging',
-                  desc: 'Enable combining multiple tables (e.g. T-01 + T-02) for large banquets or group dining reservations.',
-                  state: allowTableMerging,
-                  toggle: () => setAllowTableMerging(!allowTableMerging),
-                },
-                {
-                  title: 'Enforce Guest / Cover Count Entry',
-                  desc: 'Prompt cashier or waiter to input party size before assigning items to a table.',
-                  state: enforceGuestCount,
-                  toggle: () => setEnforceGuestCount(!enforceGuestCount),
-                },
-                {
-                  title: 'QR Code At-Table Self Ordering',
-                  desc: 'Allow guests to scan table QR code to view live menu, order food, and request assistance.',
-                  state: enableQrOrdering,
-                  toggle: () => setEnableQrOrdering(!enableQrOrdering),
-                },
-                {
-                  title: 'Table Idle Alert (> 15 mins)',
-                  desc: 'Highlight tables on POS if occupied without any active items or beverage service for over 15 minutes.',
-                  state: tableIdleAlert,
-                  toggle: () => setTableIdleAlert(!tableIdleAlert),
-                },
-              ].map((rule, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.85rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      {rule.title}
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      {rule.desc}
-                    </div>
-                  </div>
-                  {renderToggle(rule.state, rule.toggle)}
-                </div>
-              ))}
-            </div>
-
-            {renderCardFooter('Dine-In Policies')}
-          </div>
-        </div>
+      </div>
       )}
 
-      {/* SUB-TAB 7: NOTIFICATIONS */}
-      {activeSubTab === 'set_notifications' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <NotificationsNoneRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Automated Alerts & Dispatch Channels
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="button-20"
-                role="button"
-                onClick={() => showToast('Test notification sent to owner and manager.')}
-                style={{
-                  height: '32px',
-                  padding: '0 0.85rem',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <SendRoundedIcon sx={{ fontSize: 14 }} />
-                <span>Send Test Notification</span>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Low Stock Alert */}
-              <div
-                style={{
-                  padding: '1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      Low Stock Inventory Alerts
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      Notify immediately when ingredients or merchandise fall below reorder threshold.
-                    </div>
-                  </div>
-                  {renderToggle(notifyLowStock, () => setNotifyLowStock(!notifyLowStock))}
-                </div>
-                {notifyLowStock && (
-                  <input
-                    type="email"
-                    value={notifyLowStockEmail}
-                    onChange={(e) => setNotifyLowStockEmail(e.target.value)}
-                    style={{
-                      width: '100%',
-                      maxWidth: '380px',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      border: `1px solid ${theme.border}`,
-                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                      color: theme.textPrimary,
-                      fontSize: '12.5px',
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* End of Day Report */}
-              <div
-                style={{
-                  padding: '1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                      End-of-Day Daily Sales Summary
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                      Automated executive summary dispatched daily at 11:30 PM with revenue, order count, and payment tenders.
-                    </div>
-                  </div>
-                  {renderToggle(notifyEndOfDaySummary, () => setNotifyEndOfDaySummary(!notifyEndOfDaySummary))}
-                </div>
-                {notifyEndOfDaySummary && (
-                  <input
-                    type="email"
-                    value={notifyEndOfDayEmail}
-                    onChange={(e) => setNotifyEndOfDayEmail(e.target.value)}
-                    style={{
-                      width: '100%',
-                      maxWidth: '380px',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '0.45rem',
-                      border: `1px solid ${theme.border}`,
-                      backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                      color: theme.textPrimary,
-                      fontSize: '12.5px',
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Shift Cash Discrepancy */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                    Cashier Shift Closing Discrepancy Warning
-                  </div>
-                  <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                    Alert manager if actual till cash deviates from expected balance by more than ₹{discrepancyThreshold}.
-                  </div>
-                </div>
-                {renderToggle(notifyShiftDiscrepancy, () => setNotifyShiftDiscrepancy(!notifyShiftDiscrepancy))}
-              </div>
-
-              {/* Void & Refund Alert */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: theme.textPrimary }}>
-                    Instant Order Void & Refund Alert
-                  </div>
-                  <div style={{ fontSize: '12px', color: theme.textSecondary }}>
-                    Immediately send push alert when a cashier cancels a settled invoice or applies a discount over 15%.
-                  </div>
-                </div>
-                {renderToggle(notifyOrderVoidRefund, () => setNotifyOrderVoidRefund(!notifyOrderVoidRefund))}
-              </div>
-            </div>
-
-            {renderCardFooter('Notification Preferences')}
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 8: USERS & PERMISSIONS */}
-      {activeSubTab === 'set_users' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-              <div>
-                <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.25rem 0' }}>
-                  Role-Based Access Control (RBAC)
-                </h2>
-                <p style={{ fontSize: '12.5px', color: theme.textSecondary, margin: 0 }}>
-                  Define fine-grained operational permissions across manager, cashier, and staff roles.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="button-20"
-                role="button"
-                onClick={() => showToast('New role creator launched.')}
-                style={{
-                  height: '32px',
-                  padding: '0 0.85rem',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <AddRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Create Custom Role</span>
-              </button>
-            </div>
-
-            {/* Permissions Matrix Table */}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${theme.border}`, backgroundColor: theme.bgPage }}>
-                    <th style={{ textAlign: 'left', padding: '0.75rem 1rem', fontWeight: 800, color: theme.textPrimary }}>
-                      Operational Permission
-                    </th>
-                    {roles.map((r) => (
-                      <th
-                        key={r.id}
-                        style={{ textAlign: 'center', padding: '0.75rem 1rem', fontWeight: 800, color: theme.textPrimary }}
-                      >
-                        <div>{r.name}</div>
-                        <div style={{ fontSize: '11px', fontWeight: 500, color: theme.textSecondary }}>
-                          {r.usersCount} users
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { key: 'discounts', label: 'Apply Custom Discounts' },
-                    { key: 'voidOrder', label: 'Void / Cancel Settled Orders' },
-                    { key: 'viewProfit', label: 'View Cost & Profit Margins' },
-                    { key: 'editInventory', label: 'Adjust & Receive Stock' },
-                    { key: 'accessSettings', label: 'Access System Settings' },
-                    { key: 'kickDrawer', label: 'Manual Cash Drawer Open' },
-                  ].map((perm) => (
-                    <tr
-                      key={perm.key}
-                      style={{
-                        borderBottom: `1px solid ${theme.border}`,
-                        backgroundColor: 'transparent',
-                      }}
-                    >
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: theme.textPrimary }}>
-                        {perm.label}
-                      </td>
-                      {roles.map((r) => {
-                        const hasPerm = permissionsMatrix[r.id]?.[perm.key] ?? false;
-                        const isSuperAdmin = r.id === 'r1';
-                        return (
-                          <td key={r.id} style={{ textAlign: 'center', padding: '0.85rem 1rem' }}>
-                            <button
-                              type="button"
-                              disabled={isSuperAdmin}
-                              onClick={() => {
-                                setPermissionsMatrix((prev) => ({
-                                  ...prev,
-                                  [r.id]: {
-                                    ...prev[r.id],
-                                    [perm.key]: !prev[r.id]?.[perm.key],
-                                  },
-                                }));
-                              }}
-                              style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '0.35rem',
-                                border: `1px solid ${hasPerm ? theme.activeBg : theme.border}`,
-                                backgroundColor: hasPerm ? theme.activeBg : theme.hoverBg,
-                                color: hasPerm ? theme.activeText : theme.textSecondary,
-                                cursor: isSuperAdmin ? 'default' : 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              {hasPerm ? (
-                                <CheckRoundedIcon sx={{ fontSize: 16 }} />
-                              ) : (
-                                <CloseRoundedIcon sx={{ fontSize: 14 }} />
-                              )}
-                            </button>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {renderCardFooter('User Permissions Matrix')}
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 9: SECURITY */}
-      {activeSubTab === 'set_security' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Terminal & Authentication Security */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-              <LockRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                Terminal Lock & Authentication Policies
-              </h2>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Register Inactivity Auto-Lock
-                </label>
-                <select
-                  value={sessionTimeout}
-                  onChange={(e) => setSessionTimeout(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="1">1 Minute (Strict High Security)</option>
-                  <option value="5">5 Minutes</option>
-                  <option value="15">15 Minutes (Recommended)</option>
-                  <option value="30">30 Minutes</option>
-                  <option value="0">Never (Always Unlocked)</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '0.35rem' }}>
-                  Store Wi-Fi Subnet Whitelisting
-                </label>
-                <input
-                  type="text"
-                  value={whitelistedSubnet}
-                  onChange={(e) => setWhitelistedSubnet(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '0.55rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgPage,
-                    color: theme.textPrimary,
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
-                    Cashier 4-Digit Quick-Switch PIN Requirement
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                    Prompt cashier for PIN when starting a new transaction or switching active registers.
-                  </div>
-                </div>
-                {renderToggle(enforceCashierPin, () => setEnforceCashierPin(!enforceCashierPin))}
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.55rem',
-                  backgroundColor: theme.bgPage,
-                  border: `1px solid ${theme.border}`,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textPrimary }}>
-                    Two-Factor Authentication (2FA) for Managers & Admins
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
-                    Require TOTP authenticator code when logging into dashboard from new devices.
-                  </div>
-                </div>
-                {renderToggle(twoFactorAuth, () => setTwoFactorAuth(!twoFactorAuth))}
-              </div>
-            </div>
-
-            {renderCardFooter('Terminal Security & Lock Policies')}
-          </div>
-
-          {/* Security Audit Trail Log */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 1rem 0' }}>
-              Security Audit Trail (Last 24 Hours)
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {auditLogs.map((log) => (
-                <div
-                  key={log.id}
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.65rem 1rem',
-                    borderRadius: '0.55rem',
-                    backgroundColor: theme.bgPage,
-                    border: `1px solid ${theme.border}`,
-                    fontSize: '12.5px',
-                    gap: '0.5rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <span style={{ color: theme.textSecondary, fontFamily: 'monospace', fontSize: '12px' }}>
-                      {log.timestamp}
-                    </span>
-                    <span style={{ fontWeight: 700, color: theme.textPrimary }}>
-                      {log.user}
-                    </span>
-                    <span style={{ color: theme.textSecondary }}>
-                      — {log.action}
-                    </span>
-                  </div>
-                  <div style={{ color: theme.textSecondary, fontSize: '11.5px', fontFamily: 'monospace' }}>
-                    IP: {log.ip}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Active Session & Account Sign Out */}
-          <div
-            style={{
-              padding: '1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                  <LogoutRoundedIcon sx={{ fontSize: 18, color: '#EF4444' }} />
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                    Active Session & Account
-                  </h2>
-                </div>
-                <p style={{ fontSize: '13px', color: theme.textSecondary, margin: 0 }}>
-                  Signed in as <strong>Administrator</strong> on this browser terminal.
-                </p>
-              </div>
-
-              <Link
-                href="/signin"
-                className="button-20-secondary"
-                style={{
-                  height: '38px',
-                  padding: '0 1.25rem',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: '#EF4444',
-                  borderColor: (theme as any).sidebarIsDark ? '#7F1D1D' : '#FCA5A5',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <LogoutRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Log Out</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 10: APPEARANCE */}
-      {activeSubTab === 'set_appearance' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '640px' }}>
-          <div
-            style={{
-              padding: '1.25rem 1.5rem',
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              borderRadius: '0.85rem',
-              border: `1px solid ${theme.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {(currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos') ? (
-                <DarkModeRoundedIcon sx={{ fontSize: 20, color: theme.textPrimary }} />
-              ) : (
-                <LightModeRoundedIcon sx={{ fontSize: 20, color: '#EAB308' }} />
-              )}
-              <h2 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
-                Dark Mode
-              </h2>
-            </div>
-
-            {renderToggle(
-              currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos',
-              () => {
-                const isDark = currentThemeId === 'dark' || currentThemeId === 'bw_dark' || currentThemeId === 'classic_pos';
-                const target = isDark ? 'light' : 'dark';
-                onSelectTheme?.(target);
-                showToast(`Switched to ${target === 'dark' ? 'Dark Mode' : 'Light Mode'}.`);
-              }
-            )}
-          </div>
-        </div>
-      )}
+      
 
       {/* ==================================================================== */}
       {/* MODAL: ADD / EDIT RESTAURANT TABLE                                   */}
@@ -3915,6 +2603,774 @@ export default function SettingsManagement({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: ADD FRANCHISE OUTLET (API: POST /api/franchises)                 */}
+      {/* ========================================================================= */}
+      {showAddFranchiseModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '1rem',
+              border: `1px solid ${theme.border}`,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: `1px solid ${theme.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '0.5rem',
+                    backgroundColor: theme.activeBg,
+                    color: theme.activeText,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <StoreRoundedIcon sx={{ fontSize: 20 }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '15.5px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    Add Franchise Outlet
+                  </h3>
+                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                    Register a new store branch for POS register provisioning
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddFranchiseModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: theme.textSecondary,
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleAddFranchise} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {addFranchiseErrors.submit && (
+                <div
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.55rem',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: '#DC2626',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {addFranchiseErrors.submit}
+                </div>
+              )}
+
+              {/* Franchise Name (Required, 2-100 chars) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                  OUTLET / FRANCHISE NAME *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Nuradesk Cafe - Bodakdev Hub"
+                  value={addFranchiseForm.franchiseName}
+                  onChange={(e) => {
+                    setAddFranchiseForm({ ...addFranchiseForm, franchiseName: e.target.value });
+                    if (addFranchiseErrors.franchiseName) {
+                      setAddFranchiseErrors({ ...addFranchiseErrors, franchiseName: '' });
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${addFranchiseErrors.franchiseName ? '#DC2626' : theme.border}`,
+                    backgroundColor: theme.bgPage,
+                    color: theme.textPrimary,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {addFranchiseErrors.franchiseName && (
+                  <span style={{ fontSize: '11px', color: '#DC2626', marginTop: '3px', display: 'block' }}>
+                    {addFranchiseErrors.franchiseName}
+                  </span>
+                )}
+              </div>
+
+              {/* Manager & Contact */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                    MANAGER / OWNER NAME
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rahul Sharma"
+                    value={addFranchiseForm.ownerName || ''}
+                    onChange={(e) => setAddFranchiseForm({ ...addFranchiseForm, ownerName: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13.5px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                    CONTACT PHONE (10-15 DIGITS)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    value={addFranchiseForm.contact || ''}
+                    onChange={(e) => {
+                      setAddFranchiseForm({ ...addFranchiseForm, contact: e.target.value });
+                      if (addFranchiseErrors.contact) {
+                        setAddFranchiseErrors({ ...addFranchiseErrors, contact: '' });
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${addFranchiseErrors.contact ? '#DC2626' : theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13.5px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {addFranchiseErrors.contact && (
+                    <span style={{ fontSize: '11px', color: '#DC2626', marginTop: '3px', display: 'block' }}>
+                      {addFranchiseErrors.contact}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* City */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                  CITY / REGION
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ahmedabad"
+                  value={addFranchiseForm.city || ''}
+                  onChange={(e) => setAddFranchiseForm({ ...addFranchiseForm, city: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgPage,
+                    color: theme.textPrimary,
+                    fontSize: '13.5px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* Street Address */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                  STREET ADDRESS
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Shop 4B, Alpha Commercial Complex, SG Highway"
+                  value={addFranchiseForm.address || ''}
+                  onChange={(e) => setAddFranchiseForm({ ...addFranchiseForm, address: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '0.55rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgPage,
+                    color: theme.textPrimary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              {/* Modal Buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  marginTop: '0.75rem',
+                  paddingTop: '1rem',
+                  borderTop: `1px solid ${theme.border}`,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowAddFranchiseModal(false)}
+                  disabled={isSubmittingAddFranchise}
+                  className="button-20-secondary"
+                  style={{
+                    padding: '0.5rem 1.15rem',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    borderRadius: '9999px',
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingAddFranchise}
+                  className="button-20"
+                  style={{
+                    padding: '0.5rem 1.35rem',
+                    fontSize: '12.5px',
+                    fontWeight: 700,
+                    fontFamily: 'inherit',
+                    borderRadius: '9999px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  {isSubmittingAddFranchise ? (
+                    <span>Provisioning...</span>
+                  ) : (
+                    <>
+                      <CheckRoundedIcon sx={{ fontSize: 16 }} />
+                      <span>Provision Outlet</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: EDIT FRANCHISE OUTLET (API: GET/PUT /api/franchises/{id})         */}
+      {/* ========================================================================= */}
+      {editingFranchise && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '1rem',
+              border: `1px solid ${theme.border}`,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: `1px solid ${theme.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '0.5rem',
+                    backgroundColor: theme.activeBg,
+                    color: theme.activeText,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <EditRoundedIcon sx={{ fontSize: 18 }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '15.5px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                    Edit Franchise Outlet
+                  </h3>
+                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                    Branch ID: #{editingFranchise.franchiseId} • {editingFranchise.franchiseName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingFranchise(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: theme.textSecondary,
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            {isLoadingEditDetails ? (
+              <div style={{ padding: '2.5rem', textAlign: 'center', color: theme.textSecondary, fontSize: '13px' }}>
+                Fetching latest branch records from server...
+              </div>
+            ) : (
+              <form onSubmit={handleUpdateFranchise} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {editFranchiseErrors.submit && (
+                  <div
+                    style={{
+                      padding: '0.75rem 1rem',
+                      borderRadius: '0.55rem',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: '#DC2626',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {editFranchiseErrors.submit}
+                  </div>
+                )}
+
+                {/* Franchise Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                    OUTLET / FRANCHISE NAME *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFranchiseForm.franchiseName}
+                    onChange={(e) => {
+                      setEditFranchiseForm({ ...editFranchiseForm, franchiseName: e.target.value });
+                      if (editFranchiseErrors.franchiseName) {
+                        setEditFranchiseErrors({ ...editFranchiseErrors, franchiseName: '' });
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${editFranchiseErrors.franchiseName ? '#DC2626' : theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13.5px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                  {editFranchiseErrors.franchiseName && (
+                    <span style={{ fontSize: '11px', color: '#DC2626', marginTop: '3px', display: 'block' }}>
+                      {editFranchiseErrors.franchiseName}
+                    </span>
+                  )}
+                </div>
+
+                {/* Manager & Contact */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      MANAGER / OWNER NAME
+                    </label>
+                    <input
+                      type="text"
+                      value={editFranchiseForm.ownerName || ''}
+                      onChange={(e) => setEditFranchiseForm({ ...editFranchiseForm, ownerName: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 600,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      CONTACT PHONE (10-15 DIGITS)
+                    </label>
+                    <input
+                      type="tel"
+                      value={editFranchiseForm.contact || ''}
+                      onChange={(e) => {
+                        setEditFranchiseForm({ ...editFranchiseForm, contact: e.target.value });
+                        if (editFranchiseErrors.contact) {
+                          setEditFranchiseErrors({ ...editFranchiseErrors, contact: '' });
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${editFranchiseErrors.contact ? '#DC2626' : theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 600,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    {editFranchiseErrors.contact && (
+                      <span style={{ fontSize: '11px', color: '#DC2626', marginTop: '3px', display: 'block' }}>
+                        {editFranchiseErrors.contact}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* City & Status */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      CITY / REGION
+                    </label>
+                    <input
+                      type="text"
+                      value={editFranchiseForm.city || ''}
+                      onChange={(e) => setEditFranchiseForm({ ...editFranchiseForm, city: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 600,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                      STATUS *
+                    </label>
+                    <select
+                      value={editFranchiseForm.status}
+                      onChange={(e) =>
+                        setEditFranchiseForm({
+                          ...editFranchiseForm,
+                          status: e.target.value as 'ACTIVE' | 'INACTIVE',
+                        })
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: '0.55rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgPage,
+                        color: theme.textPrimary,
+                        fontSize: '13.5px',
+                        fontWeight: 700,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Street Address */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: theme.textSecondary, marginBottom: '0.35rem' }}>
+                    STREET ADDRESS
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editFranchiseForm.address || ''}
+                    onChange={(e) => setEditFranchiseForm({ ...editFranchiseForm, address: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgPage,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      resize: 'vertical',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
+
+                {/* Modal Buttons */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: '0.75rem',
+                    marginTop: '0.75rem',
+                    paddingTop: '1rem',
+                    borderTop: `1px solid ${theme.border}`,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setEditingFranchise(null)}
+                    disabled={isSubmittingEditFranchise}
+                    className="button-20-secondary"
+                    style={{
+                      padding: '0.5rem 1.15rem',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      fontFamily: 'inherit',
+                      borderRadius: '9999px',
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingEditFranchise}
+                    className="button-20"
+                    style={{
+                      padding: '0.5rem 1.35rem',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      fontFamily: 'inherit',
+                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                    }}
+                  >
+                    {isSubmittingEditFranchise ? (
+                      <span>Saving...</span>
+                    ) : (
+                      <>
+                        <CheckRoundedIcon sx={{ fontSize: 16 }} />
+                        <span>Save Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: DELETE FRANCHISE CONFIRMATION (API: DELETE /api/franchises/{id}) */}
+      {/* ========================================================================= */}
+      {deletingFranchise && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
+              borderRadius: '1rem',
+              border: `1px solid ${theme.border}`,
+              boxShadow: '0 20px 40px rgba(0,0,0,0.35)',
+              overflow: 'hidden',
+              padding: '1.5rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  color: '#DC2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <WarningAmberRoundedIcon sx={{ fontSize: 24 }} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Delete Franchise Outlet?
+                </h3>
+                <p style={{ fontSize: '12px', color: theme.textSecondary, margin: '2px 0 0 0' }}>
+                  Branch ID #{deletingFranchise.franchiseId} • {deletingFranchise.franchiseName}
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '13px', color: theme.textSecondary, lineHeight: 1.5, margin: '0 0 1rem 0' }}>
+              Are you sure you want to permanently delete outlet <strong>"{deletingFranchise.franchiseName}"</strong>?
+              This action cannot be undone.
+            </p>
+
+            {/* Conflict Alert (409 Foreign Key in use) */}
+            {deleteConflictError && (
+              <div
+                style={{
+                  padding: '0.85rem 1rem',
+                  borderRadius: '0.65rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#DC2626',
+                  fontSize: '12.5px',
+                  lineHeight: 1.45,
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.5rem',
+                }}
+              >
+                <WarningAmberRoundedIcon sx={{ fontSize: 18, marginTop: '2px', flexShrink: 0 }} />
+                <span>{deleteConflictError}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingFranchise(null);
+                  setDeleteConflictError(null);
+                }}
+                disabled={isDeletingFranchise}
+                className="button-20-secondary"
+                style={{
+                  padding: '0.5rem 1.15rem',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  fontFamily: 'inherit',
+                  borderRadius: '9999px',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteFranchise}
+                disabled={isDeletingFranchise}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  fontSize: '12.5px',
+                  fontWeight: 800,
+                  fontFamily: 'inherit',
+                  borderRadius: '9999px',
+                  backgroundColor: '#DC2626',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  cursor: isDeletingFranchise ? 'not-allowed' : 'pointer',
+                  opacity: isDeletingFranchise ? 0.7 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                }}
+              >
+                {isDeletingFranchise ? 'Deleting...' : 'Delete Outlet'}
+              </button>
+            </div>
           </div>
         </div>
       )}

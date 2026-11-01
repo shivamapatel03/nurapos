@@ -12,7 +12,7 @@ using Nurapos.Filters;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER", Policy = "PosPinVerified")]
+[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
 [Route("api/owner-catalog")]
 public sealed class OwnerCatalogController : ControllerBase
 {

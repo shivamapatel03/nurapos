@@ -9,4 +9,5 @@ public interface ITerminalService
     Task<bool> HeartbeatAsync(string terminalCode, TerminalHeartbeatRequest request, int ownerId);
     Task<IReadOnlyList<Employee>> GetEligibleEmployeesAsync(string terminalCode, int ownerId);
     Task<PosPinLoginResponse> AuthenticateEmployeeAsync(PosPinLoginRequest request);
+    Task<EmployeeLookupDto?> LookupEmployeeAsync(string identifier);
 }

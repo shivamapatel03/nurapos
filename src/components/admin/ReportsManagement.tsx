@@ -31,10 +31,20 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import {
+  getSalesTaxReport,
+  getProfitLossReport,
+  getZReports,
+  getInventoryValuationReport,
+  SalesTaxReport,
+  ProfitLossReport,
+  ZReportRecord,
+  InventoryValuationReport,
+} from '@/lib/api-client';
 
 export interface ReportsManagementProps {
-  activeSubTab?: 'rep_sales' | 'rep_inventory' | 'rep_customers' | 'rep_performance';
-  onSelectSubTab?: (tab: 'rep_sales' | 'rep_inventory' | 'rep_customers' | 'rep_performance') => void;
+  activeSubTab?: 'rep_sales' | 'rep_inventory';
+  onSelectSubTab?: (tab: 'rep_sales' | 'rep_inventory') => void;
   theme: {
     bgPage: string;
     bgCard: string;
@@ -426,7 +436,7 @@ export default function ReportsManagement({
   theme,
 }: ReportsManagementProps) {
   // Current tab (Sales, Inventory, Customers, Employee Performance)
-  const [currentTab, setCurrentTab] = useState<'rep_sales' | 'rep_inventory' | 'rep_customers' | 'rep_performance'>(activeSubTab);
+  const [currentTab, setCurrentTab] = useState<'rep_sales' | 'rep_inventory'>(activeSubTab);
 
   React.useEffect(() => {
     if (activeSubTab) {
@@ -458,6 +468,82 @@ export default function ReportsManagement({
   const [tempEndDate, setTempEndDate] = useState(getTodayStr());
 
   const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Live Reports API State
+  const [liveRevenue, setLiveRevenue] = useState<number>(0);
+  const [liveOrdersCount, setLiveOrdersCount] = useState<number>(0);
+  const [liveAov, setLiveAov] = useState<number>(0);
+  const [liveNetProfit, setLiveNetProfit] = useState<number>(0);
+  const [liveMargin, setLiveMargin] = useState<number>(0);
+  const [liveTaxData, setLiveTaxData] = useState<SalesTaxReport | null>(null);
+  const [liveInventoryValuation, setLiveInventoryValuation] = useState<InventoryValuationReport | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = useState<boolean>(false);
+
+  // Sync Live Data from Backend API
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadReports() {
+      setIsLoadingReport(true);
+      try {
+        const [plRes, taxRes, invRes] = await Promise.allSettled([
+          getProfitLossReport({ from: startDate, to: endDate }),
+          getSalesTaxReport({ from: startDate, to: endDate }),
+          getInventoryValuationReport(),
+        ]);
+
+        if (isCancelled) return;
+
+        if (plRes.status === 'fulfilled' && plRes.value?.data) {
+          const pl = plRes.value.data;
+          setLiveRevenue(pl.grossSales || 0);
+          setLiveNetProfit(pl.netProfit ?? pl.netOperatingProfit ?? 0);
+          setLiveMargin(pl.marginPercent || 0);
+        }
+
+        if (taxRes.status === 'fulfilled' && taxRes.value?.data) {
+          const tx = taxRes.value.data;
+          setLiveTaxData(tx);
+          const count = tx.orderCount || 0;
+          setLiveOrdersCount(count);
+          if (count > 0 && tx.taxableSales > 0) {
+            setLiveAov(Math.round(tx.taxableSales / count));
+          }
+        }
+
+        if (invRes.status === 'fulfilled' && invRes.value?.data) {
+          setLiveInventoryValuation(invRes.value.data);
+        }
+      } catch (err) {
+        console.warn('Reports live sync error:', err);
+      } finally {
+        if (!isCancelled) setIsLoadingReport(false);
+      }
+    }
+    loadReports();
+    return () => { isCancelled = true; };
+  }, [startDate, endDate]);
+
+  const handleExportCsv = () => {
+    const csvRows = [
+      ['Report Parameter', 'Value'],
+      ['Start Date', startDate],
+      ['End Date', endDate],
+      ['Gross Revenue', `₹${liveRevenue}`],
+      ['Net Profit', `₹${liveNetProfit}`],
+      ['Profit Margin', `${liveMargin}%`],
+      ['Total Orders', liveOrdersCount],
+      ['Average Order Value', `₹${liveAov}`],
+      ['Total GST Collected', `₹${liveTaxData?.totalTax || 0}`],
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map((e) => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Nurapos_Sales_Report_${startDate}_${endDate}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Close calendar popover on outside click
   useEffect(() => {
@@ -682,8 +768,6 @@ export default function ReportsManagement({
           }}>
             {currentTab === 'rep_sales' && 'Sales & Financial Reports'}
             {currentTab === 'rep_inventory' && 'Inventory Analytics & Audits'}
-            {currentTab === 'rep_customers' && 'Customer Intelligence & Retention'}
-            {currentTab === 'rep_performance' && 'Staff Performance & Efficiency'}
           </h1>
           <p style={{
             fontSize: '13.5px',
@@ -693,8 +777,6 @@ export default function ReportsManagement({
           }}>
             {currentTab === 'rep_sales' && 'Track gross revenues, net profit, payment methods breakdown & daily order volume.'}
             {currentTab === 'rep_inventory' && 'Monitor stock valuations, deficit warnings, inflow/outflow balance & shrinkage.'}
-            {currentTab === 'rep_customers' && 'Analyze patron lifetime value, repeat frequency cohorts & VIP leaderboards.'}
-            {currentTab === 'rep_performance' && 'Measure cashier sales volumes, speed of service, average tickets & shifts worked.'}
           </p>
         </div>
 
@@ -965,7 +1047,33 @@ export default function ReportsManagement({
             })}
           </div>
 
-          {/* Export / Print Button */}
+          {/* Export CSV Button */}
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            title="Export CSV"
+            style={{
+              height: '34px',
+              padding: '0 0.85rem',
+              borderRadius: '0.6rem',
+              border: `1px solid ${theme.border}`,
+              backgroundColor: theme.bgCard,
+              color: theme.textPrimary,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              fontSize: '12px',
+              fontWeight: 700,
+              fontFamily: 'inherit',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <DownloadRoundedIcon sx={{ fontSize: 16 }} />
+            <span>Export CSV</span>
+          </button>
+
+          {/* Print Button */}
           <button
             type="button"
             onClick={handlePrint}
@@ -1026,10 +1134,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹0
+                  {liveRevenue > 0 ? `₹${liveRevenue.toLocaleString('en-IN')}` : '₹0'}
                 </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  No data yet
+                <span style={{ fontSize: '13px', color: liveRevenue > 0 ? '#10B981' : theme.textSecondary, fontWeight: 600 }}>
+                  {liveRevenue > 0 ? `+${liveMargin}% margin` : (isLoadingReport ? 'Syncing...' : 'No data yet')}
                 </span>
               </div>
             </div>
@@ -1058,10 +1166,10 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0
+                  {liveOrdersCount > 0 ? liveOrdersCount.toLocaleString('en-IN') : '0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  tickets rung
+                  {liveOrdersCount === 1 ? 'ticket rung' : 'tickets rung'}
                 </span>
               </div>
             </div>
@@ -1090,7 +1198,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹0
+                  {liveAov > 0 ? `₹${liveAov.toLocaleString('en-IN')}` : '₹0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   per order
@@ -1285,7 +1393,7 @@ export default function ReportsManagement({
                 flexWrap: 'wrap',
               }}>
                 <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹0
+                  {liveInventoryValuation ? `₹${liveInventoryValuation.totalValue.toLocaleString('en-IN')}` : '₹0'}
                 </span>
                 <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
                   cost asset
@@ -1452,7 +1560,7 @@ export default function ReportsManagement({
                   </h3>
                 </div>
                 <span style={{ fontSize: '11px', fontWeight: 800, color: '#92400E', backgroundColor: '#FEF3C7', padding: '2px 8px', borderRadius: '9999px' }}>
-                  {criticalLowStockList.length} items
+                  {liveInventoryValuation ? `${liveInventoryValuation.lowStockItems} items` : `${criticalLowStockList.length} items`}
                 </span>
               </div>
 
@@ -1535,599 +1643,6 @@ export default function ReportsManagement({
                 ))}
               </div>
             </div>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 3. CUSTOMERS REPORT VIEW                                             */}
-      {/* ==================================================================== */}
-      {currentTab === 'rep_customers' && (
-        <>
-          {/* Top Metric Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* Total Customers */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Total Customer Base
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  registered patrons
-                </span>
-              </div>
-            </div>
-
-            {/* New Customers */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                New Customers ({timeframe})
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  +0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  no new patrons yet
-                </span>
-              </div>
-            </div>
-
-            {/* Repeat Customer Rate */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Repeat Customer Rate
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0.0%
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  loyalty re-orders
-                </span>
-              </div>
-            </div>
-
-            {/* Average Lifetime Value */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Avg Patron LTV
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  cumulative spend
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts Grid: New vs Repeat Donut + Order Frequency Bars */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-            gap: '1.5rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* New vs Repeat Acquisition Donut */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 2px 0' }}>
-                    New vs. Repeat Retention
-                  </h3>
-                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>
-                    Ratio of recurring patrons versus brand new walk-ins.
-                  </p>
-                </div>
-                <PieChartRoundedIcon sx={{ fontSize: 20, color: theme.textSecondary }} />
-              </div>
-
-              <AnimatedDonutChart
-                slices={customerAcquisitionSlices}
-                totalLabel="Patron Mix"
-                totalValue="100%"
-                size={200}
-                isRepresentation={true}
-                theme={theme}
-              />
-            </div>
-
-            {/* Customer Frequency & Cohort Distribution */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 2px 0' }}>
-                    Order Frequency Cohorts
-                  </h3>
-                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>
-                    Distribution of patrons by lifetime completed orders.
-                  </p>
-                </div>
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>Patrons</span>
-              </div>
-
-              <AnimatedBarChart
-                data={customerFrequencyData}
-                height={190}
-                barColor="#4F46E5"
-                activeBarColor="#4338CA"
-                isRepresentation={true}
-                theme={theme}
-              />
-            </div>
-          </div>
-
-          {/* Top Spending VIP Customers Leaderboard */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            padding: '1.25rem',
-            marginBottom: '1.5rem',
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.85rem 0' }}>
-              Top VIP Customers Leaderboard
-            </h3>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Rank</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Customer</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Orders</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Total Spent</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>AOV</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Favorite Item</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Last Visit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topCustomersList.length === 0 && (
-                  <tr>
-                    <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
-                      No customer data yet.
-                    </td>
-                  </tr>
-                )}
-                {topCustomersList.map((c) => (
-                  <tr key={c.phone} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                    <td style={{ padding: '0.75rem 0.85rem' }}>
-                      <span style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: c.rank === 1 ? '#FEF08A' : c.rank === 2 ? '#E2E8F0' : c.rank === 3 ? '#FED7AA' : theme.hoverBg,
-                        color: '#111827',
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        #{c.rank}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem' }}>
-                      <div style={{ fontWeight: 800, color: theme.textPrimary }}>{c.name}</div>
-                      <div style={{ fontSize: '11px', color: theme.textSecondary }}>{c.phone}</div>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: theme.textPrimary }}>
-                      {c.orders} orders
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: '#166534' }}>
-                      ₹{c.totalSpend.toLocaleString('en-IN')}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: theme.textSecondary }}>
-                      ₹{c.aov}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', color: theme.textPrimary }}>
-                      {c.favorite}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', color: theme.textSecondary, fontSize: '12px' }}>
-                      {c.lastVisit}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 4. EMPLOYEE PERFORMANCE REPORT VIEW                                  */}
-      {/* ==================================================================== */}
-      {currentTab === 'rep_performance' && (
-        <>
-          {/* Top Metric Cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '1.25rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* Total Team Sales */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Total Team Sales
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  ₹0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  across {employeeSalesData.length} staff
-                </span>
-              </div>
-            </div>
-
-            {/* Total Orders Handled */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Orders Processed
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  orders processed
-                </span>
-              </div>
-            </div>
-
-            {/* Avg Speed of Service */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Speed of Service
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0s
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  avg checkout time
-                </span>
-              </div>
-            </div>
-
-            {/* Shifts Completed */}
-            <div style={{
-              backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-              border: `1px solid ${theme.border}`,
-              borderRadius: '1rem',
-              padding: '1.35rem 1.4rem',
-              boxSizing: 'border-box',
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: (theme as any).sidebarIsDark ? theme.textSecondary : '#6B7280',
-                letterSpacing: '-0.01em',
-                marginBottom: '0.65rem',
-              }}>
-                Shifts Completed
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                gap: '0.45rem',
-                flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '26px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.03em' }}>
-                  0
-                </span>
-                <span style={{ fontSize: '13px', color: theme.textSecondary, fontWeight: 500 }}>
-                  shifts completed
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Charts Grid: Sales Contribution by Employee (Donut) + Employee Sales Bar Chart */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
-            gap: '1.5rem',
-            marginBottom: '1.75rem',
-          }}>
-            {/* Sales Share Donut */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 2px 0' }}>
-                    Sales Contribution by Staff
-                  </h3>
-                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>
-                    Revenue proportion generated per crew member.
-                  </p>
-                </div>
-                <PieChartRoundedIcon sx={{ fontSize: 20, color: theme.textSecondary }} />
-              </div>
-
-              <AnimatedDonutChart
-                slices={employeeDonutSlices}
-                totalLabel="Staff Share"
-                totalValue="100%"
-                size={200}
-                isRepresentation={true}
-                theme={theme}
-              />
-            </div>
-
-            {/* Individual Sales Bar Chart */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: `1px solid ${theme.borderCard}`,
-              borderRadius: '1.25rem',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 2px 0' }}>
-                    Individual Sales Comparison
-                  </h3>
-                  <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>
-                    Gross revenue rung up per cashier.
-                  </p>
-                </div>
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>Revenue (₹)</span>
-              </div>
-
-              <AnimatedBarChart
-                data={employeeBarChartData}
-                height={190}
-                barColor="#0284C7"
-                activeBarColor="#0369A1"
-                isRepresentation={true}
-                theme={theme}
-              />
-            </div>
-          </div>
-
-          {/* Staff Performance Leaderboard Table */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: `1px solid ${theme.borderCard}`,
-            borderRadius: '1.25rem',
-            padding: '1.25rem',
-            marginBottom: '1.5rem',
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, margin: '0 0 0.85rem 0' }}>
-              Employee Performance & Integrity Ledger
-            </h3>
-
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${theme.border}`, textAlign: 'left', backgroundColor: theme.tableHeaderBg }}>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Employee & Role</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Total Sales</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Orders Rung</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Avg Ticket</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Shifts Worked</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Speed</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase' }}>Discounts Allowed</th>
-                  <th style={{ padding: '0.65rem 0.85rem', fontWeight: 800, color: theme.textSecondary, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employeeSalesData.length === 0 && (
-                  <tr>
-                    <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: theme.textSecondary }}>
-                      No staff performance data yet.
-                    </td>
-                  </tr>
-                )}
-                {employeeSalesData.map((emp) => (
-                  <tr key={emp.name} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                    <td style={{ padding: '0.75rem 0.85rem' }}>
-                      <div style={{ fontWeight: 800, color: theme.textPrimary }}>{emp.name}</div>
-                      <div style={{ fontSize: '11px', color: theme.textSecondary }}>{emp.role}</div>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: '#166534' }}>
-                      ₹{emp.sales.toLocaleString('en-IN')}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: theme.textPrimary }}>
-                      {emp.orders} orders
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', fontWeight: 700, color: theme.textSecondary }}>
-                      ₹{emp.aov}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', color: theme.textPrimary }}>
-                      {emp.shifts} shifts
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem' }}>
-                      <span style={{
-                        padding: '2px 7px',
-                        borderRadius: '0.35rem',
-                        backgroundColor: emp.speedSec < 50 ? '#DCFCE7' : '#F3F4F6',
-                        color: emp.speedSec < 50 ? '#166534' : theme.textPrimary,
-                        fontWeight: 800,
-                        fontSize: '11.5px',
-                      }}>
-                        {emp.speedSec}s / ticket
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', color: theme.textSecondary, fontWeight: 600 }}>
-                      ₹{emp.discountsGiven.toLocaleString('en-IN')}
-                    </td>
-                    <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right' }}>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.2rem',
-                        fontWeight: 800,
-                        color: '#B45309',
-                        backgroundColor: '#FEF3C7',
-                        padding: '2px 7px',
-                        borderRadius: '9999px',
-                        fontSize: '11.5px',
-                      }}>
-                        <StarRoundedIcon sx={{ fontSize: 13, color: '#F59E0B' }} />
-                        <span>{emp.rating}</span>
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </>
       )}

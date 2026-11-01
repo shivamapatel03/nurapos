@@ -4,6 +4,9 @@ public sealed class SalesTaxReport
 {
     public DateOnly From { get; init; }
     public DateOnly To { get; init; }
+    public decimal TaxableSales { get; init; }
+    public decimal TotalTax { get; init; }
+    public int OrderCount { get; init; }
     public IReadOnlyList<TaxSlabBreakdown> SalesByRate { get; init; } = [];
     public IReadOnlyList<TaxSlabBreakdown> PurchasesByRate { get; init; } = [];
 }
@@ -23,6 +26,8 @@ public sealed class ProfitLossReport
     public decimal CostOfGoodsSold { get; init; }
     public decimal OperatingExpenses { get; init; }
     public decimal NetOperatingProfit { get; init; }
+    public decimal GrossMargin { get; init; }
+    public decimal MarginPercent { get; init; }
     public bool CostOfGoodsSoldUsesCurrentProductCost { get; init; }
 }
 

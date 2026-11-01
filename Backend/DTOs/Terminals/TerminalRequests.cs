@@ -25,6 +25,25 @@ public sealed class PosPinLoginRequest
     [Required, RegularExpression(@"^\d{4}$")] public string Pin { get; set; } = string.Empty;
 }
 
+public sealed class PosLookupRequest
+{
+    [Required]
+    public string Identifier { get; set; } = string.Empty;
+}
+
+public sealed class EmployeeLookupDto
+{
+    public int Id { get; init; }
+    public int FranchiseId { get; init; }
+    public string FranchiseName { get; init; } = string.Empty;
+    public string EmployeeCode { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public string Role { get; init; } = string.Empty;
+    public string? Phone { get; init; }
+    public string? Email { get; init; }
+    public bool PinConfigured { get; init; }
+}
+
 public sealed class PosPinLoginResponse
 {
     public string PosSessionToken { get; init; } = string.Empty;

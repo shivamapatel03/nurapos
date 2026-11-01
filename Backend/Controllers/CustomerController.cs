@@ -42,8 +42,10 @@ public sealed class CustomerController(ICustomerService service) : ControllerBas
             : Ok(new ApiResponse<LoyaltyRedeemResponse> { StatusCode = 200, Message = "Loyalty points redeemed.", Data = new LoyaltyRedeemResponse { DiscountAmount = result.DiscountAmount, RemainingPoints = result.RemainingPoints } });
     }
 
-    private bool TryOwnerId(out int id) => User.IsInRole("FRANCHISE_OWNER")
-        ? int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)
-        : int.TryParse(User.FindFirstValue("owner_id"), out id);
+    private bool TryOwnerId(out int id)
+    {
+        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
+        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+    }
     private static ApiResponse<object?> Error(int status, string message) => new() { StatusCode = status, Message = message };
 }

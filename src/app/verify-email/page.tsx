@@ -1,15 +1,48 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import { verifyEmail, resendVerification } from '@/lib/api-client';
+import { saveAuthSession } from '@/lib/auth';
+import { AuthSession, VerifyEmailRequest } from '@/types/auth';
+import PosPinModal from '@/components/auth/PosPinModal';
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState<string>('');
+  const [verificationId, setVerificationId] = useState<string>('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '']);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [verifiedSession, setVerifiedSession] = useState<AuthSession | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [infoMessage, setInfoMessage] = useState<string>('');
+  const [showPinModal, setShowPinModal] = useState<boolean>(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Retrieve email and verificationId from searchParams or sessionStorage
+  useEffect(() => {
+    const qEmail = searchParams?.get('email');
+    const qVId = searchParams?.get('verificationId');
+
+    const sEmail = typeof window !== 'undefined' ? sessionStorage.getItem('nurapos_signup_email') : null;
+    const sVId = typeof window !== 'undefined' ? sessionStorage.getItem('nurapos_verification_id') : null;
+
+    const resolvedEmail = qEmail || sEmail || 'your email';
+    setEmail(resolvedEmail);
+    if (qVId || sVId) {
+      setVerificationId(qVId || sVId || '');
+    }
+  }, [searchParams]);
 
   // 30 second countdown timer
   useEffect(() => {
@@ -25,6 +58,7 @@ export default function VerifyEmailPage() {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
+    if (errorMessage) setErrorMessage('');
 
     // Auto focus next input
     if (value && index < 3) {
@@ -38,19 +72,70 @@ export default function VerifyEmailPage() {
     }
   };
 
-  const handleResend = (e: React.MouseEvent) => {
+  const handleResend = async (e: React.MouseEvent) => {
     e.preventDefault();
-    setTimeLeft(30);
-    setOtp(['', '', '', '']);
-    inputRefs.current[0]?.focus();
+    if (timeLeft > 0 || isResending) return;
+
+    if (!email || email === 'your email') {
+      setErrorMessage('Please return to signup and provide a valid email.');
+      return;
+    }
+
+    setIsResending(true);
+    setErrorMessage('');
+    setInfoMessage('');
+
+    try {
+      await resendVerification(email);
+      setTimeLeft(30);
+      setOtp(['', '', '', '']);
+      setInfoMessage(`A fresh verification code has been sent to ${email}`);
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to resend code. Please try again shortly.');
+    } finally {
+      setIsResending(false);
+    }
   };
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsVerified(true);
+    const code = otp.join('');
+    if (code.length < 4) {
+      setErrorMessage('Please enter the full 4-digit code.');
+      return;
+    }
+
+    setErrorMessage('');
+    setInfoMessage('');
+    setIsLoading(true);
+
+    try {
+      const payload: VerifyEmailRequest = {
+        email,
+        code,
+      };
+      if (verificationId) {
+        payload.verificationId = verificationId;
+      }
+
+      // POST /api/auth/verify-email
+      const res = await verifyEmail(payload);
+
+      // Save JWT session to localStorage & cookies
+      if (res.data?.session) {
+        saveAuthSession(res.data.session);
+        setVerifiedSession(res.data.session);
+      }
+
+      setIsVerified(true);
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Verification failed. Please check the code.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Direct Unsplash image link for modern retail / cafe POS checkout
   const unsplashImageUrl = 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1200&auto=format&fit=crop';
 
   const formatTimer = (seconds: number) => {
@@ -105,7 +190,7 @@ export default function VerifyEmailPage() {
         </Link>
       </header>
 
-      {/* Main Split Layout: Fit to Desktop Viewport (No Scroll) */}
+      {/* Main Split Layout */}
       <main style={{
         flex: 1,
         minHeight: 0,
@@ -125,7 +210,7 @@ export default function VerifyEmailPage() {
           gap: 'clamp(1.5rem, 3.5vw, 4rem)',
           alignItems: 'center',
         }}>
-          {/* Left Column: Rounded Unsplash Image */}
+          {/* Left Column: Unsplash Image */}
           <div style={{
             position: 'relative',
             width: '100%',
@@ -214,42 +299,194 @@ export default function VerifyEmailPage() {
               Verify your email
             </h1>
 
-            {/* Subtitle */}
+            {/* Subtitle with dynamic email */}
             <p style={{
               fontSize: '14px',
               fontWeight: 500,
               color: '#000000',
-              marginBottom: '26px',
+              marginBottom: '20px',
               lineHeight: 1.5,
               letterSpacing: '-0.01em',
             }}>
-              We&apos;ve sent a verification link to <strong style={{ fontWeight: 800 }}>xyz@gmail.com</strong>
+              We&apos;ve sent a verification code to{' '}
+              <strong style={{ fontWeight: 800, wordBreak: 'break-all' }}>
+                {email || 'your email'}
+              </strong>
             </p>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div style={{
+                marginBottom: '14px',
+                padding: '0.55rem 0.75rem',
+                backgroundColor: '#FEF2F2',
+                border: '1px solid #FCA5A5',
+                borderRadius: '0.75rem',
+                color: '#B91C1C',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+              }}>
+                <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Info / Resent Message */}
+            {infoMessage && (
+              <div style={{
+                marginBottom: '14px',
+                padding: '0.55rem 0.75rem',
+                backgroundColor: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                borderRadius: '0.75rem',
+                color: '#15803D',
+                fontSize: '0.82rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+              }}>
+                <CheckCircleRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+                <span>{infoMessage}</span>
+              </div>
+            )}
 
             {isVerified ? (
               <div style={{
                 backgroundColor: '#FAFAFA',
-                border: '1px solid #000000',
-                borderRadius: '1rem',
+                border: '1px solid #E5E7EB',
+                borderRadius: '1.25rem',
                 padding: '1.75rem',
                 textAlign: 'center',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
               }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ECFDF5',
+                  border: '2px solid #A7F3D0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1rem auto',
+                }}>
+                  <CheckCircleRoundedIcon sx={{ fontSize: 32, color: '#10B981' }} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.4rem', color: '#000000' }}>
                   Email Verified!
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: '#525252', marginBottom: '1.25rem' }}>
-                  Your register account is active and verified.
+                <p style={{ fontSize: '0.88rem', color: '#4B5563', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+                  Your register account is active and verified. JWT authentication tokens have been securely saved.
                 </p>
-                <Link href="/onboarding" className="button-20-3d" role="button" style={{ width: '100%', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                  Continue to Onboarding &gt;&gt;
-                </Link>
+
+                {/* Session details summary */}
+                {verifiedSession && (
+                  <div style={{
+                    marginBottom: '1.25rem',
+                    padding: '0.75rem 1rem',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '0.75rem',
+                    border: '1px solid #F0F0F0',
+                    fontSize: '0.8rem',
+                    textAlign: 'left',
+                    color: '#374151',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6B7280' }}>User ID:</span>
+                      <strong style={{ color: '#000000' }}>#{verifiedSession.userId}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#6B7280' }}>Email:</span>
+                      <strong style={{ color: '#000000', wordBreak: 'break-all' }}>{verifiedSession.email}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#6B7280' }}>POS PIN:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                          backgroundColor: verifiedSession.posPinConfigured ? '#ECFDF5' : '#FEF3C7',
+                          color: verifiedSession.posPinConfigured ? '#047857' : '#B45309',
+                        }}>
+                          {verifiedSession.posPinConfigured ? 'Configured' : 'Setup Required'}
+                        </span>
+                        {!verifiedSession.posPinConfigured && (
+                          <button
+                            type="button"
+                            onClick={() => setShowPinModal(true)}
+                            style={{
+                              background: '#000000',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Set PIN
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  <Link
+                    href="/onboarding"
+                    className="button-20-3d"
+                    role="button"
+                    style={{
+                      width: '100%',
+                      height: '46px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textDecoration: 'none',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      borderRadius: '0.85rem',
+                    }}
+                  >
+                    Continue to Onboarding &gt;&gt;
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="button-20-secondary"
+                    role="button"
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textDecoration: 'none',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      borderRadius: '0.85rem',
+                    }}
+                  >
+                    Go to Dashboard
+                  </Link>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleVerify} style={{
                 display: 'flex',
                 flexDirection: 'column',
               }}>
-                {/* 4 OTP Digit Bubbles matching screenshot exactly */}
+                {/* 4 OTP Digit Bubbles */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -295,7 +532,7 @@ export default function VerifyEmailPage() {
                   ))}
                 </div>
 
-                {/* Timing remaining (right-aligned with button) */}
+                {/* Timing remaining */}
                 <div style={{
                   textAlign: 'right',
                   fontSize: '13px',
@@ -311,6 +548,7 @@ export default function VerifyEmailPage() {
                 <div>
                   <button
                     type="submit"
+                    disabled={isLoading}
                     className="button-20-3d"
                     role="button"
                     style={{
@@ -320,9 +558,15 @@ export default function VerifyEmailPage() {
                       fontWeight: 700,
                       letterSpacing: '-0.01em',
                       borderRadius: '1rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? 0.85 : 1,
                     }}
                   >
-                    Login
+                    {isLoading ? 'Verifying...' : 'Login'}
                   </button>
                 </div>
 
@@ -342,9 +586,11 @@ export default function VerifyEmailPage() {
                       fontWeight: 800,
                       color: '#000000',
                       textDecoration: 'none',
+                      opacity: timeLeft > 0 || isResending ? 0.45 : 1,
+                      cursor: timeLeft > 0 || isResending ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    Send Again
+                    {isResending ? 'Sending...' : 'Send Again'}
                   </a>
                 </div>
 
@@ -371,6 +617,25 @@ export default function VerifyEmailPage() {
           </div>
         </div>
       </main>
+
+      <PosPinModal
+        isOpen={showPinModal}
+        mode="setup"
+        onClose={() => setShowPinModal(false)}
+        onSuccess={() => {
+          if (verifiedSession) {
+            setVerifiedSession({ ...verifiedSession, posPinConfigured: true });
+          }
+        }}
+      />
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', backgroundColor: '#FFFFFF' }} />}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

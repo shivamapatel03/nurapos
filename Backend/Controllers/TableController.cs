@@ -50,8 +50,10 @@ public sealed class TableController(ITableService service) : ControllerBase
             : Conflict(Error(409,"Source table has no active order or target table is not vacant."));
     }
 
-    private bool TryOwnerId(out int id)=>User.IsInRole("FRANCHISE_OWNER")
-        ?int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),out id)
-        :int.TryParse(User.FindFirstValue("owner_id"),out id);
+    private bool TryOwnerId(out int id)
+    {
+        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
+        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+    }
     private static ApiResponse<object?> Error(int code,string message)=>new(){StatusCode=code,Message=message};
 }

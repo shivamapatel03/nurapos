@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { getOnboardingStatus, saveOnboardingDraft } from '@/lib/api-client';
 
 interface Employee {
   id: string;
@@ -31,6 +33,23 @@ export default function OnboardingScreen4() {
   const [employees, setEmployees] = useState<Employee[]>([
     { id: '1', name: '', employeeId: '', role: 'Cashier', phone: '' },
   ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadDraft() {
+      try {
+        const res = await getOnboardingStatus();
+        const draft = res.data?.draft;
+        if (draft?.staff && Array.isArray(draft.staff) && draft.staff.length > 0) {
+          setEmployees(draft.staff);
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    loadDraft();
+  }, []);
 
   const handleAddEmployee = () => {
     setEmployees((prev) => [
@@ -57,9 +76,24 @@ export default function OnboardingScreen4() {
     );
   };
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/onboarding-5');
+    setErrorMessage(null);
+
+    // Filter filled employees
+    const validStaff = employees.filter((emp) => emp.name.trim() !== '');
+
+    setIsLoading(true);
+    try {
+      if (validStaff.length > 0) {
+        await saveOnboardingDraft({ staff: validStaff });
+      }
+      router.push('/onboarding-5');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to save staff members.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSkip = () => {
@@ -183,6 +217,29 @@ export default function OnboardingScreen4() {
           flexDirection: 'column',
           alignItems: 'center',
         }}>
+          {/* Error Message */}
+          {errorMessage && (
+            <div style={{
+              width: '100%',
+              maxWidth: '600px',
+              padding: '0.6rem 0.85rem',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '0.75rem',
+              color: '#B91C1C',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              textAlign: 'left',
+              marginBottom: '1rem',
+            }}>
+              <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Team Members List Container */}
           <div style={{
             width: '100%',
@@ -517,6 +574,7 @@ export default function OnboardingScreen4() {
             {/* Bottom Button: Continue */}
             <button
               type="submit"
+              disabled={isLoading}
               className="button-20-3d"
               role="button"
               style={{
@@ -526,10 +584,15 @@ export default function OnboardingScreen4() {
                 fontWeight: 700,
                 letterSpacing: '-0.01em',
                 borderRadius: '0.85rem',
-                cursor: 'pointer',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                opacity: isLoading ? 0.8 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
               }}
             >
-              Continue
+              {isLoading ? 'Saving...' : 'Continue'}
             </button>
           </div>
         </form>
