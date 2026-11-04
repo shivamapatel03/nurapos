@@ -6,16 +6,11 @@ import Link from 'next/link';
 import heroBg from '../hero/herobackground.png';
 
 export default function Hero() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const videoContainerRef = useRef<HTMLDivElement | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement | null>(null);
 
   const handleSeeDemo = () => {
-    if (videoContainerRef.current) {
-      videoContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    if (videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.play().catch(() => {});
+    if (previewContainerRef.current) {
+      previewContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -165,40 +160,34 @@ export default function Hero() {
           </button>
         </div>
 
-        {/* Video preview: balanced compact size */}
+        {/* Hero preview image: transparent cutout without white background container */}
         <div
-          ref={videoContainerRef}
+          ref={previewContainerRef}
           style={{
             marginTop: '40px',
             width: '100%',
             maxWidth: '980px',
-            aspectRatio: '1216 / 496',
-            borderRadius: '18px',
-            overflow: 'hidden',
             position: 'relative',
-            backgroundColor: '#D9D9D9',
+            backgroundColor: 'transparent',
             boxSizing: 'border-box',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
           }}
         >
-          <video
-            ref={videoRef}
-            src="/video/hero.mp4"
-            poster="/hero/hero.png"
-            autoPlay
-            muted
-            loop
-            playsInline
-            controls
+          <Image
+            src="/hero/hero.png"
+            alt="Nuradesk POS Preview"
+            width={1633}
+            height={963}
+            priority
+            quality={95}
+            sizes="(max-width: 980px) 100vw, 980px"
             style={{
               width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              borderRadius: '18px',
+              height: 'auto',
               display: 'block',
+              filter: 'drop-shadow(0 20px 35px rgba(0, 0, 0, 0.08))',
             }}
           />
         </div>
