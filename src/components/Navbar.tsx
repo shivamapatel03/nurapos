@@ -67,7 +67,9 @@ export default function Navbar() {
 
   return (
     <>
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes navFadeIn {
           from {
             opacity: 0;
@@ -79,7 +81,7 @@ export default function Navbar() {
           }
         }
         .nav-link-btn {
-          font-family: 'Inter', sans-serif !important;
+          font-family: Inter, sans-serif !important;
           font-size: 14px !important;
           font-weight: 500 !important;
           color: #000000 !important;
@@ -98,14 +100,17 @@ export default function Navbar() {
           opacity: 0.65 !important;
         }
         @media (max-width: 900px) {
-          .desktop-nav-group {
+          .desktop-nav-group,
+          .desktop-create-account-btn {
             display: none !important;
           }
           .mobile-burger-btn {
             display: flex !important;
           }
         }
-      `}</style>
+      `,
+        }}
+      />
 
       {/* Fixed Navbar with Exact Height 58px */}
       <header
@@ -119,9 +124,7 @@ export default function Navbar() {
           backgroundColor: isMenuOpen ? 'transparent' : isScrolled ? '#FFFFFF' : 'transparent',
           borderBottom: isMenuOpen ? 'none' : isScrolled ? '1px solid #F3F4F6' : '1px solid transparent',
           boxShadow: isScrolled && !isMenuOpen ? '0 1px 4px rgba(0, 0, 0, 0.04)' : 'none',
-          backdropFilter: isScrolled && !isMenuOpen ? 'blur(8px)' : 'none',
-          WebkitBackdropFilter: isScrolled && !isMenuOpen ? 'blur(8px)' : 'none',
-          transition: 'background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease',
+          transition: 'none',
           width: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -458,6 +461,7 @@ export default function Navbar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 1002, flexShrink: 0 }}>
             <Link
               href="/signup"
+              className="desktop-create-account-btn"
               style={{
                 width: '109px',
                 height: '31px',

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import TextMotion from './TextMotion';
 
 interface FaqItem {
   question: string;
@@ -62,7 +63,13 @@ export default function FaqSection() {
     >
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 'clamp(2rem, 3.5vw, 3rem)' }}>
-        <h2
+        <TextMotion
+          as="h2"
+          text="Everything you need to know."
+          duration={0.6}
+          stagger={0.04}
+          y={18}
+          threshold={0.25}
           style={{
             fontFamily: "'Inter', sans-serif",
             fontSize: 'clamp(24px, 3.5vw, 30px)',
@@ -72,9 +79,7 @@ export default function FaqSection() {
             color: '#0A0A0A',
             margin: 0,
           }}
-        >
-          Everything you need to know.
-        </h2>
+        />
       </div>
 
       {/* Accordion List */}

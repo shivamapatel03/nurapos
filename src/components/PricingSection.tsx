@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import TextMotion from './TextMotion';
 
 interface PricingTier {
   id: string;
@@ -66,9 +67,11 @@ export default function PricingSection() {
         boxSizing: 'border-box',
       }}
     >
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .pricing-heading {
-          font-family: 'Inter', sans-serif;
+          font-family: Inter, sans-serif;
           font-size: 24px;
           line-height: 1.25;
           font-weight: 600;
@@ -90,7 +93,7 @@ export default function PricingSection() {
           border-radius: 4px;
           background-color: #000000;
           color: #FFFFFF;
-          font-family: 'Inter', sans-serif;
+          font-family: Inter, sans-serif;
           font-size: 14px;
           font-weight: 500;
           text-decoration: none;
@@ -117,7 +120,9 @@ export default function PricingSection() {
         .pricing-card-btn:hover .pricing-btn-arrow {
           transform: translateX(4px);
         }
-      `}</style>
+      `,
+        }}
+      />
 
       {/* Section Header */}
       <div
@@ -126,10 +131,23 @@ export default function PricingSection() {
           marginBottom: 'clamp(2.5rem, 4vw, 3.5rem)',
         }}
       >
-        <h2 className="pricing-heading">
-          Simple pricing. Zero hidden fees.
-        </h2>
-        <p
+        <TextMotion
+          as="h2"
+          className="pricing-heading"
+          text="Simple pricing. Zero hidden fees."
+          duration={0.6}
+          stagger={0.04}
+          y={18}
+          threshold={0.25}
+        />
+        <TextMotion
+          as="p"
+          text="Choose the right plan for your business. Start free today and scale whenever you are ready."
+          duration={0.6}
+          stagger={0.025}
+          y={14}
+          delay={0.16}
+          threshold={0.25}
           style={{
             fontFamily: "'Inter', sans-serif",
             fontSize: '15px',
@@ -138,9 +156,7 @@ export default function PricingSection() {
             margin: '0 auto',
             lineHeight: 1.55,
           }}
-        >
-          Choose the right plan for your business. Start free today and scale whenever you are ready.
-        </p>
+        />
       </div>
 
       {/* 3 Pricing Cards Grid */}

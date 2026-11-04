@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import TextMotion from './TextMotion';
 
 interface AccordionItem {
   id: string;
@@ -69,9 +70,11 @@ export default function FeatureAccordion() {
         boxSizing: 'border-box',
       }}
     >
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .feature-accordion-heading {
-          font-family: 'Inter', sans-serif;
+          font-family: Inter, sans-serif;
           font-size: 24px;
           line-height: 1.25;
           font-weight: 600;
@@ -96,7 +99,9 @@ export default function FeatureAccordion() {
         .feature-accordion-row:last-child {
           border-bottom: 1px solid #E5E7EB;
         }
-      `}</style>
+      `,
+        }}
+      />
 
       {/* Main Heading with generous whitespace and centered alignment */}
       <div
@@ -105,11 +110,15 @@ export default function FeatureAccordion() {
           textAlign: 'center',
         }}
       >
-        <h2 className="feature-accordion-heading">
-          One platform.
-          <br />
-          Every part of your business.
-        </h2>
+        <TextMotion
+          as="h2"
+          className="feature-accordion-heading"
+          text={'One platform.\nEvery part of your business.'}
+          duration={0.6}
+          stagger={0.04}
+          y={18}
+          threshold={0.25}
+        />
       </div>
 
       {/* 5 Horizontal Accordion Rows */}

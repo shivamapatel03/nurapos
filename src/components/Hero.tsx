@@ -1,12 +1,44 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import heroBg from '../hero/herobackground.png';
+import TextMotion from './TextMotion';
 
 export default function Hero() {
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Normalize mouse coordinates from -1 to 1 relative to viewport center
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      setMouseOffset({ x, y });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   const handleSeeDemo = () => {
     if (previewContainerRef.current) {
@@ -35,6 +67,30 @@ export default function Hero() {
         overflow: 'hidden',
       }}
     >
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes cloudFloatLeft {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-14px) rotate(1.2deg);
+          }
+        }
+
+        @keyframes cloudFloatRight {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-18px) rotate(-1.5deg);
+          }
+        }
+      `,
+        }}
+      />
+
       {/* Hero Background Image */}
       <div
         style={{
@@ -64,6 +120,86 @@ export default function Hero() {
         />
       </div>
 
+      {/* Parallax Cloud 1 (Left Side - Moved inward toward center) */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 'clamp(35px, 6vw, 95px)',
+          left: 'clamp(24px, 5.5vw, 120px)',
+          width: 'clamp(220px, 26vw, 380px)',
+          zIndex: 1,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: `translate3d(${mouseOffset.x * -16 - scrollY * 0.12}px, ${mouseOffset.y * -12 - scrollY * 0.28}px, 0)`,
+          transition: 'transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1)',
+          willChange: 'transform',
+        }}
+      >
+        <div
+          style={{
+            animation: 'cloudFloatLeft 7s ease-in-out infinite',
+            width: '100%',
+          }}
+        >
+          <Image
+            src="/hero/cloud1.png"
+            alt="Left decorative cloud"
+            width={1007}
+            height={724}
+            priority
+            quality={90}
+            sizes="(max-width: 900px) 220px, 380px"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              filter: 'drop-shadow(0 15px 30px rgba(0, 0, 0, 0.04))',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Parallax Cloud 2 (Right Side - Reduced compact size) */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 'clamp(45px, 7vw, 110px)',
+          right: 'clamp(30px, 6vw, 150px)',
+          width: 'clamp(170px, 20vw, 290px)',
+          zIndex: 1,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          transform: `translate3d(${mouseOffset.x * 20 + scrollY * 0.14}px, ${mouseOffset.y * 14 - scrollY * 0.32}px, 0)`,
+          transition: 'transform 0.12s cubic-bezier(0.2, 0.8, 0.4, 1)',
+          willChange: 'transform',
+        }}
+      >
+        <div
+          style={{
+            animation: 'cloudFloatRight 8.5s ease-in-out infinite',
+            width: '100%',
+          }}
+        >
+          <Image
+            src="/hero/cloud2.png"
+            alt="Right decorative cloud"
+            width={1116}
+            height={724}
+            priority
+            quality={90}
+            sizes="(max-width: 900px) 170px, 290px"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              filter: 'drop-shadow(0 20px 35px rgba(0, 0, 0, 0.05))',
+            }}
+          />
+        </div>
+      </div>
+
       <div
         style={{
           width: '100%',
@@ -73,11 +209,18 @@ export default function Hero() {
           flexDirection: 'column',
           alignItems: 'center',
           position: 'relative',
-          zIndex: 1,
+          zIndex: 2,
         }}
       >
         {/* Headline */}
-        <h1
+        <TextMotion
+          as="h1"
+          text="Sell Smarter. Manage Better. Grow Faster."
+          duration={0.65}
+          stagger={0.05}
+          y={20}
+          threshold={0}
+          delay={0.1}
           style={{
             color: '#000000',
             fontFamily: "'Inter', sans-serif",
@@ -90,9 +233,7 @@ export default function Hero() {
             letterSpacing: '-0.02em',
             maxWidth: '1100px',
           }}
-        >
-          Sell Smarter. Manage Better. Grow Faster.
-        </h1>
+        />
 
         {/* Buttons Row */}
         <div
