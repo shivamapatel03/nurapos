@@ -4,7 +4,6 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import EditorialStatement from '../components/EditorialStatement';
-import CurvedMarquee from '../components/CurvedMarquee';
 import FeatureAccordion from '../components/FeatureAccordion';
 import PricingSection from '../components/PricingSection';
 import FaqSection from '../components/FaqSection';
@@ -24,7 +23,6 @@ export default function HomePage() {
       <Navbar />
       <Hero />
       <EditorialStatement />
-      <CurvedMarquee />
       <FeatureAccordion />
       <PricingSection />
       <FaqSection />
