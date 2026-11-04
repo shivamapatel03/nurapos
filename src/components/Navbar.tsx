@@ -7,15 +7,15 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Desktop dropdown state: 'products' | 'solutions' | 'pricing' | 'resources' | null
-  const [desktopDropdown, setDesktopDropdown] = useState<'products' | 'solutions' | 'pricing' | 'resources' | null>(null);
+  // Desktop dropdown state: 'products' | 'solutions' | 'resources' | null
+  const [desktopDropdown, setDesktopDropdown] = useState<'products' | 'solutions' | 'resources' | null>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mobile expandable sub-sections
   const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const [isMobileSolutionsOpen, setIsMobileSolutionsOpen] = useState(false);
 
-  const handleDropdownEnter = (type: 'products' | 'solutions' | 'pricing' | 'resources') => {
+  const handleDropdownEnter = (type: 'products' | 'solutions' | 'resources') => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
     setDesktopDropdown(type);
   };
@@ -402,33 +402,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Pricing Dropdown / Link */}
-            <div
-              style={{ position: 'relative' }}
-              onMouseEnter={() => handleDropdownEnter('pricing')}
-              onMouseLeave={handleDropdownLeave}
-            >
-              <Link
-                href="#pricing"
-                className="nav-link-btn"
-                onClick={() => setDesktopDropdown(null)}
-              >
-                <span>Pricing</span>
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </Link>
-            </div>
-
             {/* Resources / FAQ Dropdown */}
             <div
               style={{ position: 'relative' }}
@@ -654,9 +627,6 @@ export default function Navbar() {
               )}
             </div>
 
-            <Link href="#pricing" onClick={closeMenu} style={{ fontSize: '1.15rem', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none' }}>
-              Pricing
-            </Link>
             <Link href="#faq" onClick={closeMenu} style={{ fontSize: '1.15rem', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none' }}>
               Resources &amp; FAQ
             </Link>
