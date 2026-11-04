@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import heroBg from '../hero/herobackground.png';
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -35,8 +37,38 @@ export default function Hero() {
         paddingRight: '1.5rem',
         boxSizing: 'border-box',
         fontFamily: "'Inter', sans-serif",
+        overflow: 'hidden',
       }}
     >
+      {/* Hero Background Image */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      >
+        <Image
+          src={heroBg}
+          alt="Hero background"
+          fill
+          priority
+          quality={95}
+          sizes="100vw"
+          style={{
+            objectFit: 'cover',
+            objectPosition: 'center top',
+          }}
+        />
+      </div>
+
       <div
         style={{
           width: '100%',
@@ -45,6 +77,8 @@ export default function Hero() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* Headline */}
@@ -103,7 +137,7 @@ export default function Hero() {
             Get started
           </Link>
 
-          {/* See demo button: width: 134px; height: 41px; border-radius: 4px; */}
+          {/* See demo button: transparent with crisp black border & text for high contrast */}
           <button
             type="button"
             onClick={handleSeeDemo}
@@ -111,36 +145,35 @@ export default function Hero() {
               width: '134px',
               height: '41px',
               borderRadius: '4px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'transparent',
               color: '#000000',
-              border: '1px solid #000000',
+              border: '1.5px solid #000000',
               fontFamily: "'Inter', sans-serif",
               fontSize: '14px',
-              fontWeight: 500,
+              fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               boxSizing: 'border-box',
-              transition: 'background-color 0.15s ease',
+              transition: 'background-color 0.15s ease, opacity 0.15s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F9FAFB'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             See demo
           </button>
         </div>
 
-        {/* Below video: width: 1216px; height: 496px;, border-radius: 22px; */}
+        {/* Video preview: balanced compact size */}
         <div
           ref={videoContainerRef}
           style={{
-            marginTop: '48px',
+            marginTop: '40px',
             width: '100%',
-            maxWidth: '1216px',
-            height: 'min(496px, 56.25vw)',
+            maxWidth: '980px',
             aspectRatio: '1216 / 496',
-            borderRadius: '22px',
+            borderRadius: '18px',
             overflow: 'hidden',
             position: 'relative',
             backgroundColor: '#D9D9D9',
@@ -148,7 +181,7 @@ export default function Hero() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.05)',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
           }}
         >
           <video
@@ -164,7 +197,7 @@ export default function Hero() {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              borderRadius: '22px',
+              borderRadius: '18px',
               display: 'block',
             }}
           />

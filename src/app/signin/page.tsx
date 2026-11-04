@@ -62,20 +62,97 @@ export default function SigninPage() {
   const unsplashImageUrl = 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1200&auto=format&fit=crop';
 
   return (
-    <div
-      style={{
-        height: '100vh',
-        maxHeight: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        display: 'flex',
-        flexDirection: 'column',
-        fontFamily: "'Inter', sans-serif",
-        boxSizing: 'border-box',
-      }}
-    >
+    <div className="auth-root-container">
       <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .auth-root-container {
+          min-height: 100vh;
+          min-height: 100dvh;
+          width: 100%;
+          background-color: #FFFFFF;
+          display: flex;
+          flex-direction: column;
+          font-family: 'Inter', sans-serif;
+          box-sizing: border-box;
+          overflow-x: hidden;
+          overflow-y: auto;
+        }
+
+        .auth-header {
+          height: 52px;
+          padding: 0 2.5rem;
+          display: flex;
+          justifyContent: flex-end;
+          align-items: center;
+          flex-shrink: 0;
+        }
+
+        .auth-main {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 2.5rem 1.5rem 2.5rem;
+          box-sizing: border-box;
+          width: 100%;
+        }
+
+        .auth-grid {
+          width: 100%;
+          max-width: 1150px;
+          display: grid;
+          grid-template-columns: minmax(300px, 1.15fr) minmax(320px, 1fr);
+          gap: clamp(1.5rem, 3.5vw, 3.5rem);
+          align-items: center;
+          margin: auto;
+        }
+
+        .auth-image-col {
+          position: relative;
+          width: 100%;
+          height: 560px;
+          max-height: calc(100vh - 84px);
+          border-radius: 12px;
+          overflow: hidden;
+          background-color: #F5F5F5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .auth-form-col {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          max-width: 430px;
+          width: 100%;
+          margin: 0 auto;
+          box-sizing: border-box;
+        }
+
+        .auth-title {
+          font-size: clamp(22px, 5vw, 28px);
+          font-weight: 600;
+          letter-spacing: -0.03em;
+          line-height: 1.2;
+          color: #000000;
+          margin: 0 0 0.35rem 0;
+        }
+
+        .auth-subtitle {
+          font-size: clamp(13px, 3.5vw, 14px);
+          color: #71717A;
+          font-weight: 400;
+          letter-spacing: -0.01em;
+          margin: 0;
+          line-height: 1.45;
+        }
+
         .notched-field-group {
           position: relative;
           width: 100%;
@@ -114,6 +191,7 @@ export default function SigninPage() {
           outline: none;
           box-sizing: border-box;
           box-shadow: none;
+          transition: border-color 0.15s ease;
         }
 
         .notched-field-group input::placeholder {
@@ -141,6 +219,14 @@ export default function SigninPage() {
         .notched-field-group input:-webkit-autofill:focus {
           border-color: #000000 !important;
           border-width: 1.5px !important;
+        }
+
+        .notched-field-group.is-error input {
+          border-color: #DC2626 !important;
+        }
+
+        .notched-field-group.is-error .notched-label {
+          color: #DC2626 !important;
         }
 
         .auth-submit-btn {
@@ -171,19 +257,52 @@ export default function SigninPage() {
           opacity: 0.8;
           cursor: not-allowed;
         }
+
+        @media (max-width: 900px) {
+          .auth-header {
+            padding: 0.75rem 1.25rem !important;
+            height: 48px !important;
+          }
+
+          .auth-main {
+            padding: 1.25rem 1.25rem 2.5rem 1.25rem !important;
+            align-items: flex-start !important;
+          }
+
+          .auth-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+            max-height: none !important;
+            height: auto !important;
+          }
+
+          .auth-image-col {
+            display: none !important;
+          }
+
+          .auth-form-col {
+            max-width: 100% !important;
+            padding: 0.25rem 0 0 0 !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .notched-field-group input {
+            font-size: 16px !important; /* Prevents iOS Safari auto-zoom on input tap */
+          }
+
+          .auth-toast {
+            left: 16px !important;
+            right: 16px !important;
+            bottom: 16px !important;
+            width: auto !important;
+            max-width: calc(100vw - 32px) !important;
+          }
+        }
       `}</style>
 
       {/* Top Header with "Need help" */}
-      <header
-        style={{
-          height: '52px',
-          padding: '0 2.5rem',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          flexShrink: 0,
-        }}
-      >
+      <header className="auth-header">
         <Link
           href="#help"
           onClick={(e) => {
@@ -213,45 +332,10 @@ export default function SigninPage() {
       </header>
 
       {/* Main Split Layout */}
-      <main
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '0 2.5rem 1.5rem 2.5rem',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '1150px',
-            height: '100%',
-            maxHeight: 'calc(100vh - 68px)',
-            display: 'grid',
-            gridTemplateColumns: 'minmax(300px, 1.15fr) minmax(320px, 1fr)',
-            gap: 'clamp(1.5rem, 3.5vw, 3.5rem)',
-            alignItems: 'center',
-          }}
-        >
+      <main className="auth-main">
+        <div className="auth-grid">
           {/* Left Column: Rounded Unsplash Image */}
-          <div
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '560px',
-              maxHeight: 'calc(100vh - 84px)',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              backgroundColor: '#F5F5F5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+          <div className="auth-image-col">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={unsplashImageUrl}
@@ -267,40 +351,13 @@ export default function SigninPage() {
           </div>
 
           {/* Right Column: Signin Form */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              maxWidth: '430px',
-              width: '100%',
-              margin: '0 auto',
-            }}
-          >
+          <div className="auth-form-col">
             {/* Title & Subtitle */}
             <div style={{ marginBottom: '1.75rem' }}>
-              <h1
-                style={{
-                  fontSize: '28px',
-                  fontWeight: 600,
-                  letterSpacing: '-0.03em',
-                  lineHeight: 1.2,
-                  color: '#000000',
-                  margin: '0 0 0.35rem 0',
-                }}
-              >
+              <h1 className="auth-title">
                 Welcome Back
               </h1>
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: '#71717A',
-                  fontWeight: 400,
-                  letterSpacing: '-0.01em',
-                  margin: 0,
-                  lineHeight: 1.45,
-                }}
-              >
+              <p className="auth-subtitle">
                 Enter your credentials to access your store register.
               </p>
             </div>
@@ -509,6 +566,7 @@ export default function SigninPage() {
       {errorMessage && (
         <div
           role="alert"
+          className="auth-toast"
           style={{
             position: 'fixed',
             bottom: '24px',
