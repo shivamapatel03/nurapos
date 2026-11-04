@@ -25,7 +25,7 @@ public class FranchiseController : ControllerBase
     // POST: api/franchises
     // =========================================================
     [HttpPost]
-    [Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> Create(
         [FromForm] CreateFranchiseRequest request)
     {
@@ -63,7 +63,7 @@ public class FranchiseController : ControllerBase
     // GET: api/franchises
     // =========================================================
     [HttpGet]
-    [Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> GetAll()
     {
         var userId = GetUserId();
@@ -84,7 +84,7 @@ public class FranchiseController : ControllerBase
     // GET: api/franchises/{id}
     // =========================================================
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> GetById([Range(1, int.MaxValue)] int id)
     {
         var userId = GetUserId();
@@ -125,7 +125,7 @@ public class FranchiseController : ControllerBase
     // PUT: api/franchises/{id}
     // =========================================================
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> Update(
         [Range(1, int.MaxValue)] int id,
         [FromBody] UpdateFranchiseRequest request)
@@ -176,7 +176,7 @@ public class FranchiseController : ControllerBase
     // DELETE: api/franchises/{id}
     // =========================================================
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> Delete([Range(1, int.MaxValue)] int id)
     {
         var userId = GetUserId();
@@ -220,7 +220,7 @@ public class FranchiseController : ControllerBase
 
     private int? GetUserId()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
         return int.TryParse(userId, out var parsedUserId) ? parsedUserId : null;
     }
 

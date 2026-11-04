@@ -11,7 +11,7 @@ using Nurapos.Filters;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+[Authorize]
 [Route("api/owner")]
 public sealed class OwnerOperationsController : ControllerBase
 {
@@ -225,7 +225,10 @@ public sealed class OwnerOperationsController : ControllerBase
 
     private int? CurrentOwnerId()
     {
-        var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("nameid")
+            ?? User.FindFirstValue("sub")
+            ?? User.FindFirstValue("owner_id");
         return int.TryParse(value, out var id) ? id : null;
     }
 

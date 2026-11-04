@@ -11,7 +11,7 @@ using Nurapos.Middleware;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista", Policy = "PosPinVerified")]
+[Authorize(Policy = "PosPinVerified")]
 [Route("api/pos/sales")]
 public sealed class PosSalesController(IOwnerOperationsService service, IShiftService shiftService) : ControllerBase
 {
@@ -25,9 +25,10 @@ public sealed class PosSalesController(IOwnerOperationsService service, IShiftSe
         int employeeId;
         string terminalId;
 
-        if (User.IsInRole("FRANCHISE_OWNER"))
+        if (User.IsInRole("FRANCHISE_OWNER") || User.IsInRole("franchise_owner") || User.HasClaim("role", "FRANCHISE_OWNER") || User.HasClaim("role", "Admin"))
         {
-            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out ownerId))
+            var ownerVal = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+            if (!int.TryParse(ownerVal, out ownerId))
                 return Unauthorized(Error(401, "A valid owner session is required."));
             franchiseId = request.FranchiseId > 0 ? request.FranchiseId : 1;
             employeeId = request.PosEmployeeId ?? 1;

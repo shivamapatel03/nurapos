@@ -1,22 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Desktop dropdown state: 'solutions' | 'features' | null
-  const [desktopDropdown, setDesktopDropdown] = useState<'solutions' | 'features' | null>(null);
+  // Desktop dropdown state: 'products' | 'solutions' | 'pricing' | 'resources' | null
+  const [desktopDropdown, setDesktopDropdown] = useState<'products' | 'solutions' | 'pricing' | 'resources' | null>(null);
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Mobile expandable sub-sections
+  const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false);
   const [isMobileSolutionsOpen, setIsMobileSolutionsOpen] = useState(false);
-  const [isMobileFeaturesOpen, setIsMobileFeaturesOpen] = useState(false);
 
-  const handleDropdownEnter = (type: 'solutions' | 'features') => {
+  const handleDropdownEnter = (type: 'products' | 'solutions' | 'pricing' | 'resources') => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
     setDesktopDropdown(type);
   };
@@ -79,18 +78,27 @@ export default function Navbar() {
             transform: translateY(0);
           }
         }
-        .nav-link-item {
-          color: #374151 !important;
-          transition: color 0.15s ease !important;
-        }
-        .nav-link-item:hover {
+        .nav-link-btn {
+          font-family: 'Inter', sans-serif !important;
+          font-size: 14px !important;
+          font-weight: 500 !important;
           color: #000000 !important;
+          background: transparent !important;
+          border: none !important;
+          cursor: pointer !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+          padding: 6px 0 !important;
+          transition: opacity 0.15s ease !important;
+          text-decoration: none !important;
+          outline: none !important;
         }
-        @media (max-width: 980px) {
+        .nav-link-btn:hover {
+          opacity: 0.65 !important;
+        }
+        @media (max-width: 900px) {
           .desktop-nav-group {
-            display: none !important;
-          }
-          .desktop-auth-group {
             display: none !important;
           }
           .mobile-burger-btn {
@@ -99,26 +107,24 @@ export default function Navbar() {
         }
       `}</style>
 
-      {/* Permanently Fixed Navbar with 100% Solid White Background */}
+      {/* Fixed Navbar with Exact Height 58px */}
       <header
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          height: '64px',
+          height: '58px',
           zIndex: 1000,
           backgroundColor: isMenuOpen ? 'transparent' : '#FFFFFF',
-          backdropFilter: 'none',
-          WebkitBackdropFilter: 'none',
-          borderBottom: isMenuOpen ? 'none' : '1px solid #E5E7EB',
-          boxShadow: isScrolled && !isMenuOpen ? '0 2px 14px rgba(0, 0, 0, 0.05)' : 'none',
-          transition: 'box-shadow 0.25s ease',
+          borderBottom: isMenuOpen ? 'none' : '1px solid #F3F4F6',
+          boxShadow: isScrolled && !isMenuOpen ? '0 1px 4px rgba(0, 0, 0, 0.04)' : 'none',
+          transition: 'box-shadow 0.2s ease',
           width: '100%',
           display: 'flex',
           alignItems: 'center',
           boxSizing: 'border-box',
-          fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+          fontFamily: "'Inter', sans-serif",
         }}
       >
         <div
@@ -127,7 +133,7 @@ export default function Navbar() {
             width: '100%',
             height: '100%',
             margin: '0 auto',
-            padding: '0 1.5rem',
+            padding: '0 2rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -135,59 +141,31 @@ export default function Navbar() {
             position: 'relative',
           }}
         >
-          {/* Left: Brand Logo & Name */}
+          {/* Left: Brand Name */}
           <Link
             href="/"
             onClick={closeMenu}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.65rem',
               textDecoration: 'none',
               zIndex: 1002,
               flexShrink: 0,
             }}
           >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                position: 'relative',
-                borderRadius: '9999px',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Image
-                src="/logo.png"
-                alt="Nuradesk Logo"
-                width={32}
-                height={32}
-                priority
-                style={{
-                  objectFit: 'contain',
-                  filter: isMenuOpen ? 'brightness(0) invert(1)' : 'none',
-                  transition: 'filter 0.3s ease',
-                }}
-              />
-            </div>
             <span
               style={{
-                fontSize: '1.25rem',
-                fontWeight: 800,
-                letterSpacing: '-0.035em',
+                fontSize: '20px',
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
                 color: isMenuOpen ? '#FFFFFF' : '#000000',
-                transition: 'color 0.3s ease',
+                fontFamily: "'Inter', sans-serif",
+                transition: 'color 0.2s ease',
               }}
             >
               Nuradesk
             </span>
           </Link>
 
-          {/* Middle: Desktop Navigation Links (Centered) */}
+          {/* Middle: Desktop Navigation Links (Centered, Text 14, Inter Font) */}
           <nav
             className="desktop-nav-group"
             style={{
@@ -199,374 +177,309 @@ export default function Navbar() {
               transform: 'translateX(-50%)',
             }}
           >
-              {/* Solutions Dropdown */}
-              <div
-                style={{ position: 'relative' }}
-                onMouseEnter={() => handleDropdownEnter('solutions')}
-                onMouseLeave={handleDropdownLeave}
+            {/* Products Dropdown */}
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => handleDropdownEnter('products')}
+              onMouseLeave={handleDropdownLeave}
+            >
+              <button
+                type="button"
+                className="nav-link-btn"
+                onClick={() => setDesktopDropdown(desktopDropdown === 'products' ? null : 'products')}
               >
-                <button
-                  type="button"
-                  onClick={() => setDesktopDropdown(desktopDropdown === 'solutions' ? null : 'solutions')}
+                <span>Products</span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    padding: '0.4rem 0',
-                    cursor: 'pointer',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
-                    color: desktopDropdown === 'solutions' ? '#000000' : '#374151',
-                    fontFamily: 'inherit',
-                    transition: 'color 0.15s ease',
-                    outline: 'none',
+                    transform: desktopDropdown === 'products' ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
                   }}
                 >
-                  <span>Solutions</span>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{
-                      transform: desktopDropdown === 'solutions' ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
 
-                {/* Solutions Dropdown Menu */}
-                {desktopDropdown === 'solutions' && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      left: '-12px',
-                      width: '300px',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '14px',
-                      padding: '0.55rem',
-                      boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1), 0 2px 10px rgba(0, 0, 0, 0.04)',
-                      border: '1px solid #ECECEE',
-                      zIndex: 1010,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.2rem',
-                      animation: 'navFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  >
-                    <Link
-                      href="#solutions"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Cafes &amp; Coffee Bars</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Rapid drink modifiers, split checks &amp; barista dispatch
-                      </div>
-                    </Link>
-                    <Link
-                      href="#solutions"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Retail &amp; Boutiques</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Barcode scanner lookups, size &amp; color variant matrix
-                      </div>
-                    </Link>
-                    <Link
-                      href="#solutions"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Bakeries &amp; Delis</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Daily morning bake tracking &amp; weight-based pricing
-                      </div>
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              {/* Features Dropdown */}
-              <div
-                style={{ position: 'relative' }}
-                onMouseEnter={() => handleDropdownEnter('features')}
-                onMouseLeave={handleDropdownLeave}
-              >
-                <button
-                  type="button"
-                  onClick={() => setDesktopDropdown(desktopDropdown === 'features' ? null : 'features')}
+              {desktopDropdown === 'products' && (
+                <div
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    padding: '0.4rem 0',
-                    cursor: 'pointer',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
-                    color: desktopDropdown === 'features' ? '#000000' : '#374151',
-                    fontFamily: 'inherit',
-                    transition: 'color 0.15s ease',
-                    outline: 'none',
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: '-12px',
+                    width: '280px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '10px',
+                    padding: '0.5rem',
+                    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                    border: '1px solid #ECECEE',
+                    zIndex: 1010,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.2rem',
+                    animation: 'navFadeIn 0.16s ease',
                   }}
                 >
-                  <span>Features</span>
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  <Link
+                    href="/pos-main"
+                    onClick={() => setDesktopDropdown(null)}
                     style={{
-                      transform: desktopDropdown === 'features' ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-
-                {/* Features Dropdown Menu */}
-                {desktopDropdown === 'features' && (
-                  <div
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Fast POS Register</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      1.2s split checks, card &amp; cash transactions
+                    </div>
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDesktopDropdown(null)}
                     style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      left: '-12px',
-                      width: '300px',
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: '14px',
-                      padding: '0.55rem',
-                      boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1), 0 2px 10px rgba(0, 0, 0, 0.04)',
-                      border: '1px solid #ECECEE',
-                      zIndex: 1010,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.2rem',
-                      animation: 'navFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <Link
-                      href="/pos-main"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>1.2s Fast POS Billing</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Ultra-fast counter register with split payments
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Real-Time Inventory</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Low-stock alerts, SKU matrices &amp; automatic decrement
-                      </div>
-                    </Link>
-                    <Link
-                      href="/manager"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Kitchen &amp; Barista Display</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Wireless ticket routing and order status boards
-                      </div>
-                    </Link>
-                    <Link
-                      href="/manager"
-                      onClick={() => setDesktopDropdown(null)}
-                      style={{
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '9px',
-                        textDecoration: 'none',
-                        color: '#0A0A0A',
-                        display: 'block',
-                        transition: 'background-color 0.15s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Cash Drawer &amp; Shifts</div>
-                      <div style={{ fontSize: '0.78rem', color: '#71717A', marginTop: '2px' }}>
-                        Staff clock-ins and drawer audit reconciliation
-                      </div>
-                    </Link>
-                  </div>
-                )}
-              </div>
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Real-Time Inventory</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      Stock decrements, low-stock alerts, &amp; POs
+                    </div>
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setDesktopDropdown(null)}
+                    style={{
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Business Analytics</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      Sales trends, profit margin charts, &amp; reports
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
 
-              {/* How it Works */}
-              <Link
-                href="#workflow"
-                className="nav-link-item"
-                style={{
-                  fontSize: '0.92rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
+            {/* Solutions Dropdown */}
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => handleDropdownEnter('solutions')}
+              onMouseLeave={handleDropdownLeave}
+            >
+              <button
+                type="button"
+                className="nav-link-btn"
+                onClick={() => setDesktopDropdown(desktopDropdown === 'solutions' ? null : 'solutions')}
               >
-                How It Works
-              </Link>
+                <span>Solutions</span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    transform: desktopDropdown === 'solutions' ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease',
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
 
-              {/* Pricing */}
+              {desktopDropdown === 'solutions' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: '-12px',
+                    width: '280px',
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '10px',
+                    padding: '0.5rem',
+                    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)',
+                    border: '1px solid #ECECEE',
+                    zIndex: 1010,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.2rem',
+                    animation: 'navFadeIn 0.16s ease',
+                  }}
+                >
+                  <Link
+                    href="/pos-main"
+                    onClick={() => setDesktopDropdown(null)}
+                    style={{
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Cafes &amp; Coffee Bars</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      Fast order modifiers &amp; split checks
+                    </div>
+                  </Link>
+                  <Link
+                    href="/pos-main"
+                    onClick={() => setDesktopDropdown(null)}
+                    style={{
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Retail &amp; Boutiques</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      Barcode scanners &amp; inventory matrices
+                    </div>
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setDesktopDropdown(null)}
+                    style={{
+                      padding: '0.6rem 0.8rem',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      color: '#000000',
+                      display: 'block',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#F4F4F6'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: '13.5px' }}>Bakeries &amp; Restaurants</div>
+                    <div style={{ fontSize: '12px', color: '#71717A', marginTop: '2px' }}>
+                      Table layouts, shifts, and kitchen tokens
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Pricing Dropdown / Link */}
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => handleDropdownEnter('pricing')}
+              onMouseLeave={handleDropdownLeave}
+            >
               <Link
                 href="#pricing"
-                className="nav-link-item"
-                style={{
-                  fontSize: '0.92rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
+                className="nav-link-btn"
+                onClick={() => setDesktopDropdown(null)}
               >
-                Pricing
-              </Link>
-
-              {/* FAQ */}
-              <Link
-                href="#faq"
-                className="nav-link-item"
-                style={{
-                  fontSize: '0.92rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                FAQ
-              </Link>
-            </nav>
-
-          {/* Right: Auth Buttons (Desktop) + Hamburger (Mobile) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 1002, flexShrink: 0 }}>
-            <div className="desktop-auth-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <Link
-                href="/signin"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.52rem 1.05rem',
-                  borderRadius: '8px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D4D4D8',
-                  color: '#18181B',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  letterSpacing: '-0.01em',
-                  transition: 'background-color 0.15s ease, border-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#F4F4F5';
-                  e.currentTarget.style.borderColor = '#A1A1AA';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FFFFFF';
-                  e.currentTarget.style.borderColor = '#D4D4D8';
-                }}
-              >
-                Log in
-              </Link>
-
-              <Link
-                href="/signup"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0.52rem 1.15rem',
-                  borderRadius: '8px',
-                  backgroundColor: '#09090B',
-                  color: '#FFFFFF',
-                  fontSize: '0.88rem',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  letterSpacing: '-0.01em',
-                  border: 'none',
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#27272A';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#09090B';
-                }}
-              >
-                Start Free Trial
+                <span>Pricing</span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
               </Link>
             </div>
+
+            {/* Resources / FAQ Dropdown */}
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => handleDropdownEnter('resources')}
+              onMouseLeave={handleDropdownLeave}
+            >
+              <Link
+                href="#faq"
+                className="nav-link-btn"
+                onClick={() => setDesktopDropdown(null)}
+              >
+                <span>Resources</span>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </Link>
+            </div>
+          </nav>
+
+          {/* Right: Button width: 109px, height: 31px, border-radius: 4px, background: #000 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', zIndex: 1002, flexShrink: 0 }}>
+            <Link
+              href="/signup"
+              style={{
+                width: '109px',
+                height: '31px',
+                borderRadius: '4px',
+                backgroundColor: '#000000',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 500,
+                fontFamily: "'Inter', sans-serif",
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+                transition: 'opacity 0.15s ease',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+            >
+              Create account
+            </Link>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -580,10 +493,10 @@ export default function Navbar() {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: '40px',
-                height: '40px',
+                width: '36px',
+                height: '36px',
                 backgroundColor: isMenuOpen ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                borderRadius: '9999px',
+                borderRadius: '4px',
                 border: 'none',
                 cursor: 'pointer',
                 zIndex: 1002,
@@ -592,41 +505,38 @@ export default function Navbar() {
                 transition: 'background-color 0.2s ease',
               }}
             >
-              {/* Top Bar */}
               <span
                 style={{
                   display: 'block',
-                  width: '24px',
-                  height: '2.5px',
+                  width: '20px',
+                  height: '2px',
                   backgroundColor: isMenuOpen ? '#FFFFFF' : '#000000',
-                  borderRadius: '2px',
-                  transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease',
-                  transform: isMenuOpen ? 'translateY(7px) rotate(45deg)' : 'none',
+                  borderRadius: '1px',
+                  transition: 'transform 0.25s ease, background-color 0.25s ease',
+                  transform: isMenuOpen ? 'translateY(6px) rotate(45deg)' : 'none',
                 }}
               />
-              {/* Middle Bar */}
               <span
                 style={{
                   display: 'block',
-                  width: '24px',
-                  height: '2.5px',
+                  width: '20px',
+                  height: '2px',
                   backgroundColor: isMenuOpen ? '#FFFFFF' : '#000000',
-                  borderRadius: '2px',
-                  margin: '4.5px 0',
-                  transition: 'opacity 0.2s ease, background-color 0.3s ease',
+                  borderRadius: '1px',
+                  margin: '4px 0',
+                  transition: 'opacity 0.2s ease, background-color 0.25s ease',
                   opacity: isMenuOpen ? 0 : 1,
                 }}
               />
-              {/* Bottom Bar */}
               <span
                 style={{
                   display: 'block',
-                  width: '24px',
-                  height: '2.5px',
+                  width: '20px',
+                  height: '2px',
                   backgroundColor: isMenuOpen ? '#FFFFFF' : '#000000',
-                  borderRadius: '2px',
-                  transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease',
-                  transform: isMenuOpen ? 'translateY(-7px) rotate(-45deg)' : 'none',
+                  borderRadius: '1px',
+                  transition: 'transform 0.25s ease, background-color 0.25s ease',
+                  transform: isMenuOpen ? 'translateY(-6px) rotate(-45deg)' : 'none',
                 }}
               />
             </button>
@@ -634,7 +544,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Menu Drawer */}
       <div
         role="dialog"
         aria-modal="true"
@@ -643,12 +553,12 @@ export default function Navbar() {
           position: 'fixed',
           inset: 0,
           zIndex: 999,
-          backgroundColor: '#09090B',
+          backgroundColor: '#000000',
           color: '#FFFFFF',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          paddingTop: '5.25rem',
+          paddingTop: '4.75rem',
           paddingBottom: '2.5rem',
           paddingLeft: '1.5rem',
           paddingRight: '1.5rem',
@@ -657,8 +567,8 @@ export default function Navbar() {
           transform: isMenuOpen ? 'translateY(0)' : 'translateY(-100%)',
           opacity: isMenuOpen ? 1 : 0,
           visibility: isMenuOpen ? 'visible' : 'hidden',
-          transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.4s',
-          fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+          transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.3s',
+          fontFamily: "'Inter', sans-serif",
         }}
       >
         <div
@@ -671,7 +581,6 @@ export default function Navbar() {
             gap: '1.25rem',
           }}
         >
-          {/* Main Navigation Links */}
           <nav
             style={{
               display: 'flex',
@@ -679,217 +588,115 @@ export default function Navbar() {
               gap: '1.1rem',
             }}
           >
-            {/* Mobile Solutions Accordion */}
+            <div>
+              <div
+                onClick={() => setIsMobileProductsOpen(!isMobileProductsOpen)}
+                style={{
+                  fontSize: '1.15rem',
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span>Products</span>
+                <span style={{ transform: isMobileProductsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                  ⌄
+                </span>
+              </div>
+              {isMobileProductsOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.85rem', marginTop: '0.65rem' }}>
+                  <Link href="/pos-main" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.92rem' }}>
+                    Fast POS Register
+                  </Link>
+                  <Link href="/dashboard" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.92rem' }}>
+                    Real-Time Inventory
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <div>
               <div
                 onClick={() => setIsMobileSolutionsOpen(!isMobileSolutionsOpen)}
                 style={{
-                  fontSize: '1.35rem',
-                  fontWeight: 700,
+                  fontSize: '1.15rem',
+                  fontWeight: 600,
                   color: '#FFFFFF',
-                  letterSpacing: '-0.02em',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  userSelect: 'none',
                 }}
               >
                 <span>Solutions</span>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: isMobileSolutionsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.25s ease',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                <span style={{ transform: isMobileSolutionsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                  ⌄
                 </span>
               </div>
               {isMobileSolutionsOpen && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.65rem',
-                    paddingLeft: '1rem',
-                    marginTop: '0.75rem',
-                    borderLeft: '2px solid rgba(255,255,255,0.2)',
-                  }}
-                >
-                  <Link href="#solutions" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.85rem', marginTop: '0.65rem' }}>
+                  <Link href="/pos-main" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.92rem' }}>
                     Cafes &amp; Coffee Bars
                   </Link>
-                  <Link href="#solutions" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
+                  <Link href="/signup" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.92rem' }}>
                     Retail &amp; Boutiques
                   </Link>
-                  <Link href="#solutions" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
-                    Bakeries &amp; Delis
-                  </Link>
                 </div>
               )}
             </div>
 
-            {/* Mobile Features Accordion */}
-            <div>
-              <div
-                onClick={() => setIsMobileFeaturesOpen(!isMobileFeaturesOpen)}
-                style={{
-                  fontSize: '1.35rem',
-                  fontWeight: 700,
-                  color: '#FFFFFF',
-                  letterSpacing: '-0.02em',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  userSelect: 'none',
-                }}
-              >
-                <span>Features</span>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: isMobileFeaturesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.25s ease',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </span>
-              </div>
-              {isMobileFeaturesOpen && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.65rem',
-                    paddingLeft: '1rem',
-                    marginTop: '0.75rem',
-                    borderLeft: '2px solid rgba(255,255,255,0.2)',
-                  }}
-                >
-                  <Link href="/pos-main" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
-                    1.2s Fast POS Billing
-                  </Link>
-                  <Link href="/admin" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
-                    Real-Time Inventory &amp; Stock
-                  </Link>
-                  <Link href="/manager" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
-                    Kitchen &amp; Barista Screen
-                  </Link>
-                  <Link href="/manager" onClick={closeMenu} style={{ color: '#D4D4D8', textDecoration: 'none', fontSize: '0.98rem' }}>
-                    Cash Drawer &amp; Shift Audit
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* How It Works */}
-            <Link
-              href="#workflow"
-              onClick={closeMenu}
-              style={{
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              How It Works
-            </Link>
-
-            {/* Pricing */}
-            <Link
-              href="#pricing"
-              onClick={closeMenu}
-              style={{
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                letterSpacing: '-0.02em',
-              }}
-            >
+            <Link href="#pricing" onClick={closeMenu} style={{ fontSize: '1.15rem', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none' }}>
               Pricing
             </Link>
-
-            {/* FAQ */}
-            <Link
-              href="#faq"
-              onClick={closeMenu}
-              style={{
-                fontSize: '1.35rem',
-                fontWeight: 700,
-                color: '#FFFFFF',
-                textDecoration: 'none',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              FAQ
+            <Link href="#faq" onClick={closeMenu} style={{ fontSize: '1.15rem', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none' }}>
+              Resources &amp; FAQ
             </Link>
           </nav>
-        </div>
 
-        {/* Bottom Actions: Log in & Start Free Trial */}
-        <div
-          style={{
-            maxWidth: '520px',
-            width: '100%',
-            margin: '0 auto',
-            paddingTop: '1.5rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-          }}
-        >
-          <Link
-            href="/signin"
-            onClick={closeMenu}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.75rem',
-              borderRadius: '9px',
-              backgroundColor: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              color: '#FFFFFF',
-              fontSize: '0.95rem',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Log in
-          </Link>
-
-          <Link
-            href="/signup"
-            onClick={closeMenu}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0.8rem',
-              borderRadius: '9px',
-              backgroundColor: '#FFFFFF',
-              color: '#000000',
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              textDecoration: 'none',
-            }}
-          >
-            Start Free Trial
-          </Link>
+          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <Link
+              href="/signup"
+              onClick={closeMenu}
+              style={{
+                width: '100%',
+                height: '42px',
+                borderRadius: '4px',
+                backgroundColor: '#FFFFFF',
+                color: '#000000',
+                fontSize: '14px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none',
+              }}
+            >
+              Create account
+            </Link>
+            <Link
+              href="/signin"
+              onClick={closeMenu}
+              style={{
+                width: '100%',
+                height: '42px',
+                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                border: '1px solid #444',
+                color: '#FFFFFF',
+                fontSize: '14px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none',
+              }}
+            >
+              Log in
+            </Link>
+          </div>
         </div>
       </div>
     </>

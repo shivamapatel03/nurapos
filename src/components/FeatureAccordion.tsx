@@ -23,28 +23,28 @@ const ACCORDION_ITEMS: AccordionItem[] = [
     title: 'Inventory Management',
     description:
       'Automated real-time stock sync across all registers. Receive low-stock alerts, track unit costs, manage purchase orders, and prevent stockouts effortlessly.',
-    link: '/admin',
+    link: '/dashboard',
   },
   {
     id: 'sales-analytics',
     title: 'Sales & Analytics',
     description:
       'Live revenue dashboards, shift reconciliation reports, hourly peak traffic insights, and exportable financial summaries to help you make data-driven decisions.',
-    link: '/admin',
+    link: '/dashboard',
   },
   {
     id: 'customer-management',
     title: 'Customer Management',
     description:
       'Build lasting customer loyalty with purchase histories, digital receipts, automated reward points, and targeted promotional outreach directly from checkout.',
-    link: '/admin',
+    link: '/dashboard',
   },
   {
     id: 'team-operations',
     title: 'Team & Operations',
     description:
       'Manage staff permissions, shift clock-in and clock-out tracking, cashier drawer reconciliation, and terminal audit logs with complete accountability.',
-    link: '/manager',
+    link: '/dashboard',
   },
 ];
 
@@ -65,25 +65,26 @@ export default function FeatureAccordion() {
         maxWidth: '680px',
         width: '100%',
         margin: '0 auto',
-        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+        fontFamily: "'Inter', sans-serif",
         boxSizing: 'border-box',
       }}
     >
       <style>{`
         .feature-accordion-heading {
-          font-size: 38px;
-          line-height: 1.15;
-          font-weight: 550;
-          letter-spacing: -0.035em;
+          font-family: 'Inter', sans-serif;
+          font-size: 24px;
+          line-height: 1.25;
+          font-weight: 600;
+          letter-spacing: -0.025em;
           color: #0A0A0A;
           margin: 0 auto;
-          max-width: 600px;
+          max-width: 580px;
         }
 
         @media (min-width: 769px) {
           .feature-accordion-heading {
-            font-size: 56px;
-            line-height: 1.1;
+            font-size: 30px;
+            line-height: 1.22;
           }
         }
 
@@ -100,7 +101,7 @@ export default function FeatureAccordion() {
       {/* Main Heading with generous whitespace and centered alignment */}
       <div
         style={{
-          marginBottom: 'clamp(2rem, 4vw, 3.25rem)',
+          marginBottom: 'clamp(2rem, 3.5vw, 2.75rem)',
           textAlign: 'center',
         }}
       >
@@ -146,12 +147,13 @@ export default function FeatureAccordion() {
                   userSelect: 'none',
                 }}
               >
-                {/* Title (18px, bold, black) */}
+                {/* Title (Inter Semi-Bold 600) */}
                 <span
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    letterSpacing: '-0.02em',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    letterSpacing: '-0.015em',
                     color: '#0A0A0A',
                     transition: 'color 250ms ease',
                   }}
@@ -170,7 +172,7 @@ export default function FeatureAccordion() {
                     justifyContent: 'center',
                     transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1), color 250ms ease',
-                    color: isOpen ? '#1B4EF5' : '#71717A',
+                    color: isOpen ? '#000000' : '#71717A',
                     flexShrink: 0,
                   }}
                   aria-hidden="true"
@@ -201,7 +203,7 @@ export default function FeatureAccordion() {
                 </div>
               </button>
 
-              {/* Accordion Content with smooth 250-350ms height expand/collapse & upward/downward fade-slide */}
+              {/* Accordion Content with smooth 250-350ms height expand/collapse */}
               <div
                 id={`accordion-content-${item.id}`}
                 role="region"
@@ -227,10 +229,11 @@ export default function FeatureAccordion() {
                       maxWidth: '740px',
                     }}
                   >
-                    {/* Description: 16px, regular */}
+                    {/* Description */}
                     <p
                       style={{
-                        fontSize: '16px',
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: '15px',
                         fontWeight: 400,
                         lineHeight: 1.6,
                         color: '#52525B',
@@ -241,14 +244,15 @@ export default function FeatureAccordion() {
                       {item.description}
                     </p>
 
-                    {/* "Learn more" link: 15px bold with subtle hover */}
+                    {/* "Learn more" link */}
                     <div style={{ marginTop: '0.85rem' }}>
                       <Link
                         href={item.link}
                         style={{
-                          fontSize: '15px',
-                          fontWeight: 700,
-                          color: '#1B4EF5',
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#000000',
                           textDecoration: 'none',
                           display: 'inline-flex',
                           alignItems: 'center',

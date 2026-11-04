@@ -181,7 +181,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    [Authorize(Roles = "FRANCHISE_OWNER")]
+    [Authorize]
     [HttpPost("pos-pin/setup")]
     public async Task<IActionResult> SetupPosPin([FromBody] PosPinRequest request)
     {
@@ -201,7 +201,7 @@ public class AuthController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "FRANCHISE_OWNER")]
+    [Authorize]
     [HttpPost("pos-pin/verify")]
     public async Task<IActionResult> VerifyPosPin([FromBody] PosPinRequest request)
     {
@@ -226,8 +226,11 @@ public class AuthController : ControllerBase
         }
     }
 
-    private bool TryGetUserId(out int userId) =>
-        int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
+    private bool TryGetUserId(out int userId)
+    {
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out userId);
+    }
 
     private static ApiResponse<object?> Error(int statusCode, string message) => new()
     {

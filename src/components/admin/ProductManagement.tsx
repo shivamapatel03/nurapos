@@ -447,7 +447,23 @@ export default function ProductManagement({
     const selling = typeof formSellingPrice === 'number' ? formSellingPrice : 0;
     const matchedCategory = categories.find((c) => c.name === formCategory);
     const categoryIdNum = matchedCategory ? Number(matchedCategory.id) : undefined;
-    const validCategoryId = categoryIdNum && !isNaN(categoryIdNum) && categoryIdNum > 0 ? categoryIdNum : undefined;
+    let validCategoryId = categoryIdNum && !isNaN(categoryIdNum) && categoryIdNum > 0 ? categoryIdNum : undefined;
+
+    // Auto-create category in backend if none exist yet for this owner
+    if (!validCategoryId && formCategory && formCategory.trim()) {
+      try {
+        const catRes = await createCatalogCategory({
+          name: formCategory.trim(),
+          description: 'Default catalog category',
+          status: 'ACTIVE',
+        });
+        if (catRes?.data?.id) {
+          validCategoryId = Number(catRes.data.id);
+        }
+      } catch (catErr) {
+        console.warn('Could not auto-create category:', catErr);
+      }
+    }
 
     const productPayload: ProductRequest = {
       name: formName.trim(),

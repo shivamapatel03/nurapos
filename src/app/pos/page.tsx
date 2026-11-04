@@ -54,6 +54,7 @@ import {
   createCustomer,
   getDiningTables,
   updateTableStatus,
+  getCatalogCategories,
   getCatalogProducts,
   getOffers,
 } from '@/lib/api-client';
@@ -139,6 +140,107 @@ interface HeldSale {
   deliveryPlatform?: string;
   customerName?: string;
   customerPhone?: string;
+}
+
+const DEFAULT_STORE_PRODUCTS: Product[] = [
+  {
+    id: 'demo-1',
+    name: 'Artisan Espresso',
+    variant: 'Single Origin',
+    price: 150,
+    category: 'Beverages',
+    image: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-2',
+    name: 'Iced Vanilla Latte',
+    variant: 'Grande 16oz',
+    price: 220,
+    category: 'Beverages',
+    image: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-3',
+    name: 'Matcha Green Tea',
+    variant: 'Cold Whisked',
+    price: 240,
+    category: 'Beverages',
+    image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-4',
+    name: 'Butter Croissant',
+    variant: 'Fresh Baked',
+    price: 120,
+    category: 'Bakery',
+    image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-5',
+    name: 'Blueberry Danish',
+    variant: 'Flaky Pastry',
+    price: 160,
+    category: 'Bakery',
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-6',
+    name: 'Avocado Sourdough Toast',
+    variant: 'Organic Sourdough',
+    price: 280,
+    category: 'Food',
+    image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-7',
+    name: 'Classic Club Sandwich',
+    variant: 'Toasted Multi-Grain',
+    price: 260,
+    category: 'Food',
+    image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'demo-8',
+    name: 'Ceramic Nuradesk Mug',
+    variant: 'Matte Black 12oz',
+    price: 450,
+    category: 'Retail',
+    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80',
+  },
+];
+
+function getDefaultImageForCategory(catName: string): string {
+  const lower = (catName || '').toLowerCase();
+  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('coffee') || lower.includes('tea')) {
+    return 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500&auto=format&fit=crop&q=80';
+  }
+  if (lower.includes('bake') || lower.includes('pastry') || lower.includes('cake') || lower.includes('bread') || lower.includes('croissant')) {
+    return 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80';
+  }
+  if (lower.includes('food') || lower.includes('snack') || lower.includes('meal') || lower.includes('lunch') || lower.includes('burger')) {
+    return 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&auto=format&fit=crop&q=80';
+  }
+  if (lower.includes('retail') || lower.includes('merch') || lower.includes('mug')) {
+    return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80';
+}
+
+function getCategoryIcon(catName: string) {
+  const lower = (catName || '').toLowerCase();
+  if (lower.includes('beverage') || lower.includes('drink') || lower.includes('coffee') || lower.includes('tea')) {
+    return <LocalCafeRoundedIcon sx={{ fontSize: 18 }} />;
+  }
+  if (lower.includes('bake') || lower.includes('pastry') || lower.includes('cake') || lower.includes('bread')) {
+    return <BakeryDiningRoundedIcon sx={{ fontSize: 18 }} />;
+  }
+  if (lower.includes('food') || lower.includes('meal') || lower.includes('snack') || lower.includes('lunch') || lower.includes('burger')) {
+    return <LunchDiningRoundedIcon sx={{ fontSize: 18 }} />;
+  }
+  if (lower.includes('retail') || lower.includes('merch') || lower.includes('cloth')) {
+    return <CheckroomRoundedIcon sx={{ fontSize: 18 }} />;
+  }
+  return <CategoryRoundedIcon sx={{ fontSize: 18 }} />;
 }
 
 
@@ -481,7 +583,9 @@ export default function PosMainScreen() {
   }, [diningTables]);
 
   // Product Catalog (loaded dynamically from store inventory/catalog)
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(DEFAULT_STORE_PRODUCTS);
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [storeOffers, setStoreOffers] = useState<StoreOffer[]>([]);
   const [appliedPromoCode, setAppliedPromoCode] = useState<string>('');
   const [promoDiscountAmount, setPromoDiscountAmount] = useState<number>(0);
@@ -490,7 +594,7 @@ export default function PosMainScreen() {
   // Dynamic order sequence number
   const [orderNumber, setOrderNumber] = useState<string>('#ORD-1001');
 
-  // Load real store data from localStorage on mount
+  // Load real store data from backend API & localStorage on mount
   useEffect(() => {
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -512,6 +616,7 @@ export default function PosMainScreen() {
 
       const autoOffers = loadedOffers.filter((o) => !o.code);
 
+      // Check localStorage for offline/cached products first
       const savedProducts = localStorage.getItem('nuradesk_products');
       if (savedProducts) {
         const parsed = JSON.parse(savedProducts);
@@ -523,7 +628,6 @@ export default function PosMainScreen() {
               const prodId = String(p.id);
               const prodCat = p.category || 'General';
 
-              // Find matching auto-applied offer
               const matchingOffer = autoOffers.find((offer) => {
                 if (offer.appliesTo === 'all') return true;
                 if (offer.appliesTo === 'category' && offer.targetCategories?.includes(prodCat)) return true;
@@ -549,7 +653,7 @@ export default function PosMainScreen() {
                   price: discountedPrice,
                   originalPrice: basePrice > discountedPrice ? basePrice : undefined,
                   category: prodCat,
-                  image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                  image: (p as any).image || getDefaultImageForCategory(prodCat),
                   isOffer: true,
                   offerBadge: matchingOffer.badgeText || 'OFFER',
                 };
@@ -561,7 +665,7 @@ export default function PosMainScreen() {
                 variant: p.hasVariants && p.variants?.[0]?.name ? p.variants[0].name : (p.brand || 'Standard'),
                 price: basePrice,
                 category: prodCat,
-                image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
+                image: (p as any).image || getDefaultImageForCategory(prodCat),
                 isOffer: Boolean(p.isOffer),
                 offerBadge: 'OFFER',
               };
@@ -570,27 +674,102 @@ export default function PosMainScreen() {
         }
       }
 
-      // Sync real catalog products from backend API (GET /api/owner-catalog/products)
-      getCatalogProducts()
-        .then((res) => {
-          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-            const apiProducts: Product[] = res.data.map((p) => ({
-              id: String(p.id),
-              name: p.name,
-              variant: p.unit || 'Standard',
-              price: p.sellingPrice || 0,
-              category: (p as any).categoryName || 'General',
-              image: (p as any).image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80',
-              isOffer: false,
-            }));
-            setProducts((prev) => {
-              const apiIds = new Set(apiProducts.map((p) => p.id));
-              const remaining = prev.filter((p) => !apiIds.has(p.id));
-              return [...apiProducts, ...remaining];
+      // Check localStorage for cached categories
+      const savedCats = localStorage.getItem('nuradesk_categories');
+      if (savedCats) {
+        const parsed = JSON.parse(savedCats);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCategories(parsed.map((c: any) => ({ id: String(c.id), name: c.name })));
+        }
+      }
+
+      // Live Fetch: Get categories and products in parallel from backend API
+      setIsLoadingProducts(true);
+      Promise.all([
+        getCatalogCategories().catch(() => null),
+        getCatalogProducts().catch(() => null),
+      ])
+        .then(([catRes, prodRes]) => {
+          const categoryMap = new Map<number, string>();
+          const loadedCats: Array<{ id: string; name: string }> = [];
+
+          if (catRes?.data && Array.isArray(catRes.data) && catRes.data.length > 0) {
+            catRes.data.forEach((c) => {
+              categoryMap.set(Number(c.id), c.name);
+              loadedCats.push({ id: String(c.id), name: c.name });
             });
+            setCategories(loadedCats);
+            try {
+              localStorage.setItem('nuradesk_categories', JSON.stringify(catRes.data));
+            } catch {}
+          }
+
+          if (prodRes?.data && Array.isArray(prodRes.data) && prodRes.data.length > 0) {
+            const apiProducts: Product[] = prodRes.data
+              .filter((p) => p.status !== 'INACTIVE')
+              .map((p) => {
+                const basePrice = Number(p.sellingPrice) || 0;
+                const prodId = String(p.id);
+                const resolvedCat = (p.categoryId ? categoryMap.get(p.categoryId) : undefined)
+                  || p.categoryName
+                  || (p as any).category
+                  || 'General';
+
+                const matchingOffer = autoOffers.find((offer) => {
+                  if (offer.appliesTo === 'all') return true;
+                  if (offer.appliesTo === 'category' && offer.targetCategories?.includes(resolvedCat)) return true;
+                  if (offer.appliesTo === 'products' && offer.targetProductIds?.includes(prodId)) return true;
+                  return false;
+                });
+
+                if (matchingOffer) {
+                  let discountedPrice = basePrice;
+                  if (matchingOffer.discountType === 'percentage') {
+                    discountedPrice = Math.max(0, basePrice * (1 - matchingOffer.discountValue / 100));
+                  } else if (matchingOffer.discountType === 'fixed_amount') {
+                    discountedPrice = Math.max(0, basePrice - matchingOffer.discountValue);
+                  } else if (matchingOffer.discountType === 'promo_price') {
+                    discountedPrice = matchingOffer.discountValue;
+                  }
+                  discountedPrice = Math.round(discountedPrice * 100) / 100;
+
+                  return {
+                    id: prodId,
+                    name: p.name,
+                    variant: p.unit || 'Standard',
+                    price: discountedPrice,
+                    originalPrice: basePrice > discountedPrice ? basePrice : undefined,
+                    category: resolvedCat,
+                    image: (p as any).image || getDefaultImageForCategory(resolvedCat),
+                    isOffer: true,
+                    offerBadge: matchingOffer.badgeText || 'OFFER',
+                  };
+                }
+
+                return {
+                  id: prodId,
+                  name: p.name,
+                  variant: p.unit || 'Standard',
+                  price: basePrice,
+                  category: resolvedCat,
+                  image: (p as any).image || getDefaultImageForCategory(resolvedCat),
+                  isOffer: false,
+                };
+              });
+
+            setProducts(apiProducts);
+            try {
+              localStorage.setItem('nuradesk_products', JSON.stringify(prodRes.data));
+            } catch {}
+          } else {
+            // Keep default products if no database products returned
+            setProducts((prev) => (prev.length > 0 ? prev : DEFAULT_STORE_PRODUCTS));
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          setIsLoadingProducts(false);
+        });
 
       const savedCustomers = localStorage.getItem('nuradesk_customers');
       if (savedCustomers) {
@@ -625,26 +804,32 @@ export default function PosMainScreen() {
     } catch (e) {}
   }, [heldSales]);
 
-  // Dynamic categories list: Only "All Items" by default, plus any categories created by admin
+  // Dynamic categories list: "All Items", plus all categories from backend & products
   const categoriesList = useMemo(() => {
-    // Unique categories from products
-    const customCats = Array.from(
-      new Set(
-        products
-          .map((p) => p.category)
-          .filter((cat) => cat && cat !== 'All' && cat !== 'General' && cat.toLowerCase() !== 'no category')
-      )
-    );
+    const catMap = new Map<string, number>();
 
-    // Also include any categories saved by admin in localStorage
+    // Count products per category
+    products.forEach((p) => {
+      const cat = p.category || 'General';
+      catMap.set(cat, (catMap.get(cat) || 0) + 1);
+    });
+
+    // Also include any categories fetched from backend that might not have products yet
+    categories.forEach((c) => {
+      if (c.name && !catMap.has(c.name)) {
+        catMap.set(c.name, 0);
+      }
+    });
+
+    // Also include any categories saved in localStorage
     try {
       const savedCats = localStorage.getItem('nuradesk_categories');
       if (savedCats) {
         const parsed = JSON.parse(savedCats);
         if (Array.isArray(parsed)) {
           parsed.forEach((c: any) => {
-            if (c.name && !customCats.includes(c.name) && c.name !== 'All' && c.name !== 'General') {
-              customCats.push(c.name);
+            if (c.name && !catMap.has(c.name)) {
+              catMap.set(c.name, 0);
             }
           });
         }
@@ -656,21 +841,21 @@ export default function PosMainScreen() {
         id: 'All',
         name: 'All Items',
         count: products.length,
-        icon: <RestaurantRoundedIcon sx={{ fontSize: 20 }} />,
+        icon: <RestaurantRoundedIcon sx={{ fontSize: 18 }} />,
       },
     ];
 
-    customCats.forEach((catName) => {
+    catMap.forEach((count, catName) => {
       list.push({
         id: catName,
         name: catName,
-        count: products.filter((p) => p.category?.toLowerCase() === catName.toLowerCase()).length,
-        icon: <CategoryRoundedIcon sx={{ fontSize: 20 }} />,
+        count,
+        icon: getCategoryIcon(catName),
       });
     });
 
     return list;
-  }, [products]);
+  }, [products, categories]);
 
   // Filter products by category and search
   const filteredProducts = products.filter((p) => {
@@ -686,6 +871,24 @@ export default function PosMainScreen() {
 
     return matchesCategory && matchesSearch;
   });
+
+  // Group filtered products by category for category-wise display
+  const groupedByCategory = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    filteredProducts.forEach((p) => {
+      const cat = p.category || 'General';
+      if (!map.has(cat)) {
+        map.set(cat, []);
+      }
+      map.get(cat)!.push(p);
+    });
+
+    const groups: { category: string; items: Product[] }[] = [];
+    map.forEach((items, category) => {
+      groups.push({ category, items });
+    });
+    return groups;
+  }, [filteredProducts]);
 
   // Cart operations
   const addToCart = (product: Product) => {
@@ -1559,7 +1762,195 @@ export default function PosMainScreen() {
                     : 'Try selecting another category or clearing your search query.'}
                 </div>
               </div>
+            ) : selectedCategory === 'All' && !searchQuery.trim() ? (
+              /* CATEGORY-WISE GROUPED VIEW WHEN ALL ITEMS SELECTED */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '1.5rem' }}>
+                {groupedByCategory.map((group) => (
+                  <div key={group.category} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: `1px solid ${theme.border}`,
+                      paddingBottom: '0.45rem',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', color: theme.textSecondary }}>
+                          {getCategoryIcon(group.category)}
+                        </span>
+                        <h3 style={{
+                          fontSize: '14.5px',
+                          fontWeight: 800,
+                          color: theme.textPrimary,
+                          letterSpacing: '-0.015em',
+                          margin: 0,
+                        }}>
+                          {group.category}
+                        </h3>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: theme.textSecondary,
+                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F1F5F9',
+                          padding: '1px 7px',
+                          borderRadius: '999px',
+                          border: `1px solid ${theme.border}`,
+                        }}>
+                          {group.items.length}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory(group.category)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: theme.textSecondary,
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '2px 6px',
+                        }}
+                      >
+                        View all →
+                      </button>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                      gap: '1rem',
+                    }}>
+                      {group.items.map((p) => {
+                        const countInCart = cart.find((c) => c.product.id === p.id)?.quantity || 0;
+
+                        return (
+                          <div
+                            key={p.id}
+                            onClick={() => addToCart(p)}
+                            role="button"
+                            tabIndex={0}
+                            style={{
+                              backgroundColor: theme.bgCard,
+                              border: countInCart > 0 ? `2px solid ${theme.activeBg}` : `1px solid ${theme.borderCard}`,
+                              borderRadius: '1rem',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              transition: 'all 0.15s ease',
+                              position: 'relative',
+                              boxShadow: 'none',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = theme.borderHover;
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (countInCart === 0) e.currentTarget.style.borderColor = theme.borderCard;
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            {/* Product Image Pod */}
+                            <div style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '135px',
+                              backgroundColor: theme.bgCardSubtle,
+                            }}>
+                              <Image
+                                src={p.image}
+                                alt={p.name}
+                                fill
+                                unoptimized
+                                sizes="(max-width: 768px) 100vw, 240px"
+                                style={{
+                                  objectFit: 'contain',
+                                  objectPosition: 'center',
+                                  padding: '0.65rem',
+                                  backgroundColor: theme.bgCardSubtle,
+                                }}
+                              />
+                              {/* Quantity in Cart Badge */}
+                              {countInCart > 0 && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '8px',
+                                  right: '8px',
+                                  backgroundColor: theme.badgeBg,
+                                  color: theme.badgeText,
+                                  border: `1px solid ${theme.border}`,
+                                  borderRadius: '9999px',
+                                  padding: '2px 8px',
+                                  fontSize: '11.5px',
+                                  fontWeight: 800,
+                                }}>
+                                  {countInCart}x
+                                </div>
+                              )}
+                              {p.isOffer && (
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '8px',
+                                  left: '8px',
+                                  backgroundColor: '#F59E0B',
+                                  color: '#FFFFFF',
+                                  borderRadius: '9999px',
+                                  padding: '2px 8px',
+                                  fontSize: '10px',
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
+                                }}>
+                                  {p.offerBadge || 'Offer'}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Product Details */}
+                            <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, justifyContent: 'space-between' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                                  <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    color: theme.textSecondary,
+                                    backgroundColor: theme.sidebarIsDark ? theme.bgCardSubtle : '#F1F5F9',
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    letterSpacing: '0.02em',
+                                    textTransform: 'uppercase',
+                                  }}>
+                                    {p.category || 'General'}
+                                  </span>
+                                </div>
+                                <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em', display: 'block' }}>
+                                  {p.name}
+                                </span>
+                                <span style={{ fontSize: '12px', color: theme.textSecondary, display: 'block' }}>
+                                  {p.variant}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem', marginTop: '0.45rem' }}>
+                                <span style={{ fontSize: '16px', fontWeight: 800, color: p.isOffer ? '#059669' : theme.textPrimary }}>
+                                  ₹{p.price}
+                                </span>
+                                {p.isOffer && p.originalPrice && p.originalPrice > p.price && (
+                                  <span style={{ fontSize: '12px', color: theme.textSecondary, textDecoration: 'line-through' }}>
+                                    ₹{p.originalPrice}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
+              /* FILTERED SINGLE CATEGORY OR SEARCH VIEW */
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -1653,14 +2044,30 @@ export default function PosMainScreen() {
                       </div>
 
                       {/* Product Details */}
-                      <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em' }}>
-                          {p.name}
-                        </span>
-                        <span style={{ fontSize: '12px', color: theme.textSecondary }}>
-                          {p.variant}
-                        </span>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem', marginTop: '0.35rem' }}>
+                      <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              color: theme.textSecondary,
+                              backgroundColor: theme.sidebarIsDark ? theme.bgCardSubtle : '#F1F5F9',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              letterSpacing: '0.02em',
+                              textTransform: 'uppercase',
+                            }}>
+                              {p.category || 'General'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em', display: 'block' }}>
+                            {p.name}
+                          </span>
+                          <span style={{ fontSize: '12px', color: theme.textSecondary, display: 'block' }}>
+                            {p.variant}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem', marginTop: '0.45rem' }}>
                           <span style={{ fontSize: '16px', fontWeight: 800, color: p.isOffer ? '#059669' : theme.textPrimary }}>
                             ₹{p.price}
                           </span>

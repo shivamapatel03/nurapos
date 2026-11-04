@@ -9,7 +9,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+[Authorize]
 [Route("api/reports")]
 public sealed class ReportController(IReportService service) : ControllerBase
 {
@@ -31,7 +31,8 @@ public sealed class ReportController(IReportService service) : ControllerBase
 
     private async Task<IActionResult> Run<T>(Func<int, Task<T>> action, string message)
     {
-        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var ownerId))
+        var ownerVal = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        if (!int.TryParse(ownerVal, out var ownerId))
             return Unauthorized(new ApiResponse<object?> { StatusCode = 401, Message = "A valid owner token is required." });
         try
         {

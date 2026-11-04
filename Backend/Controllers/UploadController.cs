@@ -13,12 +13,12 @@ namespace Nurapos.Controllers;
 public sealed class UploadController(IUploadService service):ControllerBase
 {
     [HttpPost("product-image")]
-    [Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     [RequestSizeLimit(5*1024*1024+65536)]
     public Task<IActionResult> ProductImage([FromForm]UploadFileRequest request,CancellationToken cancellationToken)=>Upload(request,"product-image",cancellationToken);
 
     [HttpPost("receipt")]
-    [Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier")]
+    [Authorize]
     [RequestSizeLimit(10*1024*1024+65536)]
     public Task<IActionResult> Receipt([FromForm]UploadFileRequest request,CancellationToken cancellationToken)=>Upload(request,"receipt",cancellationToken);
 
@@ -42,8 +42,8 @@ public sealed class UploadController(IUploadService service):ControllerBase
     }
     private bool TryOwnerId(out int id)
     {
-        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
-        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
     }
     private static ApiResponse<object?> Error(int status,string message)=>new(){StatusCode=status,Message=message};
 }

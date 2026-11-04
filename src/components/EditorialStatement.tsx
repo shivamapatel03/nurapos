@@ -51,7 +51,7 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
       id="editorial-manifesto"
       style={{
         position: 'relative',
-        height: '175vh', // Comfortable scroll track for slow highlighting
+        height: '145vh', // Punchy, responsive track for hard scrolling
         backgroundColor: '#FFFFFF',
         width: '100%',
         boxSizing: 'border-box',
@@ -82,22 +82,22 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
         >
           <h2
             style={{
-              fontFamily: "var(--font-heading, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif)",
-              fontSize: 'clamp(1.6rem, 3vw, 2.5rem)',
-              fontWeight: 800,
-              lineHeight: 1.35,
-              letterSpacing: '-0.035em',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 'clamp(1.35rem, 2.4vw, 2.1rem)',
+              fontWeight: 600,
+              lineHeight: 1.4,
+              letterSpacing: '-0.02em',
               margin: 0,
               display: 'inline',
               userSelect: 'none',
             }}
           >
             {words.map((word, index) => {
-              // Reserve the first 82% of the scroll track to gradually illuminate the words one by one.
-              // The remaining 18% holds all words in 100% deep black before moving to the next section.
-              const highlightEndPhase = 0.82;
-              const rangePerWord = 0.12; // Smooth gradual transition between words
-              const step = (highlightEndPhase - rangePerWord) / Math.max(1, words.length - 1);
+              // Hard scrolling effect: each word snaps decisively from gray to black as user scrolls down
+              const highlightEndPhase = 0.88;
+              const step = highlightEndPhase / words.length;
+              // Very tight threshold range so words snap punchily into black without soft blurry fading
+              const rangePerWord = 0.012;
               const wordStart = index * step;
               const wordEnd = wordStart + rangePerWord;
 
@@ -117,7 +117,7 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
                     marginRight: '0.24em',
                   }}
                 >
-                  {/* Base Layer: Muted Gray (Normally in gray) */}
+                  {/* Base Layer: Muted Gray */}
                   <span
                     style={{
                       color: '#D4D4D8',
@@ -126,17 +126,17 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
                     {word}
                   </span>
 
-                  {/* Highlight Layer: Deep Bold Black (Progressively turns black as you scroll) */}
+                  {/* Highlight Layer: Crisp Deep Black */}
                   <span
                     aria-hidden="true"
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      color: '#0A0A0A',
+                      color: '#000000',
                       opacity: wordOpacity,
                       pointerEvents: 'none',
-                      transition: 'opacity 0.05s ease-out',
+                      transition: 'opacity 0.04s cubic-bezier(0.2, 0, 0, 1)',
                     }}
                   >
                     {word}

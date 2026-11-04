@@ -8,6 +8,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { loginUser } from '@/lib/api-client';
 import { isAuthenticated } from '@/lib/auth';
@@ -20,6 +21,13 @@ export default function SigninPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto-dismiss error toast after 6 seconds
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = setTimeout(() => setErrorMessage(''), 6000);
+    return () => clearTimeout(timer);
+  }, [errorMessage]);
 
   // If already authenticated with valid token, redirect straight to dashboard
   useEffect(() => {
@@ -38,13 +46,12 @@ export default function SigninPage() {
     setIsLoading(true);
 
     try {
-      // POST /api/auth/login
       const res = await loginUser({ email: email.trim(), password });
       setIsSubmitted(true);
       setTimeout(() => {
         const dest = res.data && !res.data.posPinConfigured ? '/onboarding' : '/dashboard';
         window.location.replace(dest);
-      }, 700);
+      }, 600);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Invalid email or password. Please try again.');
     } finally {
@@ -52,30 +59,131 @@ export default function SigninPage() {
     }
   };
 
-  // Direct Unsplash image link for modern retail / cafe POS checkout
   const unsplashImageUrl = 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=1200&auto=format&fit=crop';
 
   return (
-    <div style={{
-      height: '100vh',
-      maxHeight: '100vh',
-      width: '100vw',
-      overflow: 'hidden',
-      backgroundColor: '#FFFFFF',
-      display: 'flex',
-      flexDirection: 'column',
-      fontFamily: "var(--font-inter, 'Inter', sans-serif)",
-      boxSizing: 'border-box',
-    }}>
-      {/* Top Header with "Need help" */}
-      <header style={{
-        height: '52px',
-        padding: '0 2.5rem',
+    <div
+      style={{
+        height: '100vh',
+        maxHeight: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
         display: 'flex',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        flexShrink: 0,
-      }}>
+        flexDirection: 'column',
+        fontFamily: "'Inter', sans-serif",
+        boxSizing: 'border-box',
+      }}
+    >
+      <style>{`
+        .notched-field-group {
+          position: relative;
+          width: 100%;
+        }
+
+        .notched-field-group .notched-label {
+          position: absolute;
+          left: 10px;
+          top: -8px;
+          background-color: #FFFFFF;
+          padding: 0 5px;
+          font-size: 12px;
+          font-weight: 500;
+          font-family: 'Inter', sans-serif;
+          color: #71717A;
+          line-height: 1;
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .notched-field-group:focus-within .notched-label {
+          color: #000000;
+          font-weight: 600;
+        }
+
+        .notched-field-group input {
+          width: 100%;
+          height: 44px;
+          background-color: #FFFFFF;
+          border: 1.5px solid #D4D4D8;
+          border-radius: 4px;
+          padding: 0 12px;
+          font-size: 14px;
+          font-family: 'Inter', sans-serif;
+          color: #000000;
+          outline: none;
+          box-sizing: border-box;
+          box-shadow: none;
+        }
+
+        .notched-field-group input::placeholder {
+          color: #A1A1AA;
+          font-size: 13.5px;
+        }
+
+        .notched-field-group input:focus {
+          border-color: #000000;
+        }
+
+        /* Prevent browser autofill yellow/blue background */
+        .notched-field-group input:-webkit-autofill,
+        .notched-field-group input:-webkit-autofill:hover,
+        .notched-field-group input:-webkit-autofill:focus,
+        .notched-field-group input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+          box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+          -webkit-text-fill-color: #000000 !important;
+          caret-color: #000000 !important;
+          border-color: #D4D4D8 !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .notched-field-group input:-webkit-autofill:focus {
+          border-color: #000000 !important;
+          border-width: 1.5px !important;
+        }
+
+        .auth-submit-btn {
+          width: 100%;
+          height: 44px;
+          background-color: #000000;
+          color: #FFFFFF;
+          border: 1px solid #000000;
+          border-radius: 4px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          transition: background-color 0.15s ease, opacity 0.15s ease;
+          outline: none;
+        }
+
+        .auth-submit-btn:hover:not(:disabled) {
+          background-color: #1F1F23;
+          border-color: #1F1F23;
+        }
+
+        .auth-submit-btn:disabled {
+          opacity: 0.8;
+          cursor: not-allowed;
+        }
+      `}</style>
+
+      {/* Top Header with "Need help" */}
+      <header
+        style={{
+          height: '52px',
+          padding: '0 2.5rem',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
         <Link
           href="#help"
           onClick={(e) => {
@@ -86,53 +194,64 @@ export default function SigninPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            fontSize: '0.92rem',
+            fontSize: '13px',
             fontWeight: 500,
             color: '#000000',
             textDecoration: 'none',
             transition: 'opacity 0.15s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.7';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
         >
-          <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+          <HelpOutlineRoundedIcon sx={{ fontSize: 17 }} />
           <span>Need help</span>
         </Link>
       </header>
 
-      {/* Main Split Layout: Fit to Desktop Viewport (No Scroll) */}
-      <main style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 2.5rem 1.25rem 2.5rem',
-        boxSizing: 'border-box',
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '1150px',
-          height: '100%',
-          maxHeight: 'calc(100vh - 68px)',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(300px, 1.15fr) minmax(320px, 1fr)',
-          gap: 'clamp(1.5rem, 3.5vw, 3.5rem)',
+      {/* Main Split Layout */}
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
           alignItems: 'center',
-        }}>
-          {/* Left Column: Rounded Unsplash Image */}
-          <div style={{
-            position: 'relative',
+          justifyContent: 'center',
+          padding: '0 2.5rem 1.5rem 2.5rem',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          style={{
             width: '100%',
+            maxWidth: '1150px',
             height: '100%',
-            maxHeight: 'calc(100vh - 84px)',
-            borderRadius: '1.5rem',
-            overflow: 'hidden',
-            backgroundColor: '#F5F5F5',
-            display: 'flex',
+            maxHeight: 'calc(100vh - 68px)',
+            display: 'grid',
+            gridTemplateColumns: 'minmax(300px, 1.15fr) minmax(320px, 1fr)',
+            gap: 'clamp(1.5rem, 3.5vw, 3.5rem)',
             alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+          }}
+        >
+          {/* Left Column: Rounded Unsplash Image */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '560px',
+              maxHeight: 'calc(100vh - 84px)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              backgroundColor: '#F5F5F5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={unsplashImageUrl}
@@ -142,263 +261,173 @@ export default function SigninPage() {
                 height: '100%',
                 objectFit: 'cover',
                 display: 'block',
-                borderRadius: '1.5rem',
+                borderRadius: '12px',
               }}
             />
           </div>
 
           {/* Right Column: Signin Form */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            maxWidth: '430px',
-            width: '100%',
-            margin: '0 auto',
-          }}>
-            {/* Brand Header */}
-            <Link
-              href="/"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                textDecoration: 'none',
-                marginBottom: 'clamp(0.8rem, 1.5vh, 1.35rem)',
-              }}
-            >
-              <div style={{
-                width: '40px',
-                height: '40px',
-                position: 'relative',
-                borderRadius: '9999px',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <Image
-                  src="/logo.png"
-                  alt="Nuradesk Logo"
-                  width={40}
-                  height={40}
-                  priority
-                  style={{ objectFit: 'contain' }}
-                />
-              </div>
-              <span style={{
-                fontSize: '1.65rem',
-                fontWeight: 800,
-                letterSpacing: '-0.04em',
-                color: '#000000',
-              }}>
-                Nuradesk
-              </span>
-            </Link>
-
-            {/* Title */}
-            <h1 style={{
-              fontSize: 'clamp(1.75rem, 2.4vw, 2.25rem)',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              color: '#000000',
-              marginBottom: 'clamp(0.8rem, 1.5vh, 1.4rem)',
-            }}>
-              Welcome Back
-            </h1>
-
-            {/* Error Message */}
-            {errorMessage && (
-              <div style={{
-                marginBottom: '1rem',
-                padding: '0.55rem 0.75rem',
-                backgroundColor: '#FEF2F2',
-                border: '1px solid #FCA5A5',
-                borderRadius: '0.75rem',
-                color: '#B91C1C',
-                fontSize: '0.82rem',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-              }}>
-                <ErrorOutlineRoundedIcon sx={{ fontSize: 18, flexShrink: 0 }} />
-                <span>{errorMessage}</span>
-              </div>
-            )}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              maxWidth: '430px',
+              width: '100%',
+              margin: '0 auto',
+            }}
+          >
+            {/* Title & Subtitle */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <h1
+                style={{
+                  fontSize: '28px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1.2,
+                  color: '#000000',
+                  margin: '0 0 0.35rem 0',
+                }}
+              >
+                Welcome Back
+              </h1>
+              <p
+                style={{
+                  fontSize: '14px',
+                  color: '#71717A',
+                  fontWeight: 400,
+                  letterSpacing: '-0.01em',
+                  margin: 0,
+                  lineHeight: 1.45,
+                }}
+              >
+                Enter your credentials to access your store register.
+              </p>
+            </div>
 
             {isSubmitted ? (
-              <div style={{
-                backgroundColor: '#FAFAFA',
-                border: '1px solid #E5E7EB',
-                borderRadius: '1.25rem',
-                padding: '1.75rem',
-                textAlign: 'center',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-              }}>
-                <div style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ECFDF5',
-                  border: '2px solid #A7F3D0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem auto',
-                }}>
-                  <CheckCircleRoundedIcon sx={{ fontSize: 30, color: '#10B981' }} />
+              <div
+                style={{
+                  backgroundColor: '#FAFAFA',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '4px',
+                  padding: '1.75rem',
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '4px',
+                    backgroundColor: '#ECFDF5',
+                    border: '1px solid #A7F3D0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem auto',
+                  }}
+                >
+                  <CheckCircleRoundedIcon sx={{ fontSize: 26, color: '#10B981' }} />
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.4rem', color: '#000000' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '0.4rem', color: '#000000' }}>
                   Authenticated!
                 </h3>
-                <p style={{ fontSize: '0.86rem', color: '#525252', marginBottom: '1.25rem' }}>
+                <p style={{ fontSize: '13.5px', color: '#52525B', marginBottom: '1.25rem' }}>
                   Logged in to Nuradesk as <strong>{email}</strong>. Launching your workspace...
                 </p>
-                <Link href="/dashboard" className="button-20-3d" role="button" style={{ width: '100%', height: '46px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                <Link
+                  href="/dashboard"
+                  className="auth-submit-btn"
+                  style={{ textDecoration: 'none' }}
+                >
                   Go to Dashboard &gt;&gt;
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'clamp(0.75rem, 1.5vh, 1.15rem)',
-              }}>
-                {/* Email Field */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    color: '#000000',
-                    marginBottom: '0.35rem',
-                  }}>
-                    Email :
-                  </label>
+              <form
+                onSubmit={handleSubmit}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.35rem',
+                }}
+              >
+                {/* Email Field with Notched Outline Label */}
+                <div className={`notched-field-group ${errorMessage ? 'is-error' : ''}`}>
+                  <label className="notched-label">Email</label>
                   <input
                     type="email"
                     required
+                    autoComplete="email"
                     placeholder="example@gmail.com"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       if (errorMessage) setErrorMessage('');
                     }}
-                    style={{
-                      width: '100%',
-                      height: '50px',
-                      backgroundColor: '#F0F0F0',
-                      border: '1px solid transparent',
-                      borderRadius: '0.85rem',
-                      padding: '0 1.25rem',
-                      fontSize: '0.95rem',
-                      fontFamily: 'inherit',
-                      color: '#000000',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      boxShadow: 'none',
-                      transition: 'border-color 0.15s, background-color 0.15s',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#000000';
-                      e.currentTarget.style.backgroundColor = '#FFFFFF';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'transparent';
-                      e.currentTarget.style.backgroundColor = '#F0F0F0';
-                    }}
                   />
                 </div>
 
-                {/* Password Field */}
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    color: '#000000',
-                    marginBottom: '0.35rem',
-                  }}>
-                    Password :
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (errorMessage) setErrorMessage('');
-                      }}
+                {/* Password Field with Notched Outline Label */}
+                <div className="notched-field-group">
+                  <label className="notched-label">Password</label>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
+                    style={{ paddingRight: '38px' }}
+                  />
+                  {password.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       style={{
-                        width: '100%',
-                        height: '50px',
-                        backgroundColor: '#F0F0F0',
-                        border: '1px solid transparent',
-                        borderRadius: '0.85rem',
-                        padding: '0 3rem 0 1.25rem',
-                        fontSize: '0.95rem',
-                        fontFamily: 'inherit',
-                        color: '#000000',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        boxShadow: 'none',
-                        transition: 'border-color 0.15s, background-color 0.15s',
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#71717A',
+                        padding: '4px',
+                        transition: 'color 0.15s ease',
                       }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor = '#000000';
-                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#000000';
                       }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = 'transparent';
-                        e.currentTarget.style.backgroundColor = '#F0F0F0';
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = '#71717A';
                       }}
-                    />
-                    {password.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        title={showPassword ? 'Hide password' : 'Show password'}
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        style={{
-                          position: 'absolute',
-                          right: '12px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#525252',
-                          padding: '4px',
-                          borderRadius: '0.35rem',
-                          transition: 'color 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = '#000000'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = '#525252'; }}
-                      >
-                        {showPassword ? (
-                          <VisibilityOffRoundedIcon sx={{ fontSize: 20 }} />
-                        ) : (
-                          <VisibilityRoundedIcon sx={{ fontSize: 20 }} />
-                        )}
-                      </button>
-                    )}
-                  </div>
+                    >
+                      {showPassword ? (
+                        <VisibilityOffRoundedIcon sx={{ fontSize: 18 }} />
+                      ) : (
+                        <VisibilityRoundedIcon sx={{ fontSize: 18 }} />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {/* Forget Password link (right-aligned) */}
-                <div style={{ textAlign: 'right', marginTop: '-0.2rem' }}>
+                <div style={{ textAlign: 'right', marginTop: '-0.35rem' }}>
                   <Link
                     href="/forgot-password"
                     style={{
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
+                      fontSize: '13px',
+                      fontWeight: 600,
                       color: '#000000',
                       textDecoration: 'none',
                     }}
@@ -407,34 +436,19 @@ export default function SigninPage() {
                   </Link>
                 </div>
 
-                {/* Login Button using Button-20 with 3D tactile look & buffer loading */}
-                <div style={{ marginTop: '0.5rem' }}>
+                {/* Login Button (Square with 4px border-radius, black background) */}
+                <div style={{ marginTop: '0.25rem' }}>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="button-20-3d"
-                    role="button"
-                    style={{
-                      width: '100%',
-                      height: '50px',
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      borderRadius: '1rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.65rem',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      opacity: isLoading ? 0.85 : 1,
-                      outline: 'none',
-                    }}
+                    className="auth-submit-btn"
                   >
                     {isLoading ? (
                       <>
                         <svg
                           style={{
-                            width: '20px',
-                            height: '20px',
+                            width: '16px',
+                            height: '16px',
                             animation: 'spin 0.75s linear infinite',
                             flexShrink: 0,
                           }}
@@ -456,31 +470,33 @@ export default function SigninPage() {
                             strokeLinecap="round"
                           />
                         </svg>
-                        <span>Authenticating...</span>
+                        <span>Signing in...</span>
                       </>
                     ) : (
-                      <span>Login</span>
+                      <span>Sign In</span>
                     )}
                   </button>
                 </div>
 
-                {/* Create an Account link */}
-                <div style={{
-                  textAlign: 'center',
-                  marginTop: '0.6rem',
-                  fontSize: '0.9rem',
-                  color: '#000000',
-                }}>
+                {/* Switch to Signup link */}
+                <div
+                  style={{
+                    textAlign: 'center',
+                    marginTop: '0.2rem',
+                    fontSize: '13px',
+                    color: '#71717A',
+                  }}
+                >
                   Don&apos;t have an account?{' '}
                   <Link
                     href="/signup"
                     style={{
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color: '#000000',
                       textDecoration: 'none',
                     }}
                   >
-                    Create an Account
+                    Sign up
                   </Link>
                 </div>
               </form>
@@ -488,6 +504,66 @@ export default function SigninPage() {
           </div>
         </div>
       </main>
+
+      {/* Bottom-Right Error Toast (prevents form layout shift or screen cropping) */}
+      {errorMessage && (
+        <div
+          role="alert"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 99999,
+            maxWidth: '380px',
+            width: 'calc(100vw - 48px)',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E5E7EB',
+            borderLeft: '4px solid #DC2626',
+            borderRadius: '4px',
+            padding: '12px 14px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            fontFamily: "'Inter', sans-serif",
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <ErrorOutlineRoundedIcon sx={{ fontSize: 18, color: '#DC2626', flexShrink: 0 }} />
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#000000',
+                lineHeight: 1.4,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {errorMessage}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage('')}
+            aria-label="Close error notification"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#71717A',
+              flexShrink: 0,
+            }}
+          >
+            <CloseRoundedIcon sx={{ fontSize: 16 }} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

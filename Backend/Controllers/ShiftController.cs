@@ -10,7 +10,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista,Inventory Clerk,Kitchen Lead")]
+[Authorize]
 [Route("api/shifts")]
 public sealed class ShiftController(IShiftService service) : ControllerBase
 {
@@ -65,7 +65,8 @@ public sealed class ShiftController(IShiftService service) : ControllerBase
     private bool TryScope(out int ownerId,out int? employeeId,out string? terminalId,out int? franchiseId)
     {
         employeeId=null;terminalId=null;franchiseId=null;
-        if(User.IsInRole("FRANCHISE_OWNER"))return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),out ownerId);
+        var ownerVal = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        if(User.IsInRole("FRANCHISE_OWNER") || User.IsInRole("franchise_owner") || User.HasClaim("role", "FRANCHISE_OWNER"))return int.TryParse(ownerVal,out ownerId);
         var employee=0;var franchise=0;
         var success=int.TryParse(User.FindFirstValue("owner_id"),out ownerId)
             &&int.TryParse(User.FindFirstValue("employee_id"),out employee)

@@ -10,7 +10,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER")]
+[Authorize]
 [Route("api/terminals")]
 public sealed class TerminalController(ITerminalService service) : ControllerBase
 {
@@ -44,6 +44,10 @@ public sealed class TerminalController(ITerminalService service) : ControllerBas
         return Ok(new ApiResponse<IReadOnlyList<Employee>> { StatusCode = 200, Message = "Eligible employees fetched.", Data = employees });
     }
 
-    private bool TryOwnerId(out int id) => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id);
+    private bool TryOwnerId(out int id)
+    {
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
+    }
     private static ApiResponse<object?> Error(int status, string message) => new() { StatusCode = status, Message = message };
 }

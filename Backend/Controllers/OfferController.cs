@@ -15,15 +15,15 @@ namespace Nurapos.Controllers;
 public sealed class OfferController(IOfferService service):ControllerBase
 {
     [HttpGet]
-    [Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista")]
+    [Authorize]
     public async Task<IActionResult> Get([FromQuery]int franchiseId)
     {
         if(!TryOwnerId(out var ownerId))return Unauthorized(Error(401,"A valid owner or POS session is required."));
-        if(!User.IsInRole("FRANCHISE_OWNER")&&int.TryParse(User.FindFirstValue("franchise_id"),out var scopedFranchise))franchiseId=scopedFranchise;
+        if(!User.IsInRole("FRANCHISE_OWNER")&&!User.IsInRole("franchise_owner")&&int.TryParse(User.FindFirstValue("franchise_id"),out var scopedFranchise))franchiseId=scopedFranchise;
         return Ok(new ApiResponse<IReadOnlyList<Offer>>{StatusCode=200,Message="Active offers fetched.",Data=await service.GetAllAsync(ownerId,franchiseId)});
     }
     [HttpPost]
-    [Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> Create(CreateOfferRequest request)
     {
         if(!TryOwnerId(out var ownerId))return Unauthorized(Error(401,"A valid owner token is required."));
@@ -34,22 +34,23 @@ public sealed class OfferController(IOfferService service):ControllerBase
     }
     private bool TryOwnerId(out int id)
     {
-        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
-        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
     }
     private static ApiResponse<object?> Error(int code,string message)=>new(){StatusCode=code,Message=message};
 }
 
 [ApiController]
-[Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista")]
+[Authorize]
 [Route("api/discounts")]
 public sealed class DiscountController(IOfferService service):ControllerBase
 {
     [HttpPost("validate-code")]
     public async Task<IActionResult> Validate(ValidateDiscountCodeRequest request)
     {
-        if(!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),out var ownerId))return Unauthorized(new ApiResponse<object?>{StatusCode=401,Message="A valid owner token is required."});
-        if(!User.IsInRole("FRANCHISE_OWNER"))
+        var ownerVal = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        if(!int.TryParse(ownerVal,out var ownerId))return Unauthorized(new ApiResponse<object?>{StatusCode=401,Message="A valid owner token is required."});
+        if(!User.IsInRole("FRANCHISE_OWNER")&&!User.IsInRole("franchise_owner"))
         {
             if(!int.TryParse(User.FindFirstValue("owner_id"),out ownerId)||!int.TryParse(User.FindFirstValue("franchise_id"),out var franchiseId))
                 return Unauthorized(new ApiResponse<object?>{StatusCode=401,Message="A valid POS session is required."});

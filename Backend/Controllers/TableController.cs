@@ -10,7 +10,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista")]
+[Authorize]
 [Route("api/tables")]
 public sealed class TableController(ITableService service) : ControllerBase
 {
@@ -18,12 +18,12 @@ public sealed class TableController(ITableService service) : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] int franchiseId)
     {
         if (!TryOwnerId(out var ownerId)) return Unauthorized(Error(401,"A valid owner token is required."));
-        if(!User.IsInRole("FRANCHISE_OWNER")&&int.TryParse(User.FindFirstValue("franchise_id"),out var scopedFranchise))franchiseId=scopedFranchise;
+        if(!User.IsInRole("FRANCHISE_OWNER")&&!User.IsInRole("franchise_owner")&&int.TryParse(User.FindFirstValue("franchise_id"),out var scopedFranchise))franchiseId=scopedFranchise;
         return Ok(new ApiResponse<IReadOnlyList<DiningTable>> { StatusCode=200,Message="Tables fetched successfully.",Data=await service.GetAllAsync(ownerId,franchiseId) });
     }
 
     [HttpPost]
-    [Authorize(Roles="FRANCHISE_OWNER,Admin,Store Manager")]
+    [Authorize]
     public async Task<IActionResult> Create(CreateTableRequest request)
     {
         if (!TryOwnerId(out var ownerId)) return Unauthorized(Error(401,"A valid owner token is required."));
@@ -52,8 +52,8 @@ public sealed class TableController(ITableService service) : ControllerBase
 
     private bool TryOwnerId(out int id)
     {
-        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
-        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
     }
     private static ApiResponse<object?> Error(int code,string message)=>new(){StatusCode=code,Message=message};
 }

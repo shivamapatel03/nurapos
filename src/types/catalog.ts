@@ -6,6 +6,7 @@ export interface OwnerCatalogItem {
   email?: string;
   address?: string;
   categoryId?: number;
+  categoryName?: string;
   sellingPrice?: number;
   costPrice?: number;
   taxRate?: number;

@@ -32,8 +32,11 @@ public class JwtHelper : IJwtHelper
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim("nameid", userId.ToString()),
+            new Claim("owner_id", userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(ClaimTypes.Role, role)
+            new Claim(ClaimTypes.Role, role),
+            new Claim("role", role)
         };
 
         if (posPinVerified)
@@ -69,8 +72,10 @@ public class JwtHelper : IJwtHelper
         {
             new(JwtRegisteredClaimNames.Sub, employeeId.ToString()),
             new(ClaimTypes.NameIdentifier, employeeId.ToString()),
+            new("nameid", employeeId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(ClaimTypes.Role, role),
+            new("role", role),
             new("pos_pin_verified", "true"),
             new("owner_id", ownerId.ToString()),
             new("franchise_id", franchiseId.ToString()),

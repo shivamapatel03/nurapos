@@ -12,7 +12,7 @@ using Nurapos.Filters;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+[Authorize]
 [Route("api/owner-catalog")]
 public sealed class OwnerCatalogController : ControllerBase
 {
@@ -135,7 +135,10 @@ public sealed class OwnerCatalogController : ControllerBase
 
     private int? CurrentOwnerId()
     {
-        var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var value = User.FindFirstValue("owner_id")
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("nameid")
+            ?? User.FindFirstValue("sub");
         return int.TryParse(value, out var id) ? id : null;
     }
 

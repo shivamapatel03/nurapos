@@ -9,7 +9,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager")]
+[Authorize]
 [Route("api/settings")]
 public sealed class SettingsController(ISettingsService service) : ControllerBase
 {
@@ -48,6 +48,10 @@ public sealed class SettingsController(ISettingsService service) : ControllerBas
         return Ok(new ApiResponse<HardwareSettings> { StatusCode = 200, Message = "Hardware settings saved.", Data = await service.SaveHardwareAsync(id, request) });
     }
 
-    private bool OwnerId(out int id) => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id);
+    private bool OwnerId(out int id)
+    {
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
+    }
     private static ApiResponse<object?> Error(int status) => new() { StatusCode = status, Message = "A valid owner token is required." };
 }

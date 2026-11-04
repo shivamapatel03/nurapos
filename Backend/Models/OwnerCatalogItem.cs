@@ -25,6 +25,9 @@ public sealed class OwnerCatalogItem
     [Range(1, int.MaxValue)]
     public int? CategoryId { get; set; }
 
+    [StringLength(100)]
+    public string? CategoryName { get; set; }
+
     [Range(typeof(decimal), "0", "9999999999.99")]
     public decimal? SellingPrice { get; set; }
 

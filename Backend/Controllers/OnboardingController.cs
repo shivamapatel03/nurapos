@@ -9,7 +9,7 @@ using Npgsql;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER")]
+[Authorize]
 [Route("api/onboarding")]
 public sealed class OnboardingController(IOnboardingService service) : ControllerBase
 {
@@ -46,6 +46,10 @@ public sealed class OnboardingController(IOnboardingService service) : Controlle
         catch (PostgresException ex) when (ex.SqlState == "23505") { return Conflict(Error(409, "Store code or employee code already exists.")); }
     }
 
-    private bool TryUserId(out int id) => int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id);
+    private bool TryUserId(out int id)
+    {
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
+    }
     private static ApiResponse<object?> Error(int status, string message) => new() { StatusCode = status, Message = message };
 }

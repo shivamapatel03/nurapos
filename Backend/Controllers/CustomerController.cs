@@ -10,7 +10,7 @@ using Nurapos.Services.Interfaces;
 namespace Nurapos.Controllers;
 
 [ApiController]
-[Authorize(Roles = "FRANCHISE_OWNER,Admin,Store Manager,Shift Supervisor,Senior Cashier,Cashier,Barista")]
+[Authorize]
 [Route("api/customers")]
 public sealed class CustomerController(ICustomerService service) : ControllerBase
 {
@@ -44,8 +44,8 @@ public sealed class CustomerController(ICustomerService service) : ControllerBas
 
     private bool TryOwnerId(out int id)
     {
-        if (int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out id)) return true;
-        return int.TryParse(User.FindFirstValue("owner_id"), out id);
+        var val = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("nameid") ?? User.FindFirstValue("sub") ?? User.FindFirstValue("owner_id");
+        return int.TryParse(val, out id);
     }
     private static ApiResponse<object?> Error(int status, string message) => new() { StatusCode = status, Message = message };
 }

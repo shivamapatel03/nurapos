@@ -62,19 +62,63 @@ export default function PricingSection() {
         padding: '0 1.5rem clamp(4.5rem, 6vw, 6rem) 1.5rem',
         maxWidth: '1180px',
         margin: '0 auto',
-        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+        fontFamily: "'Inter', sans-serif",
         boxSizing: 'border-box',
       }}
     >
       <style>{`
-        .pricing-btn-link .pricing-btn-arrow {
-          transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        .pricing-heading {
+          font-family: 'Inter', sans-serif;
+          font-size: 24px;
+          line-height: 1.25;
+          font-weight: 600;
+          letter-spacing: -0.025em;
+          color: #0A0A0A;
+          margin: 0 0 0.5rem 0;
+        }
+
+        @media (min-width: 769px) {
+          .pricing-heading {
+            font-size: 30px;
+            line-height: 1.22;
+          }
+        }
+
+        .pricing-card-btn {
+          width: 100%;
+          height: 40px;
+          border-radius: 4px;
+          background-color: #000000;
+          color: #FFFFFF;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          text-decoration: none;
+          letter-spacing: -0.01em;
+          box-sizing: border-box;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
+          border: 1px solid #000000;
+          transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .pricing-card-btn:hover {
+          background-color: #1F1F23;
+          border-color: #1F1F23;
+        }
+
+        .pricing-card-btn .pricing-btn-arrow {
+          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           display: inline-block;
         }
-        .pricing-btn-link:hover .pricing-btn-arrow {
-          transform: translateX(5px);
+
+        .pricing-card-btn:hover .pricing-btn-arrow {
+          transform: translateX(4px);
         }
       `}</style>
+
       {/* Section Header */}
       <div
         style={{
@@ -82,21 +126,13 @@ export default function PricingSection() {
           marginBottom: 'clamp(2.5rem, 4vw, 3.5rem)',
         }}
       >
-        <h2
-          style={{
-            fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
-            fontWeight: 800,
-            letterSpacing: '-0.035em',
-            lineHeight: 1.2,
-            color: '#0A0A0A',
-            margin: '0 0 0.5rem 0',
-          }}
-        >
+        <h2 className="pricing-heading">
           Simple pricing. Zero hidden fees.
         </h2>
         <p
           style={{
-            fontSize: '1rem',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '15px',
             color: '#71717A',
             maxWidth: '520px',
             margin: '0 auto',
@@ -121,9 +157,9 @@ export default function PricingSection() {
             key={tier.id}
             style={{
               backgroundColor: '#FFFFFF',
-              border: '1px solid #E5E7EB',
-              borderRadius: '1.5rem',
-              padding: '2.5rem 1.85rem',
+              border: tier.isPopular ? '1px solid #18181B' : '1px solid #E5E7EB',
+              borderRadius: '10px',
+              padding: '2.25rem 1.75rem',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -138,47 +174,50 @@ export default function PricingSection() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  fontSize: '0.78rem',
+                  fontSize: '12px',
                   fontWeight: 600,
+                  fontFamily: "'Inter', sans-serif",
                   letterSpacing: '-0.01em',
-                  padding: '0.35rem 0.85rem',
-                  borderRadius: '9999px',
-                  backgroundColor: '#F4F4F5',
-                  color: '#18181B',
+                  padding: '0.3rem 0.75rem',
+                  borderRadius: '4px',
+                  backgroundColor: tier.isPopular ? '#000000' : '#F4F4F5',
+                  color: tier.isPopular ? '#FFFFFF' : '#18181B',
                 }}
               >
                 {tier.badge}
               </span>
             </div>
 
-            {/* Plan Title */}
+            {/* Plan Title (Inter Semi-Bold 600) */}
             <h3
               style={{
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                letterSpacing: '-0.025em',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '18px',
+                fontWeight: 600,
+                letterSpacing: '-0.02em',
                 color: '#0A0A0A',
-                marginBottom: '0.65rem',
+                marginBottom: '0.5rem',
               }}
             >
               {tier.name}
             </h3>
 
-            {/* Big Price (matching user reference mockup) */}
+            {/* Price (Reduced size & semi-bold) */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'baseline',
                 justifyContent: 'center',
                 gap: '0.35rem',
-                margin: '0.5rem 0 1.75rem 0',
+                margin: '0.35rem 0 1.5rem 0',
               }}
             >
               <span
                 style={{
-                  fontSize: 'clamp(2.5rem, 4vw, 3.15rem)',
-                  fontWeight: 800,
-                  letterSpacing: '-0.04em',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '34px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.03em',
                   color: '#0A0A0A',
                   lineHeight: 1,
                 }}
@@ -187,7 +226,8 @@ export default function PricingSection() {
               </span>
               <span
                 style={{
-                  fontSize: '0.95rem',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '14px',
                   fontWeight: 500,
                   color: '#71717A',
                   letterSpacing: '-0.01em',
@@ -197,34 +237,20 @@ export default function PricingSection() {
               </span>
             </div>
 
-            {/* CTA Pill Button (using button-20 CSS with smooth animated arrow) */}
+            {/* CTA Square Button with small radius (no blue, sleek black) */}
             <Link
               href={tier.buttonHref}
-              className="button-20 pricing-btn-link"
-              style={{
-                width: '100%',
-                padding: '0.8rem 1.5rem',
-                borderRadius: '9999px',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-                letterSpacing: '-0.01em',
-                boxSizing: 'border-box',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.45rem',
-              }}
+              className="pricing-card-btn"
             >
               <span>{tier.buttonText}</span>
               <svg
                 className="pricing-btn-arrow"
-                width="15"
-                height="15"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.4"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
@@ -237,7 +263,9 @@ export default function PricingSection() {
             {/* Subheadline description directly below button */}
             <p
               style={{
-                fontSize: '0.88rem',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '13.5px',
+                fontWeight: 400,
                 lineHeight: 1.55,
                 color: '#52525B',
                 marginTop: '1.25rem',

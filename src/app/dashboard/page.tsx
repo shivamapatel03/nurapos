@@ -67,7 +67,6 @@ import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded
 import RateReviewRoundedIcon from '@mui/icons-material/RateReviewRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
-import TableRestaurantRoundedIcon from '@mui/icons-material/TableRestaurantRounded';
 import { ThemeId, ThemeMode, APP_THEMES, getStoredThemeMode, setStoredThemeMode } from '@/lib/themeConfig';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { getOwnerSales, getCatalogProducts, BillRecord } from '@/lib/api-client';
@@ -224,7 +223,6 @@ export default function AdminDashboardPage() {
       icon: <CategoryOutlinedIcon sx={{ fontSize: 18 }} />,
       subItems: [
         { id: 'products', label: 'Products', icon: <Inventory2RoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'add_product', label: 'Add Product', icon: <AddRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'categories', label: 'Categories', icon: <GridViewRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'offers', label: 'Offers & Discounts', icon: <LocalOfferOutlinedIcon sx={{ fontSize: 14 }} /> },
       ],
@@ -267,23 +265,6 @@ export default function AdminDashboardPage() {
       subItems: [
         { id: 'cust_all', label: 'All Customers', icon: <PeopleAltRoundedIcon sx={{ fontSize: 14 }} /> },
         { id: 'cust_history', label: 'Purchase History', icon: <ReceiptLongRoundedIcon sx={{ fontSize: 14 }} /> },
-      ],
-    },
-    {
-      id: 'terminal',
-      label: 'Go to terminal',
-      icon: <PointOfSaleOutlinedIcon sx={{ fontSize: 18 }} />,
-      href: '/pos',
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: <SettingsOutlinedIcon sx={{ fontSize: 18 }} />,
-      subItems: [
-        { id: 'set_store', label: 'Store Profile', icon: <StoreRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_tables', label: 'Tables & Dining', icon: <TableRestaurantRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_hardware', label: 'Hardware', icon: <PrintRoundedIcon sx={{ fontSize: 14 }} /> },
-        { id: 'set_logout', label: 'Log Out', icon: <LogoutRoundedIcon sx={{ fontSize: 14 }} /> },
       ],
     },
   ];
@@ -538,38 +519,42 @@ export default function AdminDashboardPage() {
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Fixed Compact Sidebar */}
+        {/* Fixed Sleek Sidebar matching user reference */}
         <aside style={{
-          width: '240px',
-          minWidth: '240px',
-          maxWidth: '240px',
-          backgroundColor: theme.bgSidebar,
-          borderRight: `1px solid ${theme.sidebarBorder || theme.border}`,
+          width: '215px',
+          minWidth: '215px',
+          maxWidth: '215px',
+          backgroundColor: theme.sidebarIsDark ? theme.bgSidebar : '#FFFFFF',
+          borderRight: `1px solid ${theme.sidebarBorder || '#F1F5F9'}`,
           height: '100%',
           overflowY: 'hidden',
           overflowX: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          padding: '0.65rem 0.55rem',
+          padding: '1.15rem 0.85rem 1.15rem',
           boxSizing: 'border-box',
           flexShrink: 0,
         }}>
-          {/* Brand Logo & Name inside Left Sidebar */}
+          {/* Brand Logo & Name */}
           <Link
             href="/dashboard"
+            onClick={() => {
+              closeAllMenus();
+              setActiveTabId('dashboard');
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.6rem',
+              gap: '0.65rem',
               textDecoration: 'none',
-              padding: '0.45rem 0.55rem 0.75rem 0.55rem',
-              marginBottom: '0.45rem',
-              borderBottom: `1px solid ${theme.sidebarBorder || theme.border}`,
+              padding: '0.2rem 0.5rem 0.95rem 0.5rem',
+              marginBottom: '0.6rem',
+              borderBottom: `1px solid ${theme.sidebarBorder || '#F1F5F9'}`,
             }}
           >
             <div style={{
-              width: '28px',
-              height: '28px',
+              width: '26px',
+              height: '26px',
               position: 'relative',
               borderRadius: '9999px',
               overflow: 'hidden',
@@ -581,8 +566,8 @@ export default function AdminDashboardPage() {
               <Image
                 src="/logo.png"
                 alt="Nuradesk Logo"
-                width={28}
-                height={28}
+                width={26}
+                height={26}
                 priority
                 style={{
                   objectFit: 'contain',
@@ -591,7 +576,7 @@ export default function AdminDashboardPage() {
               />
             </div>
             <span style={{
-              fontSize: '17px',
+              fontSize: '16.5px',
               fontWeight: 750,
               letterSpacing: '-0.02em',
               color: theme.sidebarTextPrimary || theme.textPrimary,
@@ -600,47 +585,25 @@ export default function AdminDashboardPage() {
             </span>
           </Link>
 
-          {/* Universal Sidebar Search */}
-          <div style={{ position: 'relative', margin: '0.9rem 0 0.75rem' }}>
-            <SearchRoundedIcon sx={{
-              position: 'absolute',
-              left: 10,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: 17,
-              color: theme.sidebarTextSecondary || theme.textSecondary,
-              pointerEvents: 'none',
-            }} />
-            <input
-              type="search"
-              value={sidebarSearch}
-              onChange={(event) => setSidebarSearch(event.target.value)}
-              placeholder="Search menu"
-              aria-label="Search dashboard menu"
-              style={{
-                width: '100%',
-                height: '34px',
-                padding: '0 0.65rem 0 2.1rem',
-                borderRadius: '9999px',
-                border: `1px solid ${theme.sidebarBorder || theme.border}`,
-                backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F8FAFC',
-                color: theme.sidebarTextPrimary || theme.textPrimary,
-                fontSize: '12px',
-                fontWeight: 600,
-                fontFamily: 'inherit',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {/* Navigation Links List — scrollable area */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
-            {filteredNavItems.map((item) => {
+          {/* Navigation Links List */}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+            {navItems.map((item) => {
               const hasSubItems = item.subItems && item.subItems.length > 0;
               const isExpanded = expandedMenus[item.id] ?? false;
-              // Only leaf navigation items (without sub-items) can be selected as a parent tab
-              const isActive = !hasSubItems && activeTabId === item.id;
+              const isActive = (!hasSubItems && activeTabId === item.id) ||
+                (hasSubItems && (
+                  (item.id === 'sales' && isSalesActive) ||
+                  (item.id === 'catalog' && isCatalogActive) ||
+                  (item.id === 'inventory' && isInventoryActive) ||
+                  (item.id === 'reports' && isReportsActive) ||
+                  (item.id === 'employees' && isEmployeesActive) ||
+                  (item.id === 'customers' && isCustomersActive) ||
+                  item.subItems?.some((s) => s.id === activeTabId)
+                ));
+
+              const itemColor = isActive
+                ? (theme.sidebarTextPrimary || '#111827')
+                : (theme.sidebarTextSecondary || '#94A3B8');
 
               return (
                 <div key={item.id}>
@@ -664,45 +627,51 @@ export default function AdminDashboardPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '0.42rem 0.6rem',
-                      borderRadius: '0.55rem',
+                      padding: '0.52rem 0.65rem',
+                      borderRadius: '0.5rem',
                       border: 'none',
-                      backgroundColor: isActive ? theme.sidebarActiveBg : 'transparent',
-                      color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                      backgroundColor: 'transparent',
+                      color: itemColor,
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       transition: 'all 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
+                        e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)';
+                        e.currentTarget.style.color = theme.sidebarTextPrimary || '#111827';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isActive) {
                         e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = itemColor;
                       }
                     }}
                   >
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.65rem',
+                      gap: '0.85rem',
                       minWidth: 0,
                     }}>
-                      <span style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
-                      }}>
+                      <span
+                        className="sidebar-item-icon"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'inherit',
+                          transition: 'color 0.15s ease',
+                        }}
+                      >
                         {item.icon}
                       </span>
                       <span style={{
-                        fontSize: '13.5px',
-                        fontWeight: isActive ? 750 : 600,
-                        letterSpacing: '0',
-                        color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                        fontSize: '14px',
+                        fontWeight: isActive ? 750 : 500,
+                        letterSpacing: '-0.01em',
+                        color: 'inherit',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -718,11 +687,12 @@ export default function AdminDashboardPage() {
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary),
+                          color: theme.sidebarTextSecondary || '#94A3B8',
                           transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.22s ease',
                         }}
                       >
-                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: isActive ? theme.sidebarActiveText : (theme.sidebarTextPrimary || theme.textPrimary) }} />
+                        <KeyboardArrowDownRoundedIcon sx={{ fontSize: 16, color: 'inherit' }} />
                       </span>
                     ) : item.href ? (
                       <span
@@ -730,7 +700,7 @@ export default function AdminDashboardPage() {
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          color: theme.sidebarTextSecondary || theme.textSecondary,
+                          color: theme.sidebarTextSecondary || '#94A3B8',
                         }}
                       >
                         <ArrowOutwardRoundedIcon sx={{ fontSize: 13 }} />
@@ -744,27 +714,27 @@ export default function AdminDashboardPage() {
                       style={{
                         display: 'grid',
                         gridTemplateRows: isExpanded ? '1fr' : '0fr',
-                        transition: 'grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                       }}
                     >
                       <div
                         style={{
                           overflow: 'hidden',
                           opacity: isExpanded ? 1 : 0,
-                          transform: isExpanded ? 'translateY(0)' : 'translateY(-6px)',
-                          transition: 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+                          transform: isExpanded ? 'translateY(0)' : 'translateY(-4px)',
+                          transition: 'opacity 0.2s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
                       >
                         <div
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '0.15rem',
-                            paddingLeft: '0.65rem',
+                            gap: '0.2rem',
+                            paddingLeft: '0.75rem',
                             paddingTop: '0.25rem',
-                            paddingBottom: '0.25rem',
-                            borderLeft: `1px solid ${theme.sidebarBorder || theme.border}`,
-                            marginLeft: '1.05rem',
+                            paddingBottom: '0.35rem',
+                            borderLeft: `1.5px solid ${theme.sidebarBorder || '#F1F5F9'}`,
+                            marginLeft: '1.2rem',
                           }}
                         >
                       {item.subItems?.map((sub) => {
@@ -779,14 +749,14 @@ export default function AdminDashboardPage() {
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.55rem',
+                                gap: '0.6rem',
                                 textAlign: 'left',
-                                padding: '0.32rem 0.5rem',
+                                padding: '0.36rem 0.55rem',
                                 borderRadius: '0.45rem',
                                 border: 'none',
                                 backgroundColor: 'transparent',
                                 color: '#EF4444',
-                                fontSize: '12px',
+                                fontSize: '13px',
                                 fontWeight: 600,
                                 cursor: 'pointer',
                                 fontFamily: 'inherit',
@@ -827,30 +797,30 @@ export default function AdminDashboardPage() {
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.55rem',
+                                gap: '0.6rem',
                                 textAlign: 'left',
-                                padding: '0.32rem 0.5rem',
+                                padding: '0.36rem 0.55rem',
                                 borderRadius: '0.45rem',
                                 border: 'none',
                                 textDecoration: 'none',
-                                backgroundColor: isSubActive ? theme.sidebarActiveBg : 'transparent',
-                                color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
-                                fontSize: '12px',
-                                fontWeight: isSubActive ? 800 : 500,
+                                backgroundColor: isSubActive ? (theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.035)') : 'transparent',
+                                color: isSubActive ? (theme.sidebarTextPrimary || '#111827') : (theme.sidebarTextSecondary || '#94A3B8'),
+                                fontSize: '13px',
+                                fontWeight: isSubActive ? 750 : 500,
                                 cursor: 'pointer',
                                 fontFamily: 'inherit',
                                 transition: 'all 0.15s ease',
                               }}
                               onMouseEnter={(e) => {
                                 if (!isSubActive) {
-                                  e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
-                                  e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
+                                  e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)';
+                                  e.currentTarget.style.color = theme.sidebarTextPrimary || '#111827';
                                 }
                               }}
                               onMouseLeave={(e) => {
                                 if (!isSubActive) {
                                   e.currentTarget.style.backgroundColor = 'transparent';
-                                  e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
+                                  e.currentTarget.style.color = theme.sidebarTextSecondary || '#94A3B8';
                                 }
                               }}
                             >
@@ -858,7 +828,7 @@ export default function AdminDashboardPage() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                                color: isSubActive ? (theme.sidebarTextPrimary || '#111827') : '#94A3B8',
                               }}>
                                 {sub.icon}
                               </span>
@@ -884,29 +854,29 @@ export default function AdminDashboardPage() {
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.55rem',
+                              gap: '0.6rem',
                               textAlign: 'left',
-                              padding: '0.32rem 0.5rem',
+                              padding: '0.36rem 0.55rem',
                               borderRadius: '0.45rem',
                               border: 'none',
-                              backgroundColor: isSubActive ? theme.sidebarActiveBg : 'transparent',
-                              color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
-                              fontSize: '12px',
-                              fontWeight: isSubActive ? 800 : 500,
+                              backgroundColor: isSubActive ? (theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.035)') : 'transparent',
+                              color: isSubActive ? (theme.sidebarTextPrimary || '#111827') : (theme.sidebarTextSecondary || '#94A3B8'),
+                              fontSize: '13px',
+                              fontWeight: isSubActive ? 750 : 500,
                               cursor: 'pointer',
                               fontFamily: 'inherit',
                               transition: 'all 0.15s ease',
                             }}
                             onMouseEnter={(e) => {
                               if (!isSubActive) {
-                                e.currentTarget.style.backgroundColor = theme.sidebarHoverBg || theme.hoverBg;
-                                e.currentTarget.style.color = theme.sidebarTextPrimary || theme.textPrimary;
+                                e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)';
+                                e.currentTarget.style.color = theme.sidebarTextPrimary || '#111827';
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isSubActive) {
                                 e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.color = theme.sidebarTextSecondary || theme.textSecondary;
+                                e.currentTarget.style.color = theme.sidebarTextSecondary || '#94A3B8';
                               }
                             }}
                           >
@@ -914,7 +884,7 @@ export default function AdminDashboardPage() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              color: isSubActive ? theme.sidebarActiveText : (theme.sidebarTextSecondary || theme.textSecondary),
+                              color: isSubActive ? (theme.sidebarTextPrimary || '#111827') : '#94A3B8',
                             }}>
                               {sub.icon}
                             </span>
@@ -937,110 +907,87 @@ export default function AdminDashboardPage() {
             })}
           </nav>
 
-          {/* Bottom Sidebar Section — sticky, never scrolls */}
+          {/* Bottom Sidebar Section — Go to Settings & Upgrade Plan */}
           <div style={{
-            paddingTop: '0.65rem',
+            marginTop: 'auto',
+            paddingTop: '0.85rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.45rem',
             flexShrink: 0,
           }}>
-            {/* Subscription Card */}
-            <div
+            {/* Go to Settings */}
+            <button
+              type="button"
+              onClick={() => {
+                closeAllMenus();
+                setActiveTabId('set_store');
+              }}
               style={{
-                padding: '0.55rem 0.6rem',
-                backgroundColor: (theme as any).sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                border: `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
-                borderRadius: '0.65rem',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                width: '100%',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '0.45rem',
-                boxSizing: 'border-box',
+                alignItems: 'center',
+                gap: '0.85rem',
+                padding: '0.52rem 0.65rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: isSettingsActive ? (theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.035)') : 'transparent',
+                color: isSettingsActive ? (theme.sidebarTextPrimary || '#111827') : (theme.sidebarTextSecondary || '#94A3B8'),
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '14px',
+                fontWeight: isSettingsActive ? 750 : 500,
                 transition: 'all 0.15s ease',
+                textAlign: 'left',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSettingsActive) {
+                  e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)';
+                  e.currentTarget.style.color = theme.sidebarTextPrimary || '#111827';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSettingsActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = theme.sidebarTextSecondary || '#94A3B8';
+                }
               }}
             >
-              {/* Header: Plan & Days Remaining */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{
-                  fontSize: '11.5px',
-                  fontWeight: 800,
-                  color: theme.sidebarTextPrimary || theme.textPrimary,
-                  lineHeight: 1.2,
-                }}>
-                  Pro Plan
-                </span>
+              <SettingsOutlinedIcon sx={{ fontSize: 18, color: 'inherit', transition: 'color 0.15s ease' }} />
+              <span>Go to Settings</span>
+            </button>
 
-                <span style={{
-                  fontSize: '9.5px',
-                  fontWeight: 700,
-                  color: theme.sidebarTextPrimary || theme.textPrimary,
-                  backgroundColor: (theme as any).sidebarIsDark ? theme.hoverBg : '#F3F4F6',
-                  border: `1px solid ${(theme as any).sidebarIsDark ? theme.border : '#E5E7EB'}`,
-                  padding: '1px 5px',
-                  borderRadius: '9999px',
-                  whiteSpace: 'nowrap',
-                }}>
-                  7 days left
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: '10px',
-                  color: theme.sidebarTextSecondary || theme.textSecondary,
-                  marginBottom: '3px',
-                  fontWeight: 600,
-                }}>
-                  <span>Trial Remaining</span>
-                  <span>7 / 14 Days</span>
-                </div>
-                <div style={{
-                  width: '100%',
-                  height: '4px',
-                  backgroundColor: (theme as any).sidebarIsDark ? theme.border : '#E5E7EB',
-                  borderRadius: '9999px',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    width: '50%',
-                    height: '100%',
-                    backgroundColor: theme.activeBg,
-                    borderRadius: '9999px',
-                  }} />
-                </div>
-              </div>
-
-              {/* Upgrade Button */}
-              <button
-                type="button"
-                onClick={() => setShowUpgradeModal(true)}
-                className="button-20"
-                style={{
-                  width: '100%',
-                  height: '24px',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  borderRadius: '0.4rem',
-                  padding: 0,
-                  marginTop: '0.1rem',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.2rem',
-                }}
-              >
-                <span>Upgrade Plan</span>
-                <ArrowOutwardRoundedIcon sx={{ fontSize: 10 }} />
-              </button>
-            </div>
-
-
+            {/* Upgrade Plan ↗ */}
+            <button
+              type="button"
+              onClick={() => setShowUpgradeModal(true)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.52rem 0.65rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: theme.sidebarTextPrimary || '#111827',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '14px',
+                fontWeight: 750,
+                transition: 'all 0.15s ease',
+                textAlign: 'left',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.sidebarIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <span>Upgrade Plan</span>
+              <ArrowOutwardRoundedIcon sx={{ fontSize: 13, strokeWidth: 1.5, color: 'inherit' }} />
+            </button>
           </div>
         </aside>
 
@@ -1151,385 +1098,31 @@ export default function AdminDashboardPage() {
               flexDirection: 'column',
               backgroundColor: theme.bgPage,
             }}>
-              {/* Middle Main Content Area (Scrollable) */}
+              {/* Header Greeting Area */}
               <div style={{
                 width: '100%',
-                flex: 'none',
-                height: 'auto',
-                overflow: 'visible',
-                padding: 'clamp(1.25rem, 2.5vw, 2.25rem)',
+                padding: '1.5rem 1.25rem 0.5rem',
                 boxSizing: 'border-box',
                 backgroundColor: theme.bgPage,
               }}>
-                <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-                  {/* Header Greeting */}
-                  <div style={{ marginBottom: '1.75rem' }}>
-                    <h1 style={{
-                      fontSize: '24px',
-                      fontWeight: 800,
-                      color: theme.textPrimary,
-                      letterSpacing: '-0.035em',
-                      margin: '0 0 0.25rem 0',
-                    }}>
-                      {greeting}{merchantName ? `, ${merchantName}` : ''} 👋
-                    </h1>
-                    <p style={{
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: theme.textSecondary,
-                      letterSpacing: '-0.01em',
-                      margin: 0,
-                    }}>
-                      Set up your business. Run it smarter.
-                    </p>
-                  </div>
-
-                  {/* ========================================================
-                      SECTION 1: 3-CARD SETUP / ONBOARDING GUIDE
-                      ======================================================== */}
-                  <div style={{ marginBottom: '1.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{
-                          fontSize: '12.5px',
-                          fontWeight: 800,
-                          letterSpacing: '-0.01em',
-                          color: theme.textPrimary,
-                        }}>
-                          Store Setup · 3 Quick Steps
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 2 Setup Cards Grid - Compact Modern UI */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                      gap: '0.85rem',
-                    }}>
-                      {/* Card 1: Add your first product */}
-                      <div
-                        style={{
-                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                          border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '0.9rem',
-                          padding: '1.15rem 1.15rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          minHeight: '170px',
-                          boxSizing: 'border-box',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                        }}
-                      >
-                        <div>
-                          {/* Top Icon & Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
-                            <Inventory2RoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: theme.textSecondary,
-                              backgroundColor: theme.hoverBg,
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                            }}>
-                              Step 1
-                            </span>
-                          </div>
-
-                          {/* Headline */}
-                          <h3 style={{
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            color: theme.textPrimary,
-                            letterSpacing: '-0.02em',
-                            margin: '0 0 0.35rem 0',
-                            lineHeight: 1.25,
-                          }}>
-                            Add your first product
-                          </h3>
-
-                          {/* Description */}
-                          <p style={{
-                            fontSize: '12px',
-                            color: theme.textSecondary,
-                            lineHeight: 1.45,
-                            margin: 0,
-                            fontWeight: 450,
-                          }}>
-                            Create store items with prices, variants, categories, and barcodes to start selling.
-                          </p>
-                        </div>
-
-                        {/* Middle Illustration */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0.5rem 0',
-                          margin: '0.35rem 0',
-                        }}>
-                          <Image
-                            src="/dashimages/card1dash.png"
-                            alt="Add first product"
-                            width={130}
-                            height={130}
-                            style={{
-                              objectFit: 'contain',
-                              maxHeight: '130px',
-                              width: 'auto',
-                              borderRadius: '0.6rem',
-                            }}
-                            priority
-                          />
-                        </div>
-
-                        {/* Bottom Action */}
-                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('add_product');
-                              openSingleMenu('catalog');
-                            }}
-                            className="button-20"
-                            style={{
-                              borderRadius: '9999px',
-                              padding: '0.45rem 1.15rem',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            <span>Add product</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card 2: Start selling on POS */}
-                      <div
-                        style={{
-                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                          border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '0.9rem',
-                          padding: '1.15rem 1.15rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          minHeight: '170px',
-                          boxSizing: 'border-box',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                        }}
-                      >
-                        <div>
-                          {/* Top Icon & Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <PointOfSaleRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
-                            </div>
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: theme.textSecondary,
-                              backgroundColor: theme.hoverBg,
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                            }}>
-                              Step 2
-                            </span>
-                          </div>
-
-                          {/* Headline */}
-                          <h3 style={{
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            color: theme.textPrimary,
-                            letterSpacing: '-0.02em',
-                            margin: '0 0 0.35rem 0',
-                            lineHeight: 1.25,
-                          }}>
-                            Start selling on POS
-                          </h3>
-
-                          {/* Description */}
-                          <p style={{
-                            fontSize: '12px',
-                            color: theme.textSecondary,
-                            lineHeight: 1.45,
-                            margin: 0,
-                            fontWeight: 450,
-                          }}>
-                            Open your high-speed cashier register, assign drawer floats, and ring up sales.
-                          </p>
-                        </div>
-
-                        {/* Middle Illustration */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0.5rem 0',
-                          margin: '0.35rem 0',
-                        }}>
-                          <Image
-                            src="/dashimages/card2dash.png"
-                            alt="Start selling on POS"
-                            width={195}
-                            height={130}
-                            style={{
-                              objectFit: 'contain',
-                              maxHeight: '130px',
-                              width: 'auto',
-                              borderRadius: '0.6rem',
-                            }}
-                            priority
-                          />
-                        </div>
-
-                        {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <Link
-                            href="/pos"
-                            style={{
-                              backgroundColor: theme.sidebarIsDark ? theme.hoverBg : '#FFFFFF',
-                              color: theme.textPrimary,
-                              borderRadius: '9999px',
-                              padding: '0.45rem 0.95rem',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              border: `1px solid ${theme.border}`,
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                              cursor: 'pointer',
-                              fontFamily: 'inherit',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              textDecoration: 'none',
-                              transition: 'opacity 0.15s ease',
-                              boxSizing: 'border-box',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <span>Open register</span>
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveTabId('set_hardware');
-                              openSingleMenu('settings');
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: theme.textPrimary,
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              padding: '0.45rem 0.45rem',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontFamily: 'inherit',
-                              transition: 'opacity 0.15s ease',
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.75'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <span>Hardware settings</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Card 3: Set tables for cafe or restaurant */}
-                      <div
-                        style={{
-                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#FFFFFF',
-                          border: `1px solid ${theme.borderCard}`,
-                          borderRadius: '0.9rem',
-                          padding: '1.15rem 1.15rem',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          minHeight: '170px',
-                          boxSizing: 'border-box',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                        }}
-                      >
-                        <div>
-                          {/* Top Icon & Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '20px', marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <TableRestaurantRoundedIcon sx={{ fontSize: 18, color: theme.textSecondary }} />
-                            </div>
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: theme.textSecondary,
-                              backgroundColor: theme.hoverBg,
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                            }}>
-                              Step 3
-                            </span>
-                          </div>
-
-                          {/* Headline */}
-                          <h3 style={{
-                            fontSize: '15px',
-                            fontWeight: 800,
-                            color: theme.textPrimary,
-                            letterSpacing: '-0.02em',
-                            margin: '0 0 0.35rem 0',
-                            lineHeight: 1.25,
-                          }}>
-                            Set tables for cafe or restaurant
-                          </h3>
-
-                          {/* Description */}
-                          <p style={{
-                            fontSize: '12px',
-                            color: theme.textSecondary,
-                            lineHeight: 1.45,
-                            margin: 0,
-                            fontWeight: 450,
-                          }}>
-                            Configure floor layouts, seating capacity, table numbers, and order ticket tokens.
-                          </p>
-                        </div>
-
-                        {/* Middle Illustration */}
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0.5rem 0',
-                          margin: '0.35rem 0',
-                        }}>
-                          <Image
-                            src="/dashimages/card3dash.png"
-                            alt="Set tables for cafe or restaurant"
-                            width={195}
-                            height={130}
-                            style={{
-                              objectFit: 'contain',
-                              maxHeight: '130px',
-                              width: 'auto',
-                              borderRadius: '0.6rem',
-                            }}
-                            priority
-                          />
-                        </div>
-
-                        {/* Bottom Actions Row */}
-                        <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <h1 style={{
+                  fontSize: '24px',
+                  fontWeight: 800,
+                  color: theme.textPrimary,
+                  letterSpacing: '-0.035em',
+                  margin: '0 0 0.25rem 0',
+                }}>
+                  {greeting}{merchantName ? `, ${merchantName}` : ''} 👋
+                </h1>
+                <p style={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  color: theme.textSecondary,
+                  letterSpacing: '-0.01em',
+                  margin: 0,
+                }}>
+                  Set up your business. Run it smarter.
+                </p>
               </div>
 
               {/* ========================================================

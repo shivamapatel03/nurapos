@@ -56,7 +56,7 @@ export default function FaqSection() {
         padding: 'clamp(4rem, 7vw, 6rem) 1.5rem',
         maxWidth: '920px',
         margin: '0 auto',
-        fontFamily: "var(--font-heading, 'Plus Jakarta Sans', sans-serif)",
+        fontFamily: "'Inter', sans-serif",
         boxSizing: 'border-box',
       }}
     >
@@ -64,10 +64,11 @@ export default function FaqSection() {
       <div style={{ textAlign: 'center', marginBottom: 'clamp(2rem, 3.5vw, 3rem)' }}>
         <h2
           style={{
-            fontSize: 'clamp(1.85rem, 3.8vw, 2.75rem)',
-            fontWeight: 800,
-            lineHeight: 1.2,
-            letterSpacing: '-0.035em',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 'clamp(24px, 3.5vw, 30px)',
+            fontWeight: 600,
+            lineHeight: 1.25,
+            letterSpacing: '-0.025em',
             color: '#0A0A0A',
             margin: 0,
           }}
@@ -76,7 +77,7 @@ export default function FaqSection() {
         </h2>
       </div>
 
-      {/* Accordion List (No shadow, no lines) */}
+      {/* Accordion List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {FAQS.map((faq, index) => {
           const isOpen = openIndex === index;
@@ -85,7 +86,7 @@ export default function FaqSection() {
               key={index}
               style={{
                 backgroundColor: isOpen ? '#F4F4F6' : '#F9F9FA',
-                borderRadius: '1.25rem',
+                borderRadius: '10px',
                 border: 'none',
                 boxShadow: 'none',
                 overflow: 'hidden',
@@ -98,7 +99,7 @@ export default function FaqSection() {
                 aria-expanded={isOpen}
                 style={{
                   width: '100%',
-                  padding: '1.35rem 1.6rem',
+                  padding: '1.25rem 1.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -109,10 +110,10 @@ export default function FaqSection() {
                   cursor: 'pointer',
                   textAlign: 'left',
                   color: '#0A0A0A',
-                  fontSize: '1.05rem',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  fontFamily: 'inherit',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.015em',
+                  fontFamily: "'Inter', sans-serif",
                   outline: 'none',
                 }}
               >
@@ -122,10 +123,10 @@ export default function FaqSection() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '9999px',
-                    backgroundColor: isOpen ? '#191a19' : '#E4E4E7',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '4px',
+                    backgroundColor: isOpen ? '#18181B' : '#E4E4E7',
                     color: isOpen ? '#FFFFFF' : '#18181B',
                     flexShrink: 0,
                     transition: 'background-color 0.25s ease',
@@ -138,7 +139,7 @@ export default function FaqSection() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.8"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     style={{
@@ -171,11 +172,12 @@ export default function FaqSection() {
                 >
                   <div
                     style={{
-                      padding: '0 1.6rem 1.45rem 1.6rem',
+                      padding: '0 1.5rem 1.35rem 1.5rem',
                       color: '#52525B',
-                      fontSize: '0.96rem',
-                      lineHeight: 1.65,
+                      fontSize: '14.5px',
+                      lineHeight: 1.6,
                       letterSpacing: '-0.01em',
+                      fontFamily: "'Inter', sans-serif",
                     }}
                   >
                     {faq.answer}

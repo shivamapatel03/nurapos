@@ -13,7 +13,30 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
     public async Task<List<OwnerCatalogItem>> GetAllAsync(OwnerCatalogType type, int userId)
     {
         var definition = GetDefinition(type);
-        var sql = $"SELECT {SelectColumns(definition)} FROM {definition.Table} WHERE c_user_id = @user_id ORDER BY {definition.Id};";
+        var sql = type == OwnerCatalogType.Product
+            ? """
+                SELECT 
+                    p.c_product_id AS id,
+                    p.c_product_name AS name,
+                    NULL::text AS description,
+                    NULL::text AS contact,
+                    NULL::text AS email,
+                    NULL::text AS address,
+                    p.c_category_id AS category_id,
+                    p.c_selling_price AS selling_price,
+                    p.c_cost_price AS cost_price,
+                    p.c_tax_rate AS tax_rate,
+                    p.c_tax_type AS tax_type,
+                    p.c_unit AS unit,
+                    p.c_status AS status,
+                    c.c_category_name AS category_name
+                FROM t_product p
+                LEFT JOIN t_category c ON p.c_category_id = c.c_category_id AND c.c_user_id = @user_id
+                WHERE p.c_user_id = @user_id
+                ORDER BY p.c_product_id;
+              """
+            : $"SELECT {SelectColumns(definition)}, NULL::text AS category_name FROM {definition.Table} WHERE c_user_id = @user_id ORDER BY {definition.Id};";
+
         await OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, _connection);
         command.Parameters.AddWithValue("@user_id", userId);
@@ -26,7 +49,29 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
     public async Task<OwnerCatalogItem?> GetByIdAsync(OwnerCatalogType type, int id, int userId)
     {
         var definition = GetDefinition(type);
-        var sql = $"SELECT {SelectColumns(definition)} FROM {definition.Table} WHERE {definition.Id} = @id AND c_user_id = @user_id;";
+        var sql = type == OwnerCatalogType.Product
+            ? """
+                SELECT 
+                    p.c_product_id AS id,
+                    p.c_product_name AS name,
+                    NULL::text AS description,
+                    NULL::text AS contact,
+                    NULL::text AS email,
+                    NULL::text AS address,
+                    p.c_category_id AS category_id,
+                    p.c_selling_price AS selling_price,
+                    p.c_cost_price AS cost_price,
+                    p.c_tax_rate AS tax_rate,
+                    p.c_tax_type AS tax_type,
+                    p.c_unit AS unit,
+                    p.c_status AS status,
+                    c.c_category_name AS category_name
+                FROM t_product p
+                LEFT JOIN t_category c ON p.c_category_id = c.c_category_id AND c.c_user_id = @user_id
+                WHERE p.c_product_id = @id AND p.c_user_id = @user_id;
+              """
+            : $"SELECT {SelectColumns(definition)}, NULL::text AS category_name FROM {definition.Table} WHERE {definition.Id} = @id AND c_user_id = @user_id;";
+
         await OpenConnectionAsync();
         await using var command = new NpgsqlCommand(sql, _connection);
         command.Parameters.AddWithValue("@id", id);
@@ -111,22 +156,37 @@ public sealed class OwnerCatalogRepository : IOwnerCatalogRepository
     private static string Select(string? column, string alias, string type) =>
         column == null ? $"NULL::{type} AS {alias}" : $"{column} AS {alias}";
 
-    private static OwnerCatalogItem Map(NpgsqlDataReader reader) => new()
+    private static OwnerCatalogItem Map(NpgsqlDataReader reader)
     {
-        Id = reader.GetInt32(reader.GetOrdinal("id")),
-        Name = reader.GetString(reader.GetOrdinal("name")),
-        Description = ReadString(reader, "description"),
-        Contact = ReadString(reader, "contact"),
-        Email = ReadString(reader, "email"),
-        Address = ReadString(reader, "address"),
-        CategoryId = ReadInt(reader, "category_id"),
-        SellingPrice = ReadDecimal(reader, "selling_price"),
-        CostPrice = ReadDecimal(reader, "cost_price"),
-        TaxRate = ReadDecimal(reader, "tax_rate"),
-        TaxType = ReadString(reader, "tax_type"),
-        Unit = ReadString(reader, "unit"),
-        Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "ACTIVE" : reader.GetString(reader.GetOrdinal("status"))
-    };
+        var item = new OwnerCatalogItem
+        {
+            Id = reader.GetInt32(reader.GetOrdinal("id")),
+            Name = reader.GetString(reader.GetOrdinal("name")),
+            Description = ReadString(reader, "description"),
+            Contact = ReadString(reader, "contact"),
+            Email = ReadString(reader, "email"),
+            Address = ReadString(reader, "address"),
+            CategoryId = ReadInt(reader, "category_id"),
+            SellingPrice = ReadDecimal(reader, "selling_price"),
+            CostPrice = ReadDecimal(reader, "cost_price"),
+            TaxRate = ReadDecimal(reader, "tax_rate"),
+            TaxType = ReadString(reader, "tax_type"),
+            Unit = ReadString(reader, "unit"),
+            Status = reader.IsDBNull(reader.GetOrdinal("status")) ? "ACTIVE" : reader.GetString(reader.GetOrdinal("status"))
+        };
+
+        try
+        {
+            var catOrd = reader.GetOrdinal("category_name");
+            if (catOrd >= 0 && !reader.IsDBNull(catOrd))
+            {
+                item.CategoryName = reader.GetString(catOrd);
+            }
+        }
+        catch { }
+
+        return item;
+    }
 
     private static string? ReadString(NpgsqlDataReader reader, string name)
     {
