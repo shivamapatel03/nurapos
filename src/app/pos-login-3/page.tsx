@@ -63,6 +63,8 @@ export default function PosLoginScreen3() {
         justifyContent: 'flex-end',
         alignItems: 'center',
         flexShrink: 0,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         <Link
           href="#help"

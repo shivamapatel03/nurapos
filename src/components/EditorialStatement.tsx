@@ -15,12 +15,12 @@ interface EditorialStatementProps {
 }
 
 export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialStatementProps) {
-  // Pre-calculate exact 100% corner smoothing iOS squircle path (120x120, r=28, smoothing=1.0)
+  // Pre-calculate exact 100% corner smoothing iOS squircle path (80x80, r=18, smoothing=1.0)
   const squirclePath = useMemo(() => {
     return getSvgPath({
-      width: 120,
-      height: 120,
-      cornerRadius: 28,
+      width: 80,
+      height: 80,
+      cornerRadius: 18,
       cornerSmoothing: 1, // 100% iOS continuous curvature
     });
   }, []);
@@ -32,7 +32,7 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
         position: 'relative',
         backgroundColor: '#FFFFFF',
         width: '100%',
-        padding: 'clamp(3rem, 5.5vw, 4.75rem) 1.5rem',
+        padding: 'clamp(2.5rem, 4.5vw, 4rem) 1.5rem',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
@@ -71,18 +71,18 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
           />
         </div>
 
-        {/* Feature Cards Row: Billing, Reports, Inventory, Sales (Compact 120x120, No Shadow, 100% iOS Squircle) */}
+        {/* Feature Cards Row: Billing, Reports, Inventory, Sales (Compact 80x80, No Shadow, 100% iOS Squircle) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+          transition={{ duration: 0.55, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
           style={{
-            marginTop: 'clamp(2.25rem, 3.8vw, 3.25rem)',
+            marginTop: 'clamp(2rem, 3.5vw, 2.75rem)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 'clamp(14px, 2.4vw, 24px)',
+            gap: 'clamp(12px, 2.2vw, 22px)',
             flexWrap: 'wrap',
             width: '100%',
           }}
@@ -93,13 +93,13 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
             }}
           >
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 color: '#000000',
                 letterSpacing: '-0.015em',
@@ -109,25 +109,25 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
             </span>
             <div
               style={{
-                width: '120px',
-                height: '120px',
+                width: '80px',
+                height: '80px',
                 boxShadow: 'none',
                 filter: 'none',
                 cursor: 'default',
               }}
             >
               <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
                 fill="none"
-                style={{ width: '100%', height: '100%', display: 'block' }}
+                style={{ width: '80px', height: '80px', display: 'block' }}
               >
                 <path d={squirclePath} fill="#F96A38" />
-                <rect x="24" y="30" width="72" height="11" rx="5.5" fill="white" />
-                <rect x="24" y="47" width="72" height="11" rx="5.5" fill="white" />
-                <rect x="24" y="64" width="72" height="11" rx="5.5" fill="white" />
-                <rect x="24" y="81" width="45" height="11" rx="5.5" fill="white" />
+                <rect x="16" y="20" width="48" height="7" rx="3.5" fill="white" />
+                <rect x="16" y="31" width="48" height="7" rx="3.5" fill="white" />
+                <rect x="16" y="42" width="48" height="7" rx="3.5" fill="white" />
+                <rect x="16" y="53" width="30" height="7" rx="3.5" fill="white" />
               </svg>
             </div>
           </div>
@@ -138,13 +138,13 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
             }}
           >
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 color: '#000000',
                 letterSpacing: '-0.015em',
@@ -155,8 +155,8 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
             <div
               style={{
                 position: 'relative',
-                width: '120px',
-                height: '120px',
+                width: '80px',
+                height: '80px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -166,9 +166,9 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               }}
             >
               <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
                 fill="none"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
               >
@@ -177,12 +177,12 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               <Image
                 src="/icons/report.png"
                 alt="Reports"
-                width={54}
-                height={54}
+                width={36}
+                height={36}
                 priority
                 style={{
-                  width: '54px',
-                  height: '54px',
+                  width: '36px',
+                  height: '36px',
                   objectFit: 'contain',
                   display: 'block',
                   position: 'relative',
@@ -198,13 +198,13 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
             }}
           >
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 color: '#000000',
                 letterSpacing: '-0.015em',
@@ -215,8 +215,8 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
             <div
               style={{
                 position: 'relative',
-                width: '120px',
-                height: '120px',
+                width: '80px',
+                height: '80px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -226,9 +226,9 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               }}
             >
               <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
                 fill="none"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
               >
@@ -237,12 +237,12 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               <Image
                 src="/icons/inventory.png"
                 alt="Inventory"
-                width={54}
-                height={54}
+                width={36}
+                height={36}
                 priority
                 style={{
-                  width: '54px',
-                  height: '54px',
+                  width: '36px',
+                  height: '36px',
                   objectFit: 'contain',
                   display: 'block',
                   position: 'relative',
@@ -258,13 +258,13 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '12px',
+              gap: '10px',
             }}
           >
             <span
               style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 color: '#000000',
                 letterSpacing: '-0.015em',
@@ -275,8 +275,8 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
             <div
               style={{
                 position: 'relative',
-                width: '120px',
-                height: '120px',
+                width: '80px',
+                height: '80px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -286,9 +286,9 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               }}
             >
               <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
                 fill="none"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
               >
@@ -297,12 +297,12 @@ export default function EditorialStatement({ text = STATEMENT_TEXT }: EditorialS
               <Image
                 src="/icons/discount.png"
                 alt="Sales"
-                width={54}
-                height={54}
+                width={36}
+                height={36}
                 priority
                 style={{
-                  width: '54px',
-                  height: '54px',
+                  width: '36px',
+                  height: '36px',
                   objectFit: 'contain',
                   display: 'block',
                   position: 'relative',

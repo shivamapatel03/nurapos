@@ -155,6 +155,8 @@ export default function PosLoginPage() {
         justifyContent: 'flex-end',
         alignItems: 'center',
         flexShrink: 0,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         <Link
           href="#help"
@@ -171,6 +173,7 @@ export default function PosLoginPage() {
             color: '#000000',
             textDecoration: 'none',
             transition: 'opacity 0.15s',
+            marginLeft: 'auto',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}

@@ -302,7 +302,19 @@ export default function SigninPage() {
       `}</style>
 
       {/* Top Header with "Need help" */}
-      <header className="auth-header">
+      <header
+        className="auth-header"
+        style={{
+          height: '52px',
+          padding: '0 2.5rem',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          flexShrink: 0,
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
         <Link
           href="#help"
           onClick={(e) => {
@@ -318,6 +330,7 @@ export default function SigninPage() {
             color: '#000000',
             textDecoration: 'none',
             transition: 'opacity 0.15s',
+            marginLeft: 'auto',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.opacity = '0.7';

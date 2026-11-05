@@ -20,9 +20,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isAcceptingTerms, setIsAcceptingTerms] = useState(false);
@@ -123,16 +121,6 @@ export default function SignupPage() {
       return;
     }
 
-    if (!confirmPassword) {
-      setFormError('Please confirm your password.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setFormError('Passwords do not match. Please verify both fields.');
-      return;
-    }
-
     if (!agreeTerms) {
       setFormError(null);
       setShowTermsModal(true);
@@ -147,7 +135,6 @@ export default function SignupPage() {
       name: fullName.trim(),
       email: email.trim(),
       password,
-      confirmPassword,
     };
 
     try {
@@ -625,66 +612,6 @@ export default function SignupPage() {
                     </button>
                   )}
                 </div>
-              </div>
-
-              {/* Confirm Password Field with Notched Outline Label */}
-              <div
-                className={`notched-field-group ${
-                  confirmPassword.length > 0 && confirmPassword !== password
-                    ? 'is-error'
-                    : confirmPassword.length > 0 && confirmPassword === password
-                    ? 'is-success'
-                    : ''
-                }`}
-              >
-                <label className="notched-label">Confirm Password</label>
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (formError) setFormError(null);
-                  }}
-                  style={{ paddingRight: '38px' }}
-                />
-                {confirmPassword.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#71717A',
-                      padding: '4px',
-                      transition: 'color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#000000';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#71717A';
-                    }}
-                  >
-                    {showConfirmPassword ? (
-                      <VisibilityOffRoundedIcon sx={{ fontSize: 18 }} />
-                    ) : (
-                      <VisibilityRoundedIcon sx={{ fontSize: 18 }} />
-                    )}
-                  </button>
-                )}
               </div>
 
               {/* Terms and Privacy Checkbox */}

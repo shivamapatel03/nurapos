@@ -343,6 +343,11 @@ export default function CompletePaymentModal({
     if (isSubmitting) return;
 
     // Validation checks
+    if (!customerName || customerName.trim().length < 2 || customerName.trim().toLowerCase() === 'guest customer' || !customerPhone || customerPhone.trim().length < 7) {
+      alert('A valid customer name and phone number are mandatory to complete and consider this sale.');
+      return;
+    }
+
     if (paymentMethod === 'cash' && isCashInsufficient) {
       alert(`Insufficient cash received. Short by ₹${(payableTotal - parsedCashTendered).toFixed(2)}`);
       return;
@@ -805,7 +810,7 @@ export default function CompletePaymentModal({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ color: theme.textSecondary }}>Order {orderNumber}</span>
                 <span style={{ color: theme.textPrimary, fontWeight: 700 }}>
-                  Subtotal: ₹{subtotal.toFixed(2)} {(discountAmount + loyaltyDiscount) > 0 && <span style={{ color: '#16A34A' }}>(-₹{(discountAmount + loyaltyDiscount).toFixed(2)})</span>} + GST: ₹{tax.toFixed(2)}
+                  Subtotal: ₹{subtotal.toFixed(2)} {(discountAmount + loyaltyDiscount) > 0 && <span style={{ color: '#DC2626', fontWeight: 600 }}>(-₹{(discountAmount + loyaltyDiscount).toFixed(2)})</span>} + GST: ₹{tax.toFixed(2)}
                 </span>
               </div>
               <div style={{ textAlign: 'right' }}>

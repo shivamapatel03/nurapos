@@ -47,6 +47,7 @@ import ActionMenu, {
 } from '@/components/pos/ActionMenu';
 import CompletePaymentModal from '@/components/pos/CompletePaymentModal';
 import {
+  getOwnerSales,
   getActiveShift,
   recordCashMovement,
   closeShift,
@@ -80,6 +81,11 @@ import TableBarRoundedIcon from '@mui/icons-material/TableBarRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import DeliveryDiningRoundedIcon from '@mui/icons-material/DeliveryDiningRounded';
 import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
+import KitchenRoundedIcon from '@mui/icons-material/KitchenRounded';
+import MapRoundedIcon from '@mui/icons-material/MapRounded';
+import ChairRoundedIcon from '@mui/icons-material/ChairRounded';
 
 const TABLE_SECTIONS: Record<string, string[]> = {
   'Main Hall': ['T-01', 'T-02', 'T-03', 'T-04', 'T-05', 'T-06'],
@@ -87,6 +93,33 @@ const TABLE_SECTIONS: Record<string, string[]> = {
   'Garden': ['G-01', 'G-02', 'G-03', 'G-04'],
   'Rooftop': ['R-01', 'R-02', 'R-03'],
 };
+
+const DEFAULT_DINING_TABLES: DiningTable[] = [
+  // Main Hall (6 Tables)
+  { id: 1, franchiseId: 1, tableNumber: 'T-01', section: 'Main Hall', capacity: 4, status: 'VACANT' },
+  { id: 2, franchiseId: 1, tableNumber: 'T-02', section: 'Main Hall', capacity: 2, status: 'OCCUPIED', activeOrderId: '#ORD-1001' },
+  { id: 3, franchiseId: 1, tableNumber: 'T-03', section: 'Main Hall', capacity: 4, status: 'VACANT' },
+  { id: 4, franchiseId: 1, tableNumber: 'T-04', section: 'Main Hall', capacity: 6, status: 'RESERVED' },
+  { id: 5, franchiseId: 1, tableNumber: 'T-05', section: 'Main Hall', capacity: 4, status: 'VACANT' },
+  { id: 6, franchiseId: 1, tableNumber: 'T-06', section: 'Main Hall', capacity: 8, status: 'BILLED', activeOrderId: '#ORD-1002' },
+
+  // AC Hall (4 Tables)
+  { id: 7, franchiseId: 1, tableNumber: 'AC-01', section: 'AC Hall', capacity: 4, status: 'VACANT' },
+  { id: 8, franchiseId: 1, tableNumber: 'AC-02', section: 'AC Hall', capacity: 4, status: 'OCCUPIED', activeOrderId: '#ORD-0998' },
+  { id: 9, franchiseId: 1, tableNumber: 'AC-03', section: 'AC Hall', capacity: 2, status: 'VACANT' },
+  { id: 10, franchiseId: 1, tableNumber: 'AC-04', section: 'AC Hall', capacity: 6, status: 'VACANT' },
+
+  // Garden (4 Tables)
+  { id: 11, franchiseId: 1, tableNumber: 'G-01', section: 'Garden', capacity: 4, status: 'VACANT' },
+  { id: 12, franchiseId: 1, tableNumber: 'G-02', section: 'Garden', capacity: 6, status: 'VACANT' },
+  { id: 13, franchiseId: 1, tableNumber: 'G-03', section: 'Garden', capacity: 4, status: 'OCCUPIED', activeOrderId: '#ORD-1000' },
+  { id: 14, franchiseId: 1, tableNumber: 'G-04', section: 'Garden', capacity: 2, status: 'VACANT' },
+
+  // Rooftop (3 Tables)
+  { id: 15, franchiseId: 1, tableNumber: 'R-01', section: 'Rooftop', capacity: 4, status: 'VACANT' },
+  { id: 16, franchiseId: 1, tableNumber: 'R-02', section: 'Rooftop', capacity: 4, status: 'VACANT' },
+  { id: 17, franchiseId: 1, tableNumber: 'R-03', section: 'Rooftop', capacity: 8, status: 'RESERVED' },
+];
 
 interface Product {
   id: string;
@@ -247,11 +280,128 @@ function getCategoryIcon(catName: string) {
 
 
 
+
+const DEFAULT_STORE_INVOICES = [
+  {
+    id: 'inv-101',
+    orderNumber: '#INV-1048',
+    date: new Date().toISOString().split('T')[0],
+    timestamp: '11:45 AM',
+    customerName: 'Rahul Sharma',
+    customerPhone: '+91 98765 43210',
+    items: [
+      { name: 'Artisan Espresso', quantity: 2, price: 150, total: 300 },
+      { name: 'Butter Croissant', quantity: 1, price: 120, total: 120 },
+    ],
+    totalAmount: 441,
+    paymentMethod: 'UPI / QR',
+    status: 'Completed',
+    orderType: 'dine_in',
+    tableNumber: 'Main Hall • T-01',
+  },
+  {
+    id: 'inv-102',
+    orderNumber: '#INV-1047',
+    date: new Date().toISOString().split('T')[0],
+    timestamp: '11:15 AM',
+    customerName: 'Guest Customer',
+    items: [
+      { name: 'Iced Vanilla Latte', quantity: 1, price: 220, total: 220 },
+      { name: 'Blueberry Danish', quantity: 1, price: 160, total: 160 },
+    ],
+    totalAmount: 399,
+    paymentMethod: 'CASH',
+    status: 'Completed',
+    orderType: 'takeaway',
+    ticketNumber: 'TK-12',
+  },
+  {
+    id: 'inv-103',
+    orderNumber: '#INV-1046',
+    date: new Date().toISOString().split('T')[0],
+    timestamp: '10:30 AM',
+    customerName: 'Priya Patel',
+    customerPhone: '+91 98234 56789',
+    items: [
+      { name: 'Avocado Sourdough Toast', quantity: 1, price: 280, total: 280 },
+      { name: 'Matcha Green Tea', quantity: 1, price: 240, total: 240 },
+    ],
+    totalAmount: 546,
+    paymentMethod: 'CARD',
+    status: 'Completed',
+    orderType: 'dine_in',
+    tableNumber: 'Balcony • T-04',
+  },
+];
+
+const DEFAULT_STORE_CUSTOMERS: Customer[] = [
+  {
+    id: 1,
+    ownerId: 1,
+    name: 'Rahul Sharma',
+    phone: '+91 98765 43210',
+    email: 'rahul.sharma@example.com',
+    address: 'Vastrapur, Ahmedabad',
+    loyaltyPoints: 240,
+    totalSpent: 4850,
+    totalVisits: 8,
+    createdAtUtc: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    ownerId: 1,
+    name: 'Priya Patel',
+    phone: '+91 98234 56789',
+    email: 'priya.patel@example.com',
+    address: 'Navrangpura, Ahmedabad',
+    loyaltyPoints: 120,
+    totalSpent: 2600,
+    totalVisits: 5,
+    createdAtUtc: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    ownerId: 1,
+    name: 'Aman Verma',
+    phone: '+91 97123 45678',
+    email: 'aman.verma@example.com',
+    address: 'Bodakdev, Ahmedabad',
+    loyaltyPoints: 350,
+    totalSpent: 7200,
+    totalVisits: 12,
+    createdAtUtc: new Date().toISOString(),
+  },
+  {
+    id: 4,
+    ownerId: 1,
+    name: 'Sneha Mehta',
+    phone: '+91 99887 76655',
+    email: 'sneha.mehta@example.com',
+    address: 'Satellite, Ahmedabad',
+    loyaltyPoints: 80,
+    totalSpent: 1400,
+    totalVisits: 3,
+    createdAtUtc: new Date().toISOString(),
+  },
+];
+
 export default function PosMainScreen() {
   const { isAuthorized, handleLogout } = useAuthGuard();
   const router = useRouter();
 
   // Navigation state
+  
+  // Held Sales, Invoices & Customer Search + Ghost Skeleton Loading
+  const [heldSearchQuery, setHeldSearchQuery] = useState('');
+  const [isLoadingHeldSales, setIsLoadingHeldSales] = useState(false);
+
+  const [invoicesList, setInvoicesList] = useState<any[]>(DEFAULT_STORE_INVOICES);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
+
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
+
   const [activeNav, setActiveNav] = useState<'new_sale' | 'held_sales' | 'invoices' | 'customers'>('new_sale');
 
   // 9-Dot Quick Launcher Popup state & ref
@@ -313,16 +463,30 @@ export default function PosMainScreen() {
   // Held sales list (starts empty)
   const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
 
-  // Customer state & Order Type state
-  const [customerName, setCustomerName] = useState('Guest Customer');
+  // Customer state (Empty by default: Customer is Mandatory for sales)
+  const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
   const [tableSection, setTableSection] = useState('Main Hall');
   const [tableNumber, setTableNumber] = useState('T-01');
+  const [guestCount, setGuestCount] = useState<number>(2);
+  const [tableNote, setTableNote] = useState<string>('');
   const [ticketNumber, setTicketNumber] = useState('#TK-01');
   const [deliveryPlatform, setDeliveryPlatform] = useState('Direct');
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [discountPct, setDiscountPct] = useState(0);
+
+  // Dine In Advanced Features State
+  const [showFloorPlanModal, setShowFloorPlanModal] = useState<boolean>(false);
+  const [showKotModal, setShowKotModal] = useState<boolean>(false);
+  const [showTransferTableModal, setShowTransferTableModal] = useState<boolean>(false);
+  const [kotGeneratedCount, setKotGeneratedCount] = useState<number>(0);
+  const [floorPlanFilter, setFloorPlanFilter] = useState<string>('All');
+  const [floorPlanStatusFilter, setFloorPlanStatusFilter] = useState<string>('ALL');
+
+  // Customer Modal Tab: 'new' | 'existing'
+  const [customerModalTab, setCustomerModalTab] = useState<'new' | 'existing'>('new');
+  const [customerSearchInModal, setCustomerSearchInModal] = useState<string>('');
 
   // Frequent customers list (loaded dynamically from store database)
   const [frequentCustomers, setFrequentCustomers] = useState<{ name: string; phone: string }[]>([]);
@@ -477,8 +641,8 @@ export default function PosMainScreen() {
   const [isCreatingCustomer, setIsCreatingCustomer] = useState<boolean>(false);
   const [addCustomerError, setAddCustomerError] = useState<string | null>(null);
 
-  // Dining Tables State
-  const [diningTables, setDiningTables] = useState<DiningTable[]>([]);
+  // Dining Tables State (Seeded with DEFAULT_DINING_TABLES fallback)
+  const [diningTables, setDiningTables] = useState<DiningTable[]>(DEFAULT_DINING_TABLES);
   const [isLoadingTables, setIsLoadingTables] = useState<boolean>(false);
 
   // Fetch Customers (API 40: GET /api/customers)
@@ -539,6 +703,188 @@ export default function PosMainScreen() {
     }
   };
 
+  // Load Invoices with Ghost Shimmer
+  const loadInvoices = async () => {
+    setIsLoadingInvoices(true);
+    try {
+      let localOrders: any[] = [];
+      try {
+        const stored = localStorage.getItem('nuradesk_orders');
+        if (stored) localOrders = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Error reading nuradesk_orders', e);
+      }
+
+      let backendOrders: any[] = [];
+      try {
+        const res = await getOwnerSales();
+        if (res?.data && Array.isArray(res.data)) {
+          backendOrders = res.data.map((b) => ({
+            id: b.id,
+            orderNumber: b.billNumber || `#INV-${b.id}`,
+            date: b.createdAtUtc ? b.createdAtUtc.split('T')[0] : new Date().toISOString().split('T')[0],
+            timestamp: b.createdAtUtc ? new Date(b.createdAtUtc).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today',
+            customerName: 'Customer',
+            items: b.items || [],
+            totalAmount: b.totalAmount,
+            paymentMethod: b.paymentMethod || 'CASH',
+            status: 'Completed',
+          }));
+        }
+      } catch (err) {
+        // Backend offline or no owner sales yet, use local
+      }
+
+      const combined = [...localOrders];
+      backendOrders.forEach((bo) => {
+        if (!combined.some((co) => co.orderNumber === bo.orderNumber || co.id === bo.id)) {
+          combined.push(bo);
+        }
+      });
+
+      if (combined.length === 0) {
+        setInvoicesList(DEFAULT_STORE_INVOICES);
+      } else {
+        setInvoicesList(combined);
+      }
+    } finally {
+      setTimeout(() => setIsLoadingInvoices(false), 300);
+    }
+  };
+
+  // Load Customers with Ghost Shimmer
+  const loadCustomers = async () => {
+    setIsLoadingCustomers(true);
+    try {
+      await fetchCustomersData();
+    } finally {
+      setTimeout(() => setIsLoadingCustomers(false), 300);
+    }
+  };
+
+  // Trigger ghost skeleton loading on view switch
+  useEffect(() => {
+    if (activeNav === 'invoices') {
+      loadInvoices();
+    } else if (activeNav === 'customers') {
+      loadCustomers();
+    } else if (activeNav === 'held_sales') {
+      setIsLoadingHeldSales(true);
+      const timer = setTimeout(() => setIsLoadingHeldSales(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeNav]);
+
+  // Real search filter for Held Sales
+  const filteredHeldSales = useMemo(() => {
+    const q = heldSearchQuery.toLowerCase().trim();
+    if (!q) return heldSales;
+    return heldSales.filter((h) => {
+      const idMatch = h.id.toLowerCase().includes(q);
+      const custMatch = h.customerName ? h.customerName.toLowerCase().includes(q) : false;
+      const tableMatch = h.tableNumber ? h.tableNumber.toLowerCase().includes(q) : false;
+      const ticketMatch = h.ticketNumber ? h.ticketNumber.toLowerCase().includes(q) : false;
+      const itemsMatch = h.items.some((item) => item.product.name.toLowerCase().includes(q));
+      return idMatch || custMatch || tableMatch || ticketMatch || itemsMatch;
+    });
+  }, [heldSales, heldSearchQuery]);
+
+  // Real search filter for Invoices
+  const filteredInvoices = useMemo(() => {
+    const q = invoiceSearchQuery.toLowerCase().trim();
+    if (!q) return invoicesList;
+    return invoicesList.filter((inv) => {
+      const numMatch = (inv.orderNumber || inv.billNumber || String(inv.id)).toLowerCase().includes(q);
+      const custMatch = inv.customerName ? inv.customerName.toLowerCase().includes(q) : false;
+      const phoneMatch = inv.customerPhone ? inv.customerPhone.toLowerCase().includes(q) : false;
+      const methodMatch = inv.paymentMethod ? inv.paymentMethod.toLowerCase().includes(q) : false;
+      const dateMatch = (inv.date || inv.timestamp || '').toLowerCase().includes(q);
+      const itemsMatch = Array.isArray(inv.items) && inv.items.some((item: any) =>
+        (item.name || item.productName || '').toLowerCase().includes(q)
+      );
+      return numMatch || custMatch || phoneMatch || methodMatch || dateMatch || itemsMatch;
+    });
+  }, [invoicesList, invoiceSearchQuery]);
+
+  // Real search filter for Customers
+  const effectiveCustomers = customersList.length > 0 ? customersList : DEFAULT_STORE_CUSTOMERS;
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearchQuery.toLowerCase().trim();
+    if (!q) return effectiveCustomers;
+    return effectiveCustomers.filter((cust) => {
+      const nameMatch = cust.name ? cust.name.toLowerCase().includes(q) : false;
+      const phoneMatch = cust.phone ? cust.phone.toLowerCase().includes(q) : false;
+      const emailMatch = cust.email ? cust.email.toLowerCase().includes(q) : false;
+      return nameMatch || phoneMatch || emailMatch;
+    });
+  }, [effectiveCustomers, customerSearchQuery]);
+
+  // Reusable Ghost Shimmer Skeleton Loader
+  const renderGhostSkeletonCards = (count = 3) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
+      {Array.from({ length: count }).map((_, idx) => (
+        <div
+          key={idx}
+          style={{
+            padding: '1.2rem 1.25rem',
+            backgroundColor: theme.bgCard,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '0.85rem',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.65rem',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: theme.sidebarIsDark
+                ? 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%)',
+              animation: 'posGhostShimmer 1.4s infinite',
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{
+              width: `${120 + (idx % 3) * 40}px`,
+              height: '16px',
+              borderRadius: '6px',
+              backgroundColor: theme.sidebarIsDark ? '#27272A' : '#E4E4E7',
+            }} />
+            <div style={{
+              width: '70px',
+              height: '18px',
+              borderRadius: '999px',
+              backgroundColor: theme.sidebarIsDark ? '#27272A' : '#E4E4E7',
+            }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{
+              width: `${180 + (idx % 2) * 50}px`,
+              height: '12px',
+              borderRadius: '4px',
+              backgroundColor: theme.sidebarIsDark ? '#27272A' : '#E4E4E7',
+            }} />
+            <div style={{
+              width: '90px',
+              height: '22px',
+              borderRadius: '6px',
+              backgroundColor: theme.sidebarIsDark ? '#27272A' : '#E4E4E7',
+            }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+
+
   // Fetch Dining Tables for Outlet (API 43: GET /api/tables)
   const fetchTablesData = async (franchiseId?: number) => {
     setIsLoadingTables(true);
@@ -593,6 +939,79 @@ export default function PosMainScreen() {
 
   // Dynamic order sequence number
   const [orderNumber, setOrderNumber] = useState<string>('#ORD-1001');
+
+  // Mandatory Customer Verification: Sales cannot be considered without customer details
+  const isCustomerValid = useMemo(() => {
+    return Boolean(
+      customerName &&
+      customerName.trim().length >= 2 &&
+      customerName.trim().toLowerCase() !== 'guest customer' &&
+      customerPhone &&
+      customerPhone.trim().length >= 7
+    );
+  }, [customerName, customerPhone]);
+
+  // Active Selected Dining Table Object with safe fallback
+  const currentTableObj = useMemo(() => {
+    return diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection) ||
+           diningTables.find((t) => t.tableNumber === tableNumber) ||
+           { id: 1, franchiseId: 1, tableNumber, section: tableSection, capacity: 4, status: 'VACANT' };
+  }, [diningTables, tableNumber, tableSection]);
+
+  // Dining Floor Statistics
+  const floorStats = useMemo(() => {
+    const total = diningTables.length;
+    const vacant = diningTables.filter((t) => t.status === 'VACANT').length;
+    const occupied = diningTables.filter((t) => t.status === 'OCCUPIED').length;
+    const reserved = diningTables.filter((t) => t.status === 'RESERVED').length;
+    const billed = diningTables.filter((t) => t.status === 'BILLED').length;
+    return { total, vacant, occupied, reserved, billed };
+  }, [diningTables]);
+
+  // Select Table from Floor Plan
+  const handleSelectTable = (tbl: DiningTable) => {
+    setTableSection(tbl.section);
+    setTableNumber(tbl.tableNumber);
+    setShowFloorPlanModal(false);
+  };
+
+  // Transfer Table order to another vacant table
+  const handleTransferTable = (targetTable: DiningTable) => {
+    const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection);
+    if (currentTbl) {
+      handleUpdateTableStatus(currentTbl.id, 'VACANT', undefined);
+    }
+    handleUpdateTableStatus(targetTable.id, 'OCCUPIED', orderNumber);
+    setTableSection(targetTable.section);
+    setTableNumber(targetTable.tableNumber);
+    setShowTransferTableModal(false);
+  };
+
+  // Kitchen Order Ticket (KOT)
+  const handleSendKot = () => {
+    if (cart.length === 0) return;
+    setShowKotModal(true);
+  };
+
+  const handlePrintConfirmKot = () => {
+    setKotGeneratedCount((prev) => prev + 1);
+    const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection);
+    if (currentTbl) {
+      handleUpdateTableStatus(currentTbl.id, 'OCCUPIED', orderNumber);
+    }
+    setShowKotModal(false);
+  };
+
+  // Primary Checkout Trigger: strictly enforces customer presence
+  const handleInitiateCharge = () => {
+    if (cart.length === 0) return;
+    if (!isCustomerValid) {
+      setAddCustomerError('Customer details (Full Name & Phone) are mandatory before checking out a sale.');
+      setShowAddCustomerModal(true);
+      return;
+    }
+    setShowPaymentModal(true);
+  };
 
   // Load real store data from backend API & localStorage on mount
   useEffect(() => {
@@ -872,23 +1291,6 @@ export default function PosMainScreen() {
     return matchesCategory && matchesSearch;
   });
 
-  // Group filtered products by category for category-wise display
-  const groupedByCategory = useMemo(() => {
-    const map = new Map<string, Product[]>();
-    filteredProducts.forEach((p) => {
-      const cat = p.category || 'General';
-      if (!map.has(cat)) {
-        map.set(cat, []);
-      }
-      map.get(cat)!.push(p);
-    });
-
-    const groups: { category: string; items: Product[] }[] = [];
-    map.forEach((items, category) => {
-      groups.push({ category, items });
-    });
-    return groups;
-  }, [filteredProducts]);
 
   // Cart operations
   const addToCart = (product: Product) => {
@@ -1002,8 +1404,11 @@ export default function PosMainScreen() {
     setCart([]);
     setSaleNote('');
     setPaymentNote('');
-    setCustomerName('Guest Customer');
+    setCustomerName('');
     setCustomerPhone('');
+    setSelectedCustomerId(null);
+    setCustomerLoyaltyPoints(0);
+    setKotGeneratedCount(0);
   };
 
   // Hold Sale
@@ -1024,12 +1429,21 @@ export default function PosMainScreen() {
       customerName,
       customerPhone: customerPhone.trim() || undefined,
     };
+    if (orderType === 'dine_in') {
+      const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection);
+      if (currentTbl) {
+        handleUpdateTableStatus(currentTbl.id, 'OCCUPIED', newHold.id);
+      }
+    }
     setHeldSales((prev) => [newHold, ...prev]);
     setCart([]);
     setSaleNote('');
     setPaymentNote('');
-    setCustomerName('Guest Customer');
+    setCustomerName('');
     setCustomerPhone('');
+    setSelectedCustomerId(null);
+    setCustomerLoyaltyPoints(0);
+    setKotGeneratedCount(0);
   };
 
   const restoreHeldSale = (hold: HeldSale) => {
@@ -1043,6 +1457,12 @@ export default function PosMainScreen() {
     if (hold.deliveryPlatform) setDeliveryPlatform(hold.deliveryPlatform);
     if (hold.customerName) setCustomerName(hold.customerName);
     if (hold.customerPhone) setCustomerPhone(hold.customerPhone);
+    if (hold.orderType === 'dine_in' && hold.tableNumber) {
+      const currentTbl = diningTables.find((t) => t.tableNumber === hold.tableNumber);
+      if (currentTbl) {
+        handleUpdateTableStatus(currentTbl.id, 'OCCUPIED', hold.id);
+      }
+    }
     setHeldSales((prev) => prev.filter((h) => h.id !== hold.id));
     setActiveNav('new_sale');
   };
@@ -1138,6 +1558,13 @@ export default function PosMainScreen() {
         const nextNum = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
         setTicketNumber(`TK-${String(nextNum).padStart(2, '0')}`);
       }
+      // Free the dining table upon completing the sale
+      if (orderType === 'dine_in') {
+        const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection);
+        if (currentTbl) {
+          handleUpdateTableStatus(currentTbl.id, 'VACANT', undefined);
+        }
+      }
     } catch (e) {}
 
     setTimeout(() => {
@@ -1146,8 +1573,11 @@ export default function PosMainScreen() {
       setCart([]);
       setSaleNote('');
       setPaymentNote('');
-      setCustomerName('Guest Customer');
+      setCustomerName('');
       setCustomerPhone('');
+      setSelectedCustomerId(null);
+      setCustomerLoyaltyPoints(0);
+      setKotGeneratedCount(0);
       setOrderType('dine_in');
       setTableSection('Main Hall');
       setTableNumber('T-01');
@@ -1200,7 +1630,12 @@ export default function PosMainScreen() {
             animation: 'nurapos-spin 0.7s linear infinite',
           }} />
           <style>{`
-            @keyframes nurapos-spin {
+            @keyframes posGhostShimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        @keyframes nurapos-spin {
               0% { transform: rotate(0deg); }
               100% { transform: rotate(360deg); }
             }
@@ -1318,6 +1753,54 @@ export default function PosMainScreen() {
                   transformOrigin: 'top left',
                 }}
               >
+                {/* Cashier Info in Popup */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '8px 10px 10px 10px',
+                    borderBottom: `1px solid ${theme.border}`,
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: theme.sidebarIsDark ? '#27272A' : '#F4F4F5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      color: theme.textPrimary,
+                      border: `1px solid ${theme.border}`,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {currentCashierName.charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: theme.textPrimary,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {currentCashierName}
+                    </span>
+                    <span style={{ fontSize: '11px', color: theme.textSecondary, fontWeight: 500 }}>
+                      Active Cashier
+                    </span>
+                  </div>
+                </div>
+
                 <ActionMenu
                   primaryColor="#007DCC"
                   secondaryColor="#FFB900"
@@ -1325,7 +1808,7 @@ export default function PosMainScreen() {
                     {
                       id: 'new_sale',
                       label: 'New sale',
-                      icon: <img src="/icons/newsale.png" alt="New sale" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      icon: <ActionCashRegisterIcon size={22} />,
                       onClick: () => {
                         setActiveNav('new_sale');
                         setIsAppsMenuOpen(false);
@@ -1335,7 +1818,7 @@ export default function PosMainScreen() {
                       id: 'held_sales',
                       label: 'Held sales',
                       badge: heldSales.length > 0 ? heldSales.length : undefined,
-                      icon: <img src="/icons/4dot.png" alt="Held sales" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      icon: <ActionHeldSalesIcon size={22} />,
                       onClick: () => {
                         setActiveNav('held_sales');
                         setIsAppsMenuOpen(false);
@@ -1344,7 +1827,7 @@ export default function PosMainScreen() {
                     {
                       id: 'invoices',
                       label: 'Invoices',
-                      icon: <img src="/icons/invoice.png" alt="Invoices" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      icon: <ActionInvoicesIcon size={22} />,
                       onClick: () => {
                         setActiveNav('invoices');
                         setIsAppsMenuOpen(false);
@@ -1353,7 +1836,8 @@ export default function PosMainScreen() {
                     {
                       id: 'customers',
                       label: 'Customers',
-                      icon: <img src="/icons/customers.png" alt="Customers" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      badge: effectiveCustomers.length > 0 ? effectiveCustomers.length : undefined,
+                      icon: <ActionCustomersIcon size={22} />,
                       onClick: () => {
                         setActiveNav('customers');
                         setIsAppsMenuOpen(false);
@@ -1362,7 +1846,7 @@ export default function PosMainScreen() {
                     {
                       id: 'cash_movement',
                       label: 'Cash in / out',
-                      icon: <AccountBalanceWalletRoundedIcon sx={{ fontSize: 24, color: theme.posBtnBg }} />,
+                      icon: <AccountBalanceWalletRoundedIcon sx={{ fontSize: 22, color: 'currentColor' }} />,
                       onClick: () => {
                         setShowCashMovementModal(true);
                         setIsAppsMenuOpen(false);
@@ -1371,7 +1855,7 @@ export default function PosMainScreen() {
                     {
                       id: 'end_shift',
                       label: 'End shift',
-                      icon: <img src="/icons/shifts.png" alt="End shift" style={{ width: 28, height: 28, objectFit: 'contain', display: 'block' }} />,
+                      icon: <ActionEndShiftIcon size={22} />,
                       onClick: () => {
                         setShowEndShiftModal(true);
                         setIsAppsMenuOpen(false);
@@ -1380,7 +1864,7 @@ export default function PosMainScreen() {
                     {
                       id: 'dark_mode',
                       label: themeMode === 'light' ? 'Dark mode' : 'Light mode',
-                      icon: <ActionDarkModeIcon size={26} primaryColor="#007DCC" secondaryColor="#FFB900" isDarkMode={themeMode === 'dark'} />,
+                      icon: <ActionDarkModeIcon size={22} isDarkMode={themeMode === 'dark'} />,
                       onClick: handleToggleTheme,
                     },
                   ]}
@@ -1388,7 +1872,7 @@ export default function PosMainScreen() {
                   isDarkMode={themeMode === 'dark'}
                 />
 
-                {/* Divider & Logout */}
+                {/* Divider & Solid Black Logout Button */}
                 <div
                   style={{
                     marginTop: '8px',
@@ -1407,26 +1891,27 @@ export default function PosMainScreen() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.45rem',
-                      padding: '7px 10px',
+                      padding: '8px 12px',
                       borderRadius: '10px',
-                      backgroundColor: 'transparent',
-                      color: '#EF4444',
+                      backgroundColor: '#000000',
+                      color: '#FFFFFF',
                       border: 'none',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       fontSize: '12.5px',
                       fontWeight: 600,
-                      transition: 'all 0.15s ease',
+                      transition: 'opacity 0.15s ease',
                       width: '100%',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                      e.currentTarget.style.opacity = '0.85';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.opacity = '1';
                     }}
                   >
-                    <img src="/icons/logout.png" alt="Logout" style={{ width: 18, height: 18, objectFit: 'contain', display: 'block', opacity: 0.85 }} />
+                    <LogoutRoundedIcon sx={{ fontSize: 17, color: '#FFFFFF' }} />
                     <span>Logout</span>
                   </button>
                 </div>
@@ -1559,7 +2044,8 @@ export default function PosMainScreen() {
           flexDirection: 'column',
           gap: '1rem',
         }}>
-          {/* Top Search Bar with Barcode Scanner Icon */}
+          {/* Top Search Bar with Barcode Scanner Icon (Only in New Sale / Catalog view) */}
+          {activeNav === 'new_sale' && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -1636,8 +2122,10 @@ export default function PosMainScreen() {
               <QrCodeScannerRoundedIcon sx={{ fontSize: 20 }} />
             </button>
           </div>
+          )}
 
           {/* Category Filter: Horizontal Scrollable Pill Tabs */}
+          {activeNav === 'new_sale' && (
           <div
             style={{
               display: 'flex',
@@ -1702,6 +2190,7 @@ export default function PosMainScreen() {
               );
             })}
           </div>
+          )}
 
           {/* Products Section Heading */}
           {activeNav === 'new_sale' && (
@@ -1762,195 +2251,8 @@ export default function PosMainScreen() {
                     : 'Try selecting another category or clearing your search query.'}
                 </div>
               </div>
-            ) : selectedCategory === 'All' && !searchQuery.trim() ? (
-              /* CATEGORY-WISE GROUPED VIEW WHEN ALL ITEMS SELECTED */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '1.5rem' }}>
-                {groupedByCategory.map((group) => (
-                  <div key={group.category} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      borderBottom: `1px solid ${theme.border}`,
-                      paddingBottom: '0.45rem',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', color: theme.textSecondary }}>
-                          {getCategoryIcon(group.category)}
-                        </span>
-                        <h3 style={{
-                          fontSize: '14.5px',
-                          fontWeight: 800,
-                          color: theme.textPrimary,
-                          letterSpacing: '-0.015em',
-                          margin: 0,
-                        }}>
-                          {group.category}
-                        </h3>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          color: theme.textSecondary,
-                          backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F1F5F9',
-                          padding: '1px 7px',
-                          borderRadius: '999px',
-                          border: `1px solid ${theme.border}`,
-                        }}>
-                          {group.items.length}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCategory(group.category)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: theme.textSecondary,
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          padding: '2px 6px',
-                        }}
-                      >
-                        View all →
-                      </button>
-                    </div>
-
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                      gap: '1rem',
-                    }}>
-                      {group.items.map((p) => {
-                        const countInCart = cart.find((c) => c.product.id === p.id)?.quantity || 0;
-
-                        return (
-                          <div
-                            key={p.id}
-                            onClick={() => addToCart(p)}
-                            role="button"
-                            tabIndex={0}
-                            style={{
-                              backgroundColor: theme.bgCard,
-                              border: countInCart > 0 ? `2px solid ${theme.activeBg}` : `1px solid ${theme.borderCard}`,
-                              borderRadius: '1rem',
-                              overflow: 'hidden',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              transition: 'all 0.15s ease',
-                              position: 'relative',
-                              boxShadow: 'none',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = theme.borderHover;
-                              e.currentTarget.style.transform = 'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              if (countInCart === 0) e.currentTarget.style.borderColor = theme.borderCard;
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
-                          >
-                            {/* Product Image Pod */}
-                            <div style={{
-                              position: 'relative',
-                              width: '100%',
-                              height: '135px',
-                              backgroundColor: theme.bgCardSubtle,
-                            }}>
-                              <Image
-                                src={p.image}
-                                alt={p.name}
-                                fill
-                                unoptimized
-                                sizes="(max-width: 768px) 100vw, 240px"
-                                style={{
-                                  objectFit: 'contain',
-                                  objectPosition: 'center',
-                                  padding: '0.65rem',
-                                  backgroundColor: theme.bgCardSubtle,
-                                }}
-                              />
-                              {/* Quantity in Cart Badge */}
-                              {countInCart > 0 && (
-                                <div style={{
-                                  position: 'absolute',
-                                  top: '8px',
-                                  right: '8px',
-                                  backgroundColor: theme.badgeBg,
-                                  color: theme.badgeText,
-                                  border: `1px solid ${theme.border}`,
-                                  borderRadius: '9999px',
-                                  padding: '2px 8px',
-                                  fontSize: '11.5px',
-                                  fontWeight: 800,
-                                }}>
-                                  {countInCart}x
-                                </div>
-                              )}
-                              {p.isOffer && (
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '8px',
-                                  left: '8px',
-                                  backgroundColor: '#F59E0B',
-                                  color: '#FFFFFF',
-                                  borderRadius: '9999px',
-                                  padding: '2px 8px',
-                                  fontSize: '10px',
-                                  fontWeight: 800,
-                                  textTransform: 'uppercase',
-                                  boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
-                                }}>
-                                  {p.offerBadge || 'Offer'}
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Product Details */}
-                            <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, justifyContent: 'space-between' }}>
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                                  <span style={{
-                                    fontSize: '10px',
-                                    fontWeight: 700,
-                                    color: theme.textSecondary,
-                                    backgroundColor: theme.sidebarIsDark ? theme.bgCardSubtle : '#F1F5F9',
-                                    padding: '1px 6px',
-                                    borderRadius: '4px',
-                                    letterSpacing: '0.02em',
-                                    textTransform: 'uppercase',
-                                  }}>
-                                    {p.category || 'General'}
-                                  </span>
-                                </div>
-                                <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, letterSpacing: '-0.015em', display: 'block' }}>
-                                  {p.name}
-                                </span>
-                                <span style={{ fontSize: '12px', color: theme.textSecondary, display: 'block' }}>
-                                  {p.variant}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.45rem', marginTop: '0.45rem' }}>
-                                <span style={{ fontSize: '16px', fontWeight: 800, color: p.isOffer ? '#059669' : theme.textPrimary }}>
-                                  ₹{p.price}
-                                </span>
-                                {p.isOffer && p.originalPrice && p.originalPrice > p.price && (
-                                  <span style={{ fontSize: '12px', color: theme.textSecondary, textDecoration: 'line-through' }}>
-                                    ₹{p.originalPrice}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
             ) : (
-              /* FILTERED SINGLE CATEGORY OR SEARCH VIEW */
+              /* PRODUCT CATALOG GRID */
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
@@ -2084,47 +2386,120 @@ export default function PosMainScreen() {
               </div>
             )
           ) : activeNav === 'held_sales' ? (
-            /* Held Sales List View */
+            /* Held Sales List View with Real Search & Ghost Skeleton */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Held Sales ({heldSales.length})
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setActiveNav('new_sale')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.55rem',
-                    padding: '0.4rem 0.85rem',
-                    color: theme.textPrimary,
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} />
-                  <span>Back to Catalog</span>
-                </button>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
+                    Held Sales ({filteredHeldSales.length})
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: theme.textSecondary }}>
+                    Resume active suspended sales or park a new order.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Real Search Bar */}
+                  <div style={{ position: 'relative', width: '260px' }}>
+                    <SearchRoundedIcon sx={{
+                      position: 'absolute',
+                      left: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: 18,
+                      color: theme.textSecondary,
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Search held sales..."
+                      value={heldSearchQuery}
+                      onChange={(e) => setHeldSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '36px',
+                        padding: '0 28px 0 32px',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: '0.55rem',
+                        color: theme.textPrimary,
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    {heldSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setHeldSearchQuery('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: theme.textSecondary,
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                        }}
+                      >
+                        <CloseRoundedIcon sx={{ fontSize: 15 }} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveNav('new_sale')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.55rem',
+                      padding: '0.45rem 0.85rem',
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <ArrowBackRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>Back to Catalog</span>
+                  </button>
+                </div>
               </div>
 
-              {heldSales.length === 0 ? (
+              {isLoadingHeldSales ? (
+                renderGhostSkeletonCards(3)
+              ) : filteredHeldSales.length === 0 ? (
                 <div style={{
-                  padding: '3rem',
+                  padding: '3rem 1.5rem',
                   textAlign: 'center',
                   color: theme.textMuted,
                   backgroundColor: theme.bgCardSubtle,
                   borderRadius: '1rem',
                   border: `1px solid ${theme.border}`,
                 }}>
-                  No sales currently on hold.
+                  <PauseCircleOutlineRoundedIcon sx={{ fontSize: 40, opacity: 0.35, marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '14.5px', fontWeight: 700, color: theme.textPrimary }}>
+                    {heldSearchQuery ? `No held sales matching "${heldSearchQuery}"` : 'No sales currently on hold'}
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '4px' }}>
+                    {heldSearchQuery ? 'Try clearing your search query' : 'Park sales from the ticket sidebar to resume them later.'}
+                  </div>
                 </div>
               ) : (
-                heldSales.map((h) => (
+                filteredHeldSales.map((h) => (
                   <div
                     key={h.id}
                     style={{
@@ -2135,10 +2510,11 @@ export default function PosMainScreen() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      gap: '1rem',
                     }}
                   >
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 800, color: theme.textPrimary, display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                         <span>{h.id} • {h.items.length} items</span>
                         {h.orderType && (
                           <span style={{
@@ -2161,63 +2537,533 @@ export default function PosMainScreen() {
                       <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '0.2rem' }}>
                         {h.customerName && h.customerName !== 'Guest Customer' ? `${h.customerName} • ` : ''}Held {h.time} • Total: ₹{h.total}
                       </div>
+                      <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '0.25rem', opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {h.items.map((i) => `${i.product.name} ×${i.quantity}`).join(', ')}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => restoreHeldSale(h)}
-                      className="button-20"
-                      style={{
-                        padding: '0.5rem 1.1rem',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        backgroundColor: theme.posBtnBg,
-                        color: theme.posBtnText,
-                        borderRadius: '0.65rem',
-                        cursor: 'pointer',
-                        border: 'none',
-                      }}
-                    >
-                      Resume Sale
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setHeldSales((prev) => prev.filter((item) => item.id !== h.id))}
+                        title="Discard held sale"
+                        style={{
+                          background: 'none',
+                          border: `1px solid ${theme.border}`,
+                          borderRadius: '0.55rem',
+                          color: '#EF4444',
+                          cursor: 'pointer',
+                          padding: '0.45rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <DeleteOutlineRoundedIcon sx={{ fontSize: 18 }} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => restoreHeldSale(h)}
+                        className="button-20"
+                        style={{
+                          padding: '0.5rem 1.1rem',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          backgroundColor: theme.posBtnBg,
+                          color: theme.posBtnText,
+                          borderRadius: '0.65rem',
+                          cursor: 'pointer',
+                          border: 'none',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Resume Sale
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
-          ) : (
-            /* Invoices / Customers View */
+          ) : activeNav === 'invoices' ? (
+            /* Invoices List View with Real Search & Ghost Skeleton */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  {activeNav === 'invoices' ? 'Recent Invoices' : 'Store Customer Directory'}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setActiveNav('new_sale')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    backgroundColor: theme.bgCard,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: '0.55rem',
-                    padding: '0.4rem 0.85rem',
-                    color: theme.textPrimary,
-                    fontSize: '12.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ArrowBackRoundedIcon sx={{ fontSize: 16 }} />
-                  <span>Back to Sale</span>
-                </button>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
+                    Recent Invoices ({filteredInvoices.length})
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: theme.textSecondary }}>
+                    Completed sales bills with payment breakdown and timestamps.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Real Search Bar */}
+                  <div style={{ position: 'relative', width: '260px' }}>
+                    <SearchRoundedIcon sx={{
+                      position: 'absolute',
+                      left: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: 18,
+                      color: theme.textSecondary,
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Search invoices by #, customer, pay mode..."
+                      value={invoiceSearchQuery}
+                      onChange={(e) => setInvoiceSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '36px',
+                        padding: '0 28px 0 32px',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: '0.55rem',
+                        color: theme.textPrimary,
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    {invoiceSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setInvoiceSearchQuery('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: theme.textSecondary,
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                        }}
+                      >
+                        <CloseRoundedIcon sx={{ fontSize: 15 }} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={loadInvoices}
+                    title="Refresh Invoices"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '36px',
+                      height: '36px',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.55rem',
+                      color: theme.textSecondary,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <RestartAltRoundedIcon sx={{ fontSize: 18 }} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveNav('new_sale')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.55rem',
+                      padding: '0.45rem 0.85rem',
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <ArrowBackRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>Back to Sale</span>
+                  </button>
+                </div>
               </div>
-              <div style={{ backgroundColor: theme.bgCardSubtle, border: `1px solid ${theme.border}`, borderRadius: '1rem', padding: '1.25rem' }}>
-                <p style={{ color: theme.textSecondary, fontSize: '13.5px', margin: 0 }}>
-                  {activeNav === 'invoices'
-                    ? 'Showing all paid invoices for SP CAFE Ahmedabad shift today.'
-                    : 'Customer database with loyalty points and contact information.'}
-                </p>
+
+              {isLoadingInvoices ? (
+                renderGhostSkeletonCards(4)
+              ) : filteredInvoices.length === 0 ? (
+                <div style={{
+                  padding: '3rem 1.5rem',
+                  textAlign: 'center',
+                  color: theme.textMuted,
+                  backgroundColor: theme.bgCardSubtle,
+                  borderRadius: '1rem',
+                  border: `1px solid ${theme.border}`,
+                }}>
+                  <ReceiptLongRoundedIcon sx={{ fontSize: 40, opacity: 0.35, marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '14.5px', fontWeight: 700, color: theme.textPrimary }}>
+                    {invoiceSearchQuery ? `No invoices matching "${invoiceSearchQuery}"` : 'No invoices recorded today'}
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '4px' }}>
+                    {invoiceSearchQuery ? 'Try searching by bill #, customer name or payment type' : 'Ring up sales in the register to see completed invoices.'}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {filteredInvoices.map((inv, idx) => {
+                    const billNo = inv.orderNumber || inv.billNumber || `#INV-${inv.id || idx + 1}`;
+                    const itemsCount = Array.isArray(inv.items) ? inv.items.reduce((s: number, i: any) => s + (i.quantity || 1), 0) : 0;
+                    const itemsSummary = Array.isArray(inv.items)
+                      ? inv.items.map((i: any) => `${i.name || i.productName || 'Item'} ×${i.quantity || 1}`).join(', ')
+                      : '';
+                    const totalAmt = inv.totalAmount || inv.total || 0;
+                    const payMethod = inv.paymentMethod || 'CASH';
+
+                    return (
+                      <div
+                        key={inv.id || inv.orderNumber || idx}
+                        style={{
+                          padding: '1.1rem 1.25rem',
+                          backgroundColor: theme.bgCard,
+                          border: `1px solid ${theme.border}`,
+                          borderRadius: '0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '1rem',
+                          transition: 'border-color 0.15s ease',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary }}>
+                              {billNo}
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                              backgroundColor: 'rgba(34, 197, 94, 0.12)',
+                              color: '#16A34A',
+                              border: '1px solid rgba(34, 197, 94, 0.3)',
+                            }}>
+                              Paid
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '9999px',
+                              backgroundColor: theme.bgCardSubtle,
+                              color: theme.textSecondary,
+                              border: `1px solid ${theme.border}`,
+                            }}>
+                              {payMethod}
+                            </span>
+                            {inv.orderType && (
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                padding: '2px 7px',
+                                borderRadius: '9999px',
+                                backgroundColor: theme.bgCardSubtle,
+                                color: theme.activeBg,
+                                border: `1px solid ${theme.border}`,
+                              }}>
+                                {inv.orderType === 'dine_in' ? 'Dine In' : inv.orderType === 'takeaway' ? 'Takeaway' : 'Delivery'}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '0.25rem' }}>
+                            {inv.customerName && inv.customerName !== 'Guest Customer' ? `${inv.customerName} • ` : ''}
+                            {inv.date || 'Today'} {inv.timestamp ? `at ${inv.timestamp}` : ''} • {itemsCount} items
+                          </div>
+
+                          {itemsSummary && (
+                            <div style={{
+                              fontSize: '11.5px',
+                              color: theme.textSecondary,
+                              opacity: 0.8,
+                              marginTop: '0.25rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {itemsSummary}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary }}>
+                            ₹{Number(totalAmt).toFixed(2)}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              alert(`Invoice ${billNo}\nCustomer: ${inv.customerName || 'Guest'}\nItems: ${itemsSummary}\nTotal: ₹${totalAmt}\nPayment: ${payMethod}`);
+                            }}
+                            style={{
+                              marginTop: '0.35rem',
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              color: theme.textSecondary,
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '2px 6px',
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            View Receipt
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Customers Directory View with Real Search & Ghost Skeleton */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+              }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
+                    Customer Directory ({filteredCustomers.length})
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '12.5px', color: theme.textSecondary }}>
+                    Search customer loyalty records or add a new customer to this store.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Real Search Bar */}
+                  <div style={{ position: 'relative', width: '260px' }}>
+                    <SearchRoundedIcon sx={{
+                      position: 'absolute',
+                      left: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: 18,
+                      color: theme.textSecondary,
+                    }} />
+                    <input
+                      type="text"
+                      placeholder="Search by name, phone, email..."
+                      value={customerSearchQuery}
+                      onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        height: '36px',
+                        padding: '0 28px 0 32px',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: '0.55rem',
+                        color: theme.textPrimary,
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                    {customerSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomerSearchQuery('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: theme.textSecondary,
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                        }}
+                      >
+                        <CloseRoundedIcon sx={{ fontSize: 15 }} />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCustomerModal(true)}
+                    className="button-20"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.45rem 0.85rem',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      backgroundColor: theme.posBtnBg,
+                      color: theme.posBtnText,
+                      borderRadius: '0.55rem',
+                      cursor: 'pointer',
+                      border: 'none',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <PersonAddAltRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>+ Add Customer</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveNav('new_sale')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.55rem',
+                      padding: '0.45rem 0.85rem',
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <ArrowBackRoundedIcon sx={{ fontSize: 16 }} />
+                    <span>Back to Sale</span>
+                  </button>
+                </div>
               </div>
+
+              {isLoadingCustomers ? (
+                renderGhostSkeletonCards(4)
+              ) : filteredCustomers.length === 0 ? (
+                <div style={{
+                  padding: '3rem 1.5rem',
+                  textAlign: 'center',
+                  color: theme.textMuted,
+                  backgroundColor: theme.bgCardSubtle,
+                  borderRadius: '1rem',
+                  border: `1px solid ${theme.border}`,
+                }}>
+                  <PeopleAltRoundedIcon sx={{ fontSize: 40, opacity: 0.35, marginBottom: '0.5rem' }} />
+                  <div style={{ fontSize: '14.5px', fontWeight: 700, color: theme.textPrimary }}>
+                    {customerSearchQuery ? `No customers matching "${customerSearchQuery}"` : 'No customers registered yet'}
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: theme.textSecondary, marginTop: '4px' }}>
+                    Click "+ Add Customer" above to register a new loyalty member.
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.85rem' }}>
+                  {filteredCustomers.map((cust) => (
+                    <div
+                      key={cust.id}
+                      style={{
+                        padding: '1.1rem 1.25rem',
+                        backgroundColor: theme.bgCard,
+                        border: `1px solid ${theme.border}`,
+                        borderRadius: '0.85rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '0.85rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          backgroundColor: theme.sidebarIsDark ? '#27272A' : '#F1F5F9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '15px',
+                          fontWeight: 800,
+                          color: theme.activeBg,
+                          border: `1px solid ${theme.border}`,
+                          flexShrink: 0,
+                        }}>
+                          {cust.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '14.5px', fontWeight: 800, color: theme.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {cust.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: theme.textSecondary, marginTop: '2px' }}>
+                            {cust.phone}
+                          </div>
+                          {cust.email && (
+                            <div style={{ fontSize: '11px', color: theme.textSecondary, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {cust.email}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingTop: '0.65rem',
+                        borderTop: `1px solid ${theme.border}`,
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          backgroundColor: 'rgba(234, 179, 8, 0.12)',
+                          color: '#CA8A04',
+                          border: '1px solid rgba(234, 179, 8, 0.3)',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                        }}>
+                          ★ {cust.loyaltyPoints || 0} Points
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomerName(cust.name);
+                            setCustomerPhone(cust.phone);
+                            setSelectedCustomerId(cust.id);
+                            setCustomerLoyaltyPoints(cust.loyaltyPoints || 0);
+                            setActiveNav('new_sale');
+                          }}
+                          style={{
+                            padding: '0.35rem 0.75rem',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            backgroundColor: theme.activeBg,
+                            color: theme.activeText,
+                            borderRadius: '0.45rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Select for Sale
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -2247,1035 +3093,1157 @@ export default function PosMainScreen() {
           flexShrink: 0,
           boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: cart.length > 0 ? '#10B981' : theme.textMuted,
+              boxShadow: cart.length > 0 ? '0 0 8px rgba(16, 185, 129, 0.6)' : 'none',
+              flexShrink: 0,
+            }} />
             <h2 style={{
-              fontSize: '15px',
+              fontSize: '15.5px',
               fontWeight: 800,
               color: theme.textPrimary,
               letterSpacing: '-0.02em',
               margin: 0,
             }}>
-                Current Sale
-              </h2>
-              <span style={{
-                fontSize: '10.5px',
-                fontWeight: 800,
-                backgroundColor: theme.bgCardSubtle,
-                border: `1px solid ${theme.border}`,
-                color: theme.textSecondary,
-                padding: '1px 6px',
-                borderRadius: '9999px',
-              }}>
-                {orderNumber}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              {/* Sale Note Button */}
-              <button
-                type="button"
-                onClick={() => setShowSaleNoteModal(true)}
-                title={saleNote ? `Sale Note: ${saleNote}` : 'Add Sale Note'}
-                style={{
-                  background: saleNote ? theme.hoverBg : 'transparent',
-                  border: saleNote ? `1px solid ${theme.activeBg}` : 'none',
-                  color: saleNote ? theme.activeBg : theme.textSecondary,
-                  cursor: 'pointer',
-                  padding: '4px 6px',
-                  borderRadius: '0.45rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <NoteAltRoundedIcon sx={{ fontSize: 15 }} />
-                {saleNote && <span style={{ maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Note</span>}
-              </button>
-
-              {/* Pay Note Button */}
-              <button
-                type="button"
-                onClick={() => setShowPaymentNoteModal(true)}
-                title={paymentNote ? `Pay Note: ${paymentNote}` : 'Add Payment Note'}
-                style={{
-                  background: paymentNote ? theme.hoverBg : 'transparent',
-                  border: paymentNote ? `1px solid ${theme.activeBg}` : 'none',
-                  color: paymentNote ? theme.activeBg : theme.textSecondary,
-                  cursor: 'pointer',
-                  padding: '4px 6px',
-                  borderRadius: '0.45rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                }}
-              >
-                <PaymentsRoundedIcon sx={{ fontSize: 15 }} />
-                {paymentNote && <span style={{ maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Pay</span>}
-              </button>
-
-              {/* Clear Cart Button */}
-              {cart.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearCart}
-                  title="Clear Ticket"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: theme.textMuted,
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '0.45rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginLeft: '2px',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-                >
-                  <DeleteOutlineRoundedIcon sx={{ fontSize: 17 }} />
-                </button>
-              )}
-            </div>
+              Current Sale
+            </h2>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 800,
+              backgroundColor: theme.bgCardSubtle,
+              border: `1px solid ${theme.border}`,
+              color: theme.textSecondary,
+              padding: '2px 7px',
+              borderRadius: '9999px',
+            }}>
+              {orderNumber}
+            </span>
           </div>
 
-          {/* Order Type Buttons & Context Bar */}
-          <div style={{
-            padding: '0.65rem 0.95rem 0.55rem',
-            backgroundColor: theme.bgCard,
-            borderBottom: `1px solid ${theme.border}`,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.5rem',
-          }}>
-            {/* Simple Selection Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', width: '100%' }}>
-              {/* Dine In Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            {/* Dine-In KOT Badge (if KOT generated) */}
+            {orderType === 'dine_in' && kotGeneratedCount > 0 && (
               <button
                 type="button"
-                onClick={() => setOrderType('dine_in')}
+                onClick={handleSendKot}
+                title="View Kitchen Order Ticket"
                 style={{
-                  flex: 1,
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.48rem 0.65rem',
-                  borderRadius: '0.55rem',
-                  border: orderType === 'dine_in' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                  backgroundColor: orderType === 'dine_in' ? theme.activeBg : theme.bgCard,
-                  color: orderType === 'dine_in' ? theme.activeText : theme.textSecondary,
-                  fontSize: '12.5px',
-                  fontWeight: orderType === 'dine_in' ? 800 : 600,
+                  gap: '0.2rem',
+                  padding: '3px 7px',
+                  borderRadius: '0.45rem',
+                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#059669',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
                   fontFamily: 'inherit',
-                  userSelect: 'none',
                 }}
               >
-                <RestaurantRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Dine In</span>
+                <KitchenRoundedIcon sx={{ fontSize: 13 }} />
+                <span>KOT ({kotGeneratedCount})</span>
               </button>
-
-              {/* Takeaway Button */}
-              <button
-                type="button"
-                onClick={() => setOrderType('takeaway')}
-                style={{
-                  flex: 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.48rem 0.65rem',
-                  borderRadius: '0.55rem',
-                  border: orderType === 'takeaway' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                  backgroundColor: orderType === 'takeaway' ? theme.activeBg : theme.bgCard,
-                  color: orderType === 'takeaway' ? theme.activeText : theme.textSecondary,
-                  fontSize: '12.5px',
-                  fontWeight: orderType === 'takeaway' ? 800 : 600,
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-                  fontFamily: 'inherit',
-                  userSelect: 'none',
-                }}
-              >
-                <TakeoutDiningRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Takeaway</span>
-              </button>
-
-              {/* Delivery Button */}
-              <button
-                type="button"
-                onClick={() => setOrderType('delivery')}
-                style={{
-                  flex: 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.48rem 0.65rem',
-                  borderRadius: '0.55rem',
-                  border: orderType === 'delivery' ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
-                  backgroundColor: orderType === 'delivery' ? theme.activeBg : theme.bgCard,
-                  color: orderType === 'delivery' ? theme.activeText : theme.textSecondary,
-                  fontSize: '12.5px',
-                  fontWeight: orderType === 'delivery' ? 800 : 600,
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-                  fontFamily: 'inherit',
-                  userSelect: 'none',
-                }}
-              >
-                <DeliveryDiningRoundedIcon sx={{ fontSize: 16 }} />
-                <span>Delivery</span>
-              </button>
-            </div>
-
-            {/* Context Section (Table with Section / Takeaway Ticket Number System / Delivery Mode) */}
-            {orderType === 'dine_in' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <TableBarRoundedIcon sx={{ fontSize: 14, color: theme.activeBg }} />
-                
-                {/* Table Section Dropdown */}
-                <select
-                  value={tableSection}
-                  onChange={(e) => {
-                    const newSec = e.target.value;
-                    setTableSection(newSec);
-                    const tables = dynamicSections[newSec] || ['T-01'];
-                    if (!tables.includes(tableNumber)) {
-                      setTableNumber(tables[0]);
-                    }
-                  }}
-                  title="Table Section"
-                  style={{
-                    height: '26px',
-                    padding: '0 6px',
-                    borderRadius: '5px',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCard,
-                    color: theme.textPrimary,
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: 'none',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {Object.keys(dynamicSections).map((sec) => (
-                    <option key={sec} value={sec}>{sec}</option>
-                  ))}
-                </select>
-
-                {/* Table Number Dropdown */}
-                <select
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  title="Table Number"
-                  style={{
-                    height: '26px',
-                    padding: '0 6px',
-                    borderRadius: '5px',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCard,
-                    color: theme.activeBg,
-                    fontSize: '11.5px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: 'none',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {(dynamicSections[tableSection] || ['T-01', 'T-02']).map((tbl) => {
-                    const tblObj = diningTables.find((t) => t.tableNumber === tbl);
-                    const statusText = tblObj ? ` (${tblObj.status})` : '';
-                    return (
-                      <option key={tbl} value={tbl}>{tbl}{statusText}</option>
-                    );
-                  })}
-                </select>
-              </div>
             )}
 
-            {orderType === 'takeaway' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <ConfirmationNumberRoundedIcon sx={{ fontSize: 13, color: theme.activeBg }} />
-                <span style={{ fontSize: '10.5px', fontWeight: 700, color: theme.textSecondary }}>Ticket:</span>
+            {/* Sale Note Button */}
+            <button
+              type="button"
+              onClick={() => setShowSaleNoteModal(true)}
+              title={saleNote ? `Sale Note: ${saleNote}` : 'Add Sale Note'}
+              style={{
+                background: saleNote ? theme.hoverBg : 'transparent',
+                border: saleNote ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                color: saleNote ? theme.activeBg : theme.textSecondary,
+                cursor: 'pointer',
+                padding: '4px 6px',
+                borderRadius: '0.45rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.2rem',
+                fontSize: '11px',
+                fontWeight: 700,
+                fontFamily: 'inherit',
+              }}
+            >
+              <NoteAltRoundedIcon sx={{ fontSize: 15 }} />
+              {saleNote && <span style={{ maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Note</span>}
+            </button>
+
+            {/* Pay Note Button */}
+            <button
+              type="button"
+              onClick={() => setShowPaymentNoteModal(true)}
+              title={paymentNote ? `Pay Note: ${paymentNote}` : 'Add Payment Note'}
+              style={{
+                background: paymentNote ? theme.hoverBg : 'transparent',
+                border: paymentNote ? `1px solid ${theme.activeBg}` : `1px solid ${theme.border}`,
+                color: paymentNote ? theme.activeBg : theme.textSecondary,
+                cursor: 'pointer',
+                padding: '4px 6px',
+                borderRadius: '0.45rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.2rem',
+                fontSize: '11px',
+                fontWeight: 700,
+                fontFamily: 'inherit',
+              }}
+            >
+              <PaymentsRoundedIcon sx={{ fontSize: 15 }} />
+              {paymentNote && <span style={{ maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Pay</span>}
+            </button>
+
+            {/* Clear Cart Button */}
+            {cart.length > 0 && (
+              <button
+                type="button"
+                onClick={clearCart}
+                title="Clear Ticket"
+                style={{
+                  background: 'none',
+                  border: `1px solid ${theme.border}`,
+                  color: theme.textMuted,
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  borderRadius: '0.45rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginLeft: '2px',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.borderColor = '#EF4444'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.borderColor = theme.border; }}
+              >
+                <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Order Type Buttons & Context Bar */}
+        <div style={{
+          padding: '0.65rem 0.95rem 0.55rem',
+          backgroundColor: theme.bgCard,
+          borderBottom: `1px solid ${theme.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.55rem',
+        }}>
+          {/* iOS-Style Modern Segmented Control */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '3px',
+            padding: '3px',
+            borderRadius: '0.65rem',
+            backgroundColor: theme.sidebarIsDark ? '#1C1D21' : '#F1F5F9',
+            border: `1px solid ${theme.border}`,
+          }}>
+            {/* Dine In Button */}
+            <button
+              type="button"
+              onClick={() => setOrderType('dine_in')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.42rem 0.5rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: orderType === 'dine_in'
+                  ? (theme.sidebarIsDark ? '#2E2F38' : '#FFFFFF')
+                  : 'transparent',
+                color: orderType === 'dine_in'
+                  ? (theme.sidebarIsDark ? '#FFFFFF' : '#000000')
+                  : theme.textSecondary,
+                fontSize: '12px',
+                fontWeight: orderType === 'dine_in' ? 800 : 600,
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: orderType === 'dine_in' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.15s ease',
+                fontFamily: 'inherit',
+                userSelect: 'none',
+              }}
+            >
+              <RestaurantRoundedIcon sx={{ fontSize: 15 }} />
+              <span>Dine In</span>
+            </button>
+
+            {/* Takeaway Button */}
+            <button
+              type="button"
+              onClick={() => setOrderType('takeaway')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.42rem 0.5rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: orderType === 'takeaway'
+                  ? (theme.sidebarIsDark ? '#2E2F38' : '#FFFFFF')
+                  : 'transparent',
+                color: orderType === 'takeaway'
+                  ? (theme.sidebarIsDark ? '#FFFFFF' : '#000000')
+                  : theme.textSecondary,
+                fontSize: '12px',
+                fontWeight: orderType === 'takeaway' ? 800 : 600,
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: orderType === 'takeaway' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.15s ease',
+                fontFamily: 'inherit',
+                userSelect: 'none',
+              }}
+            >
+              <TakeoutDiningRoundedIcon sx={{ fontSize: 15 }} />
+              <span>Takeaway</span>
+            </button>
+
+            {/* Delivery Button */}
+            <button
+              type="button"
+              onClick={() => setOrderType('delivery')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.42rem 0.5rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                backgroundColor: orderType === 'delivery'
+                  ? (theme.sidebarIsDark ? '#2E2F38' : '#FFFFFF')
+                  : 'transparent',
+                color: orderType === 'delivery'
+                  ? (theme.sidebarIsDark ? '#FFFFFF' : '#000000')
+                  : theme.textSecondary,
+                fontSize: '12px',
+                fontWeight: orderType === 'delivery' ? 800 : 600,
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: orderType === 'delivery' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.15s ease',
+                fontFamily: 'inherit',
+                userSelect: 'none',
+              }}
+            >
+              <DeliveryDiningRoundedIcon sx={{ fontSize: 15 }} />
+              <span>Delivery</span>
+            </button>
+          </div>
+
+          {/* DINE IN ADVANCED MANAGEMENT CARD */}
+          {orderType === 'dine_in' && (
+            <div style={{
+              backgroundColor: theme.sidebarIsDark ? '#18191E' : '#F8FAFC',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '0.75rem',
+              padding: '0.6rem 0.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem',
+            }}>
+              {/* Row 1: Table & Floor plan selector */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '7px',
+                    backgroundColor: theme.sidebarIsDark ? '#27272A' : '#EFF6FF',
+                    color: theme.activeBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <TableBarRoundedIcon sx={{ fontSize: 17 }} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary, whiteSpace: 'nowrap' }}>
+                        {tableSection} • {tableNumber}
+                      </span>
+                      <span style={{
+                        fontSize: '9.5px',
+                        fontWeight: 800,
+                        padding: '1px 5px',
+                        borderRadius: '999px',
+                        backgroundColor: currentTableObj.status === 'OCCUPIED' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)',
+                        color: currentTableObj.status === 'OCCUPIED' ? '#DC2626' : '#16A34A',
+                        border: `1px solid ${currentTableObj.status === 'OCCUPIED' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.25)'}`,
+                      }}>
+                        ● {currentTableObj.status || 'VACANT'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
+                      {currentTableObj.capacity || 4} Seats Capacity
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floor Plan Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFloorPlanModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '0.5rem',
+                    color: theme.activeBg,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  <MapRoundedIcon sx={{ fontSize: 14 }} />
+                  <span>Floor Plan</span>
+                </button>
+              </div>
+
+              {/* Row 2: Guests / Covers Stepper + KOT & Transfer Table actions */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingTop: '0.45rem',
+                borderTop: `1px solid ${theme.border}`,
+                gap: '0.45rem',
+              }}>
+                {/* Guests Stepper */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <GroupsRoundedIcon sx={{ fontSize: 15, color: theme.textSecondary }} />
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: theme.textSecondary }}>Guests:</span>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '5px',
+                    padding: '1px 2px',
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setGuestCount((g) => Math.max(1, g - 1))}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: theme.textSecondary,
+                        padding: 0,
+                      }}
+                    >
+                      <RemoveRoundedIcon sx={{ fontSize: 11 }} />
+                    </button>
+                    <span style={{ width: '16px', textAlign: 'center', fontSize: '11px', fontWeight: 800, color: theme.textPrimary }}>
+                      {guestCount}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setGuestCount((g) => Math.min(20, g + 1))}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: theme.textSecondary,
+                        padding: 0,
+                      }}
+                    >
+                      <AddRoundedIcon sx={{ fontSize: 11 }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dine In Actions: KOT & Move Table */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <button
+                    type="button"
+                    disabled={cart.length === 0}
+                    onClick={handleSendKot}
+                    title="Send Kitchen Order Ticket"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.3rem 0.55rem',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: cart.length > 0 ? (kotGeneratedCount > 0 ? '#10B981' : '#000000') : theme.bgCard,
+                      color: cart.length > 0 ? '#FFFFFF' : theme.textMuted,
+                      border: `1px solid ${cart.length > 0 ? 'transparent' : theme.border}`,
+                      borderRadius: '0.45rem',
+                      cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                      opacity: cart.length === 0 ? 0.6 : 1,
+                      fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <KitchenRoundedIcon sx={{ fontSize: 13 }} />
+                    <span>{kotGeneratedCount > 0 ? `KOT (${kotGeneratedCount})` : 'Send KOT'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTransferTableModal(true)}
+                    title="Move order to another table"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.2rem',
+                      padding: '0.3rem 0.45rem',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '0.45rem',
+                      color: theme.textSecondary,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <SwapHorizRoundedIcon sx={{ fontSize: 14 }} />
+                    <span>Move</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAKEAWAY TOKEN CARD */}
+          {orderType === 'takeaway' && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: theme.sidebarIsDark ? '#18191E' : '#F8FAFC',
+              border: `1px solid ${theme.border}`,
+              borderRadius: '0.75rem',
+              padding: '0.5rem 0.75rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <ConfirmationNumberRoundedIcon sx={{ fontSize: 16, color: theme.activeBg }} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>Takeaway Token:</span>
                 <input
                   type="text"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
                   title="Takeaway Ticket / Token Number"
                   style={{
-                    width: '60px',
-                    height: '24px',
+                    width: '72px',
+                    height: '26px',
                     padding: '0 4px',
                     borderRadius: '5px',
                     border: `1px solid ${theme.border}`,
                     backgroundColor: theme.bgCard,
-                    color: theme.activeBg,
-                    fontSize: '11px',
+                    color: theme.textPrimary,
+                    fontSize: '12px',
                     fontWeight: 800,
                     textAlign: 'center',
                     outline: 'none',
-                    boxShadow: 'none',
                     fontFamily: 'monospace',
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const num = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
-                    setTicketNumber(`TK-${String(num).padStart(2, '0')}`);
-                  }}
-                  title="Next Ticket Number (+1)"
-                  style={{
-                    height: '24px',
-                    padding: '0 5px',
-                    borderRadius: '5px',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCard,
-                    color: theme.textSecondary,
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    boxShadow: 'none',
-                  }}
-                >
-                  +1
-                </button>
               </div>
-            )}
 
-            {orderType === 'delivery' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <DeliveryDiningRoundedIcon sx={{ fontSize: 14, color: theme.activeBg }} />
-                <select
-                  value={deliveryPlatform}
-                  onChange={(e) => setDeliveryPlatform(e.target.value)}
-                  title="Delivery Partner / Platform"
-                  style={{
-                    height: '24px',
-                    padding: '0 6px',
-                    borderRadius: '5px',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCard,
-                    color: theme.activeBg,
-                    fontSize: '11px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: 'none',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <option value="Direct">Direct Delivery</option>
-                  <option value="Zomato">Zomato</option>
-                  <option value="Swiggy">Swiggy</option>
-                  <option value="UberEats">UberEats</option>
-                </select>
-              </div>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const num = parseInt(ticketNumber.replace(/\D/g, '') || '0') + 1;
+                  setTicketNumber(`TK-${String(num).padStart(2, '0')}`);
+                }}
+                title="Next Ticket Number (+1)"
+                style={{
+                  height: '26px',
+                  padding: '0 8px',
+                  borderRadius: '5px',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCard,
+                  color: theme.textPrimary,
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                }}
+              >
+                +1 Next
+              </button>
+            </div>
+          )}
 
-          {/* Customer Bar: Name & Phone (Single Line 32px) */}
-          <div style={{
-            padding: '0.35rem 0.85rem',
-            backgroundColor: theme.bgCard,
-            borderBottom: `1px solid ${theme.border}`,
-            position: 'relative',
-          }}>
+          {/* DELIVERY PARTNER CARD */}
+          {orderType === 'delivery' && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: theme.bgCardSubtle,
+              justifyContent: 'space-between',
+              backgroundColor: theme.sidebarIsDark ? '#18191E' : '#F8FAFC',
               border: `1px solid ${theme.border}`,
-              borderRadius: '0.5rem',
-              height: '28px',
-              padding: '0 0.4rem',
-              gap: '0.35rem',
-              boxSizing: 'border-box',
+              borderRadius: '0.75rem',
+              padding: '0.5rem 0.75rem',
             }}>
-              {/* Customer Name input */}
-              <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: '0.25rem' }}>
-                <PersonOutlineRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary, flexShrink: 0 }} />
-                <input
-                  type="text"
-                  placeholder="Guest Customer"
-                  value={customerName === 'Guest Customer' ? '' : customerName}
-                  onChange={(e) => setCustomerName(e.target.value ? e.target.value : 'Guest Customer')}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    padding: 0,
-                  }}
-                />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <DeliveryDiningRoundedIcon sx={{ fontSize: 16, color: theme.activeBg }} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary }}>Platform:</span>
               </div>
-
-              {/* Divider */}
-              <div style={{ width: '1px', height: '14px', backgroundColor: theme.border, flexShrink: 0 }} />
-
-              {/* Customer Phone input */}
-              <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, gap: '0.25rem' }}>
-                <PhoneRoundedIcon sx={{ fontSize: 12, color: theme.textSecondary, flexShrink: 0 }} />
-                <input
-                  type="tel"
-                  placeholder="Phone Number"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: theme.textPrimary,
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                    padding: 0,
-                  }}
-                />
-              </div>
-
-              {/* Loyalty badge if customer has points */}
-              {customerLoyaltyPoints > 0 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '2px',
-                  backgroundColor: 'rgba(234, 179, 8, 0.14)',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  color: '#CA8A04',
-                  fontSize: '10.5px',
-                  fontWeight: 800,
-                  flexShrink: 0,
-                }}>
-                  <StarRoundedIcon sx={{ fontSize: 13 }} />
-                  <span>{customerLoyaltyPoints} Pts</span>
-                </div>
-              )}
-
-              {/* Actions: Reset & Frequent */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
-                {(customerName !== 'Guest Customer' || customerPhone) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomerName('Guest Customer');
-                      setCustomerPhone('');
-                      setSelectedCustomerId(null);
-                      setCustomerLoyaltyPoints(0);
-                    }}
-                    title="Reset to Guest"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: theme.textMuted,
-                      cursor: 'pointer',
-                      padding: '2px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 12 }} />
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setShowAddCustomerModal(true)}
-                  title="Add new customer"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: theme.posBtnBg,
-                    cursor: 'pointer',
-                    padding: '2px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <PersonAddAltRoundedIcon sx={{ fontSize: 14 }} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCustomerPicker((prev) => !prev);
-                    if (!showCustomerPicker) fetchCustomersData();
-                  }}
-                  title="Select customer from database"
-                  style={{
-                    background: showCustomerPicker ? theme.hoverBg : 'none',
-                    border: 'none',
-                    color: theme.activeBg,
-                    cursor: 'pointer',
-                    padding: '2px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <PeopleAltRoundedIcon sx={{ fontSize: 14 }} />
-                </button>
-              </div>
-            </div>
-
-            {/* Customers Popover (API 40: GET /api/customers) */}
-            {showCustomerPicker && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 4px)',
-                left: '0.85rem',
-                right: '0.85rem',
-                backgroundColor: theme.bgCard,
-                border: `1px solid ${theme.border}`,
-                borderRadius: '0.65rem',
-                padding: '0.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.35rem',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                zIndex: 50,
-                maxHeight: '260px',
-                overflowY: 'auto',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: theme.textSecondary,
-                  borderBottom: `1px solid ${theme.border}`,
-                  paddingBottom: '4px',
-                }}>
-                  <span>Customer Directory</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowCustomerPicker(false);
-                        setShowAddCustomerModal(true);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: theme.posBtnBg,
-                        fontSize: '10.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        padding: 0,
-                      }}
-                    >
-                      + Add New
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomerPicker(false)}
-                      style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: 0 }}
-                    >
-                      <CloseRoundedIcon sx={{ fontSize: 13 }} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Filter / Search input */}
-                <input
-                  type="text"
-                  placeholder="Filter by name or phone..."
-                  onChange={(e) => fetchCustomersData(e.target.value)}
-                  style={{
-                    height: '26px',
-                    padding: '0 6px',
-                    borderRadius: '4px',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '11px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-
-                {isSearchingCustomers ? (
-                  <div style={{ padding: '0.65rem 0.5rem', fontSize: '11px', color: theme.textSecondary, textAlign: 'center' }}>
-                    Searching customers...
-                  </div>
-                ) : customersList.length === 0 ? (
-                  <div style={{ padding: '0.65rem 0.5rem', fontSize: '11px', color: theme.textSecondary, textAlign: 'center' }}>
-                    No registered customers found.
-                  </div>
-                ) : (
-                  customersList.map((cust) => (
-                    <div
-                      key={cust.id}
-                      onClick={() => {
-                        setCustomerName(cust.name);
-                        setCustomerPhone(cust.phone);
-                        setSelectedCustomerId(cust.id);
-                        setCustomerLoyaltyPoints(cust.loyaltyPoints || 0);
-                        setShowCustomerPicker(false);
-                      }}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.4rem 0.5rem',
-                        borderRadius: '0.45rem',
-                        cursor: 'pointer',
-                        backgroundColor: customerPhone === cust.phone ? theme.hoverBg : 'transparent',
-                        transition: 'background-color 0.1s ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.hoverBg; }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = customerPhone === cust.phone ? theme.hoverBg : 'transparent';
-                      }}
-                    >
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: theme.textPrimary }}>
-                          {cust.name}
-                        </span>
-                        <span style={{ fontSize: '10px', color: theme.textSecondary }}>
-                          {cust.phone}
-                        </span>
-                      </div>
-                      {cust.loyaltyPoints > 0 && (
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          color: '#CA8A04',
-                          backgroundColor: 'rgba(234, 179, 8, 0.12)',
-                          padding: '2px 5px',
-                          borderRadius: '4px',
-                        }}>
-                          ⭐ {cust.loyaltyPoints} Pts
-                        </span>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Cart Items List */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '0.5rem 0.85rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.35rem',
-          }}>
-            {cart.length === 0 ? (
-              <div style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                color: theme.textMuted,
-                gap: '0.5rem',
-              }}>
-                <ReceiptLongRoundedIcon sx={{ fontSize: 36, color: theme.border }} />
-                <span style={{ fontSize: '13.5px', fontWeight: 600, color: theme.textSecondary }}>Ticket is empty</span>
-                <span style={{ fontSize: '12px', maxWidth: '200px', color: theme.textMuted }}>Tap any product from the catalog to add items.</span>
-              </div>
-            ) : (
-              <>
-                {cart.map((item) => {
-                  const hasCustomPrice = item.customPrice !== undefined && item.customPrice !== item.product.price;
-                  const discAmt = getItemDiscountAmount(item);
-                  const lineTotal = getItemLineTotal(item);
-
-                  return (
-                    <div
-                      key={item.product.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.4rem 0.5rem',
-                        borderRadius: '0.6rem',
-                        border: `1px solid ${theme.border}`,
-                        backgroundColor: theme.bgCardSubtle,
-                      }}
-                    >
-                      {/* Product Thumbnail */}
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        backgroundColor: theme.bgCard,
-                        border: `1px solid ${theme.border}`,
-                      }}>
-                        {item.product.image ? (
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '4px', backgroundColor: theme.bgCard }}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <div style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '18px',
-                          }}>🍽️</div>
-                        )}
-                      </div>
-
-                      {/* Name + Variant */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: theme.textPrimary,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
-                          {item.product.name}
-                        </div>
-                        <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
-                          {hasCustomPrice ? (
-                            <><s style={{ opacity: 0.5 }}>₹{item.product.price}</s> <strong style={{ color: theme.activeBg }}>₹{item.customPrice}</strong></>
-                          ) : (
-                            item.product.variant || `₹${item.product.price}`
-                          )}
-                        </div>
-                        {discAmt > 0 && (
-                          <span style={{
-                            fontSize: '9.5px',
-                            fontWeight: 800,
-                            backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                            color: '#16A34A',
-                            padding: '1px 5px',
-                            borderRadius: '4px',
-                          }}>
-                            {item.discountPct ? `${item.discountPct}% OFF` : `-₹${item.discountAmount}`}
-                          </span>
-                        )}
-                        {item.itemNote && (
-                          <div style={{ fontSize: '10px', color: theme.activeBg, marginTop: '2px' }}>ðŸ“ {item.itemNote}</div>
-                        )}
-                      </div>
-
-                      {/* Qty Stepper */}
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '2px',
-                          backgroundColor: theme.bgCard,
-                          border: `1px solid ${theme.border}`,
-                          borderRadius: '7px',
-                          padding: '1px 2px',
-                          flexShrink: 0,
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.product.id, -1)}
-                          style={{
-                            width: '20px', height: '20px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'none', border: 'none',
-                            color: theme.textSecondary, cursor: 'pointer', padding: 0,
-                          }}
-                        >
-                          <RemoveRoundedIcon sx={{ fontSize: 12 }} />
-                        </button>
-                        <span style={{
-                          width: '20px', textAlign: 'center',
-                          fontSize: '12px', fontWeight: 800, color: theme.textPrimary,
-                        }}>
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.product.id, 1)}
-                          style={{
-                            width: '20px', height: '20px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'none', border: 'none',
-                            color: theme.textSecondary, cursor: 'pointer', padding: 0,
-                          }}
-                        >
-                          <AddRoundedIcon sx={{ fontSize: 12 }} />
-                        </button>
-                      </div>
-
-                      {/* Line Total */}
-                      <div style={{
-                        width: '48px',
-                        textAlign: 'right',
-                        fontSize: '13px',
-                        fontWeight: 800,
-                        color: theme.textPrimary,
-                        flexShrink: 0,
-                      }}>
-                        ₹{lineTotal}
-                      </div>
-
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); updateQuantity(item.product.id, -item.quantity); }}
-                        style={{
-                          background: 'none', border: 'none',
-                          color: '#EF4444', cursor: 'pointer',
-                          padding: '2px', display: 'flex', alignItems: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
-                      </button>
-                    </div>
-                  );
-                })}
-
-
-              </>
-            )}
-          </div>
-
-          {/* Ticket Summary & Checkout Footer (Ultra-Sleek & Compact) */}
-          <div style={{
-            padding: '0.65rem 0.85rem',
-            backgroundColor: theme.bgCard,
-            borderTop: `1px solid ${theme.border}`,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.45rem',
-          }}>
-            {/* Subtotal, Tax, Discount */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
-                <span>Subtotal</span>
-                <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{subtotal}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary, alignItems: 'center' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  Discount{' '}
-                  {discountPct > 0 ? (
-                    <>
-                      <span style={{ color: '#16A34A', fontWeight: 700 }}>({discountPct}%)</span>
-                      <button
-                        type="button"
-                        aria-label="Remove discount"
-                        onClick={() => setDiscountPct(0)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '15px',
-                          height: '15px',
-                          borderRadius: '50%',
-                          border: '1px solid rgba(22, 163, 74, 0.45)',
-                          background: 'rgba(22, 163, 74, 0.08)',
-                          color: '#16A34A',
-                          cursor: 'pointer',
-                          padding: 0,
-                          lineHeight: 1,
-                        }}
-                      >
-                        <CloseRoundedIcon sx={{ fontSize: 11 }} />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setDiscountPct(10)}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: theme.activeBg, fontSize: '11px', fontWeight: 700,
-                        fontFamily: 'inherit', padding: 0,
-                      }}
-                    >Add Discount</button>
-                  )}
-                </span>
-                <span style={{ color: discountPct > 0 ? '#16A34A' : theme.textSecondary, fontWeight: 600 }}>
-                  {discountPct > 0 ? `-₹${manualDiscount}` : '₹0'}
-                </span>
-              </div>
-              {promoDiscountAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#059669' }}>
-                  <span>Promo ({appliedPromoCode})</span>
-                  <span style={{ fontWeight: 700 }}>-₹{promoDiscountAmount}</span>
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
-                <span>Tax (GST 5%)</span>
-                <span style={{ color: theme.textPrimary, fontWeight: 600 }}>₹{tax}</span>
-              </div>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                fontSize: '16px', fontWeight: 800, color: theme.textPrimary,
-                paddingTop: '0.3rem', borderTop: `1px dashed ${theme.border}`, marginTop: '0.1rem',
-              }}>
-                <span>Total Amount</span>
-                <span style={{ fontSize: '19px', fontWeight: 900, color: theme.textPrimary }}>₹{total}</span>
-              </div>
-            </div>
-
-            {/* Promo Code Input / Applied Badge */}
-            <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
-              <div
+              <select
+                value={deliveryPlatform}
+                onChange={(e) => setDeliveryPlatform(e.target.value)}
                 style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F8FAFC',
-                  borderRadius: '0.5rem',
+                  height: '28px',
+                  padding: '0 8px',
+                  borderRadius: '5px',
                   border: `1px solid ${theme.border}`,
-                  padding: '2px 8px',
-                  height: '31px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <LocalOfferRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary }} />
-                <input
-                  type="text"
-                  placeholder="Promo / Coupon code"
-                  value={appliedPromoCode}
-                  onChange={(e) => setAppliedPromoCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleApplyCouponCode(appliedPromoCode);
-                    }
-                  }}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    outline: 'none',
-                    fontSize: '11px',
-                    fontFamily: 'monospace',
-                    fontWeight: 700,
-                    color: theme.textPrimary,
-                    width: '100%',
-                  }}
-                />
-                {appliedPromoCode && (
-                  <button
-                    type="button"
-                    onClick={() => handleApplyCouponCode('')}
-                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: theme.textSecondary, padding: 0, display: 'flex' }}
-                  >
-                    <CloseRoundedIcon sx={{ fontSize: 13 }} />
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                disabled={cart.length === 0 || !appliedPromoCode}
-                onClick={() => handleApplyCouponCode(appliedPromoCode)}
-                style={{
-                  height: '31px',
-                  padding: '0 10px',
-                  borderRadius: '0.5rem',
-                  border: `1px solid ${theme.border}`,
-                  backgroundColor: promoDiscountAmount > 0 ? '#10B981' : (theme.sidebarIsDark ? theme.bgCard : '#F1F5F9'),
-                  color: promoDiscountAmount > 0 ? '#FFFFFF' : theme.textPrimary,
-                  fontSize: '11px',
+                  backgroundColor: theme.bgCard,
+                  color: theme.textPrimary,
+                  fontSize: '11.5px',
                   fontWeight: 700,
-                  cursor: cart.length === 0 || !appliedPromoCode ? 'not-allowed' : 'pointer',
-                  opacity: cart.length === 0 || !appliedPromoCode ? 0.5 : 1,
+                  cursor: 'pointer',
+                  outline: 'none',
                   fontFamily: 'inherit',
                 }}
               >
-                {promoDiscountAmount > 0 ? 'Applied' : 'Apply'}
-              </button>
+                <option value="Direct">Direct Delivery</option>
+                <option value="Zomato">Zomato</option>
+                <option value="Swiggy">Swiggy</option>
+                <option value="UberEats">UberEats</option>
+              </select>
             </div>
-            {promoMessage && (
-              <div
+          )}
+        </div>
+
+        {/* MANDATORY CUSTOMER SECTION */}
+        <div style={{
+          padding: '0.55rem 0.95rem',
+          backgroundColor: theme.bgCard,
+          borderBottom: `1px solid ${theme.border}`,
+        }}>
+          {!isCustomerValid ? (
+            /* Unverified: Mandatory Customer Alert Box */
+            <div style={{
+              padding: '0.65rem 0.75rem',
+              borderRadius: '0.65rem',
+              backgroundColor: theme.sidebarIsDark ? 'rgba(234, 179, 8, 0.1)' : '#FEF9C3',
+              border: `1px solid ${theme.sidebarIsDark ? 'rgba(234, 179, 8, 0.3)' : '#FDE047'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
+                <PersonAddAltRoundedIcon sx={{ fontSize: 18, color: '#CA8A04', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 800, color: theme.sidebarIsDark ? '#FACC15' : '#854D0E' }}>
+                    Customer Mandatory
+                  </div>
+                  <div style={{ fontSize: '10.5px', color: theme.sidebarIsDark ? '#D4D4D8' : '#713F12', opacity: 0.9 }}>
+                    Name & phone required for sale
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAddCustomerError(null);
+                  setShowAddCustomerModal(true);
+                }}
                 style={{
-                  fontSize: '10.5px',
-                  fontWeight: 600,
-                  color: promoDiscountAmount > 0 ? '#059669' : '#DC2626',
-                  padding: '0 2px',
+                  padding: '0.38rem 0.75rem',
+                  backgroundColor: '#000000',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '0.45rem',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  fontFamily: 'inherit',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                 }}
               >
-                {promoMessage}
+                + Add Customer
+              </button>
+            </div>
+          ) : (
+            /* Verified Customer Chip */
+            <div style={{
+              padding: '0.5rem 0.75rem',
+              borderRadius: '0.65rem',
+              backgroundColor: theme.sidebarIsDark ? 'rgba(34, 197, 94, 0.08)' : '#F0FDF4',
+              border: `1px solid ${theme.sidebarIsDark ? 'rgba(34, 197, 94, 0.25)' : '#BBF7D0'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  backgroundColor: '#16A34A',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}>
+                  {customerName.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '12.5px',
+                    fontWeight: 800,
+                    color: theme.textPrimary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                  }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {customerName}
+                    </span>
+                    <CheckCircleRoundedIcon sx={{ fontSize: 14, color: '#16A34A' }} />
+                  </div>
+                  <div style={{ fontSize: '10.5px', color: theme.textSecondary }}>
+                    {customerPhone}
+                    {customerLoyaltyPoints > 0 && (
+                      <span style={{ marginLeft: '6px', color: '#CA8A04', fontWeight: 800 }}>
+                        • ★ {customerLoyaltyPoints} Pts
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddCustomerError(null);
+                    setShowAddCustomerModal(true);
+                  }}
+                  style={{
+                    padding: '2px 7px',
+                    fontSize: '10.5px',
+                    fontWeight: 700,
+                    backgroundColor: 'transparent',
+                    color: theme.activeBg,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerName('');
+                    setCustomerPhone('');
+                    setSelectedCustomerId(null);
+                    setCustomerLoyaltyPoints(0);
+                  }}
+                  title="Remove Customer"
+                  style={{
+                    padding: '2px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    color: theme.textMuted,
+                    cursor: 'pointer',
+                    display: 'flex',
+                  }}
+                >
+                  <CloseRoundedIcon sx={{ fontSize: 15 }} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Cart Items List */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '0.65rem 0.95rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.4rem',
+        }}>
+          {cart.length === 0 ? (
+            <div style={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              color: theme.textMuted,
+              gap: '0.5rem',
+            }}>
+              <ReceiptLongRoundedIcon sx={{ fontSize: 38, color: theme.border }} />
+              <span style={{ fontSize: '14px', fontWeight: 700, color: theme.textSecondary }}>Ticket is empty</span>
+              <span style={{ fontSize: '12px', maxWidth: '210px', color: theme.textMuted }}>
+                Tap any product from the catalog to add items to this sale.
+              </span>
+            </div>
+          ) : (
+            cart.map((item) => {
+              const hasCustomPrice = item.customPrice !== undefined && item.customPrice !== item.product.price;
+              const discAmt = getItemDiscountAmount(item);
+              const lineTotal = getItemLineTotal(item);
+
+              return (
+                <div
+                  key={item.product.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    padding: '0.45rem 0.55rem',
+                    borderRadius: '0.65rem',
+                    border: `1px solid ${theme.border}`,
+                    backgroundColor: theme.bgCardSubtle,
+                  }}
+                >
+                  {/* Thumbnail / Emoji */}
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '7px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    backgroundColor: theme.bgCard,
+                    border: `1px solid ${theme.border}`,
+                  }}>
+                    {item.product.image ? (
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '3px' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '17px',
+                      }}>🍽️</div>
+                    )}
+                  </div>
+
+                  {/* Name + Price + Discount */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: theme.textPrimary,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {item.product.name}
+                    </div>
+                    <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
+                      {hasCustomPrice ? (
+                        <><s style={{ opacity: 0.5 }}>₹{item.product.price}</s> <strong style={{ color: theme.activeBg }}>₹{item.customPrice}</strong></>
+                      ) : (
+                        item.product.variant || `₹${item.product.price}`
+                      )}
+                    </div>
+                    {discAmt > 0 && (
+                      <span style={{
+                        fontSize: '9.5px',
+                        fontWeight: 800,
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        color: '#DC2626',
+                        padding: '1px 5px',
+                        borderRadius: '4px',
+                      }}>
+                        {item.discountPct ? `${item.discountPct}% OFF` : `-₹${item.discountAmount}`}
+                      </span>
+                    )}
+                    {item.itemNote && (
+                      <div style={{ fontSize: '10px', color: theme.activeBg, marginTop: '2px' }}>
+                        📝 {item.itemNote}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quantity Stepper */}
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      backgroundColor: theme.bgCard,
+                      border: `1px solid ${theme.border}`,
+                      borderRadius: '6px',
+                      padding: '1px 2px',
+                      flexShrink: 0,
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product.id, -1)}
+                      style={{
+                        width: '20px', height: '20px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'none', border: 'none',
+                        color: theme.textSecondary, cursor: 'pointer', padding: 0,
+                      }}
+                    >
+                      <RemoveRoundedIcon sx={{ fontSize: 12 }} />
+                    </button>
+                    <span style={{
+                      width: '20px', textAlign: 'center',
+                      fontSize: '12px', fontWeight: 800, color: theme.textPrimary,
+                    }}>
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(item.product.id, 1)}
+                      style={{
+                        width: '20px', height: '20px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'none', border: 'none',
+                        color: theme.textSecondary, cursor: 'pointer', padding: 0,
+                      }}
+                    >
+                      <AddRoundedIcon sx={{ fontSize: 12 }} />
+                    </button>
+                  </div>
+
+                  {/* Line Total */}
+                  <div style={{
+                    width: '52px',
+                    textAlign: 'right',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: theme.textPrimary,
+                    flexShrink: 0,
+                  }}>
+                    ₹{lineTotal}
+                  </div>
+
+                  {/* Delete Item */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); updateQuantity(item.product.id, -item.quantity); }}
+                    title="Remove Item"
+                    style={{
+                      background: 'none', border: 'none',
+                      color: theme.textMuted, cursor: 'pointer',
+                      padding: '2px', display: 'flex', alignItems: 'center',
+                      flexShrink: 0,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
+                  >
+                    <DeleteOutlineRoundedIcon sx={{ fontSize: 16 }} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Ticket Summary & Checkout Footer */}
+        <div style={{
+          padding: '0.65rem 0.95rem 0.85rem',
+          backgroundColor: theme.bgCard,
+          borderTop: `1px solid ${theme.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.45rem',
+        }}>
+          {/* Subtotal, Discount, Tax */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
+              <span>Subtotal</span>
+              <span style={{ color: theme.textPrimary, fontWeight: 700 }}>₹{subtotal}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary, alignItems: 'center' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                Discount{' '}
+                {discountPct > 0 ? (
+                  <>
+                    <span style={{ color: '#DC2626', fontWeight: 700 }}>({discountPct}%)</span>
+                    <button
+                      type="button"
+                      aria-label="Remove discount"
+                      onClick={() => setDiscountPct(0)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '15px',
+                        height: '15px',
+                        borderRadius: '50%',
+                        border: '1px solid rgba(220, 38, 38, 0.45)',
+                        background: 'rgba(220, 38, 38, 0.08)',
+                        color: '#DC2626',
+                        cursor: 'pointer',
+                        padding: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      <CloseRoundedIcon sx={{ fontSize: 11 }} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setDiscountPct(10)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: theme.activeBg, fontSize: '11px', fontWeight: 700,
+                      fontFamily: 'inherit', padding: 0,
+                    }}
+                  >
+                    + Add Discount
+                  </button>
+                )}
+              </span>
+              <span style={{ color: discountPct > 0 ? '#DC2626' : theme.textSecondary, fontWeight: 700 }}>
+                {discountPct > 0 ? `-₹${manualDiscount}` : '₹0'}
+              </span>
+            </div>
+
+            {promoDiscountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#DC2626' }}>
+                <span>Promo ({appliedPromoCode})</span>
+                <span style={{ fontWeight: 700 }}>-₹{promoDiscountAmount}</span>
               </div>
             )}
 
-            {/* Action Buttons: Hold Sale */}
-            <div style={{ display: 'flex', gap: '0.45rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: theme.textSecondary }}>
+              <span>Tax (GST 5%)</span>
+              <span style={{ color: theme.textPrimary, fontWeight: 700 }}>₹{tax}</span>
+            </div>
+
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              fontSize: '15px', fontWeight: 800, color: theme.textPrimary,
+              paddingTop: '0.4rem', borderTop: `1px dashed ${theme.border}`, marginTop: '0.15rem',
+            }}>
+              <span>Total Amount</span>
+              <span style={{ fontSize: '20px', fontWeight: 900, color: theme.textPrimary, letterSpacing: '-0.02em' }}>
+                ₹{total}
+              </span>
+            </div>
+          </div>
+
+          {/* Promo Code Input */}
+          <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                backgroundColor: theme.sidebarIsDark ? theme.bgCard : '#F8FAFC',
+                borderRadius: '0.55rem',
+                border: `1px solid ${theme.border}`,
+                padding: '2px 8px',
+                height: '32px',
+                boxSizing: 'border-box',
+              }}
+            >
+              <LocalOfferRoundedIcon sx={{ fontSize: 13, color: theme.textSecondary }} />
+              <input
+                type="text"
+                placeholder="Promo / Coupon code"
+                value={appliedPromoCode}
+                onChange={(e) => setAppliedPromoCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleApplyCouponCode(appliedPromoCode);
+                  }
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  outline: 'none',
+                  fontSize: '11px',
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  color: theme.textPrimary,
+                  width: '100%',
+                }}
+              />
+              {appliedPromoCode && (
+                <button
+                  type="button"
+                  onClick={() => handleApplyCouponCode('')}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: theme.textSecondary, padding: 0, display: 'flex' }}
+                >
+                  <CloseRoundedIcon sx={{ fontSize: 13 }} />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              disabled={cart.length === 0 || !appliedPromoCode}
+              onClick={() => handleApplyCouponCode(appliedPromoCode)}
+              style={{
+                height: '32px',
+                padding: '0 10px',
+                borderRadius: '0.55rem',
+                border: `1px solid ${theme.border}`,
+                backgroundColor: promoDiscountAmount > 0 ? '#10B981' : (theme.sidebarIsDark ? theme.bgCard : '#F1F5F9'),
+                color: promoDiscountAmount > 0 ? '#FFFFFF' : theme.textPrimary,
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: cart.length === 0 || !appliedPromoCode ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 || !appliedPromoCode ? 0.5 : 1,
+                fontFamily: 'inherit',
+              }}
+            >
+              {promoDiscountAmount > 0 ? 'Applied' : 'Apply'}
+            </button>
+          </div>
+          {promoMessage && (
+            <div
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 600,
+                color: promoDiscountAmount > 0 ? '#059669' : '#DC2626',
+                padding: '0 2px',
+              }}
+            >
+              {promoMessage}
+            </div>
+          )}
+
+          {/* Action Row: Hold Sale & Dine-in KOT */}
+          <div style={{ display: 'flex', gap: '0.45rem' }}>
+            <button
+              type="button"
+              disabled={cart.length === 0}
+              onClick={handleHoldSale}
+              style={{
+                flex: 1,
+                height: '34px',
+                borderRadius: '0.55rem',
+                border: `1px solid ${theme.border}`,
+                backgroundColor: theme.bgCardSubtle,
+                color: theme.textPrimary,
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: cart.length === 0 ? 0.45 : 1,
+                transition: 'all 0.15s ease',
+                fontFamily: 'inherit',
+              }}
+            >
+              Hold Sale
+            </button>
+            {orderType === 'dine_in' && (
               <button
                 type="button"
                 disabled={cart.length === 0}
-                onClick={handleHoldSale}
+                onClick={handleSendKot}
                 style={{
-                  flex: 1, height: '31px',
-                  borderRadius: '0.5rem',
+                  flex: 1,
+                  height: '34px',
+                  borderRadius: '0.55rem',
                   border: `1px solid ${theme.border}`,
                   backgroundColor: theme.bgCardSubtle,
-                  color: theme.textPrimary,
-                  fontSize: '11px', fontWeight: 700,
+                  color: cart.length > 0 ? theme.activeBg : theme.textMuted,
+                  fontSize: '11.5px',
+                  fontWeight: 700,
                   cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
                   opacity: cart.length === 0 ? 0.45 : 1,
-                  transition: 'all 0.15s ease', fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.3rem',
+                  fontFamily: 'inherit',
                 }}
               >
-                Hold Sale
+                <KitchenRoundedIcon sx={{ fontSize: 15 }} />
+                <span>Send KOT</span>
               </button>
-            </div>
-
-            {/* Primary Payment Button (Charge ₹Total) */}
-            <button
-              type="button"
-              role="button"
-              className="button-20"
-              disabled={cart.length === 0}
-              onClick={() => setShowPaymentModal(true)}
-              style={{
-                width: '100%',
-                height: '44px',
-                borderRadius: '6px',
-                fontSize: '15px',
-                fontWeight: 800,
-                letterSpacing: '-0.01em',
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: cart.length === 0 ? 0.45 : 1,
-              }}
-            >
-              <span>Charge ₹{total}</span>
-            </button>
+            )}
           </div>
-        </aside>
+
+          {/* Primary Checkout CTA (Customer Mandatory Enforced) */}
+          <button
+            type="button"
+            disabled={cart.length === 0}
+            onClick={handleInitiateCharge}
+            style={{
+              width: '100%',
+              height: '46px',
+              borderRadius: '0.65rem',
+              fontSize: '14.5px',
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: cart.length === 0 ? 0.45 : 1,
+              border: 'none',
+              backgroundColor: !isCustomerValid && cart.length > 0 ? '#CA8A04' : '#000000',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              fontFamily: 'inherit',
+              boxShadow: cart.length > 0 ? '0 4px 12px rgba(0,0,0,0.18)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {!isCustomerValid && cart.length > 0 ? (
+              <>
+                <PersonAddAltRoundedIcon sx={{ fontSize: 18 }} />
+                <span>Add Customer to Charge ₹{total}</span>
+              </>
+            ) : (
+              <>
+                <span>Charge ₹{total}</span>
+                <ArrowOutwardRoundedIcon sx={{ fontSize: 16 }} />
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
 
       {/* COMPLETE PAYMENT MODAL */}
       <CompletePaymentModal
@@ -3285,10 +4253,11 @@ export default function PosMainScreen() {
           if (cart.length === 0) {
             setSaleNote('');
             setPaymentNote('');
-            setCustomerName('Guest Customer');
+            setCustomerName('');
             setCustomerPhone('');
             setSelectedCustomerId(null);
             setCustomerLoyaltyPoints(0);
+            setKotGeneratedCount(0);
             setOrderType('dine_in');
             setTableSection('Main Hall');
             setTableNumber('T-01');
@@ -3327,23 +4296,24 @@ export default function PosMainScreen() {
               setTicketNumber(`TK-${String(nextNum).padStart(2, '0')}`);
             }
 
-            // Update dining table status to OCCUPIED if dine_in
+            // Free the dining table (mark as VACANT) upon successful checkout
             if (orderType === 'dine_in') {
-              const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber);
+              const currentTbl = diningTables.find((t) => t.tableNumber === tableNumber && t.section === tableSection);
               if (currentTbl) {
-                handleUpdateTableStatus(currentTbl.id, 'OCCUPIED', orderNumber);
+                handleUpdateTableStatus(currentTbl.id, 'VACANT', undefined);
               }
             }
           } catch (e) {}
 
-          // Clear cart so next order starts clean
+          // Clear cart so next order starts clean with mandatory customer requirement
           setCart([]);
           setSaleNote('');
           setPaymentNote('');
-          setCustomerName('Guest Customer');
+          setCustomerName('');
           setCustomerPhone('');
           setSelectedCustomerId(null);
           setCustomerLoyaltyPoints(0);
+          setKotGeneratedCount(0);
           setOrderType('dine_in');
           setTableSection('Main Hall');
           setTableNumber('T-01');
@@ -3873,33 +4843,598 @@ export default function PosMainScreen() {
         </div>
       )}
 
-      {/* QUICK ADD CUSTOMER MODAL (API 41: POST /api/customers) */}
-      {showAddCustomerModal && (
+      {/* INTERACTIVE FLOOR & TABLE PLAN MODAL */}
+      {showFloorPlanModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.6)',
+          backgroundColor: 'rgba(0,0,0,0.65)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 100,
+          zIndex: 110,
           padding: '1.5rem',
         }}>
           <div style={{
             width: '100%',
-            maxWidth: '420px',
+            maxWidth: '780px',
+            maxHeight: '90vh',
             backgroundColor: theme.popoverBg,
             border: `1px solid ${theme.border}`,
             borderRadius: '1.25rem',
-            padding: '1.75rem',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+            padding: '1.5rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            overflow: 'hidden',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TableBarRoundedIcon sx={{ fontSize: 24, color: theme.activeBg }} />
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
+                    Floor Plan & Dining Tables
+                  </h3>
+                </div>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: theme.textSecondary }}>
+                  Select a table to seat guests, transfer active tickets, or view occupancy status.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFloorPlanModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 22 }} />
+              </button>
+            </div>
+
+            {/* Quick Stats Strip */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              overflowX: 'auto',
+              paddingBottom: '2px',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                backgroundColor: theme.sidebarIsDark ? '#27272A' : '#F1F5F9',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: theme.textPrimary,
+              }}>
+                <span>Total: {floorStats.total}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(34, 197, 94, 0.12)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#16A34A',
+              }}>
+                <span>● Available: {floorStats.vacant}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#DC2626',
+              }}>
+                <span>● Occupied: {floorStats.occupied}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#2563EB',
+              }}>
+                <span>● Reserved: {floorStats.reserved}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(168, 85, 247, 0.12)',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: '#9333EA',
+              }}>
+                <span>● Billed: {floorStats.billed}</span>
+              </div>
+            </div>
+
+            {/* Filter Controls: Sections & Status */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {/* Floor Section Tabs */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflowX: 'auto' }}>
+                {['All', ...Object.keys(TABLE_SECTIONS)].map((sec) => (
+                  <button
+                    key={sec}
+                    type="button"
+                    onClick={() => setFloorPlanFilter(sec)}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      fontSize: '11.5px',
+                      fontWeight: floorPlanFilter === sec ? 800 : 600,
+                      backgroundColor: floorPlanFilter === sec ? theme.activeBg : theme.bgCardSubtle,
+                      color: floorPlanFilter === sec ? theme.activeText : theme.textSecondary,
+                      border: `1px solid ${floorPlanFilter === sec ? 'transparent' : theme.border}`,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {sec}
+                  </button>
+                ))}
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <select
+                value={floorPlanStatusFilter}
+                onChange={(e) => setFloorPlanStatusFilter(e.target.value)}
+                style={{
+                  height: '30px',
+                  padding: '0 8px',
+                  borderRadius: '0.45rem',
+                  border: `1px solid ${theme.border}`,
+                  backgroundColor: theme.bgCard,
+                  color: theme.textPrimary,
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="VACANT">Available Only</option>
+                <option value="OCCUPIED">Occupied Only</option>
+                <option value="RESERVED">Reserved Only</option>
+                <option value="BILLED">Billed Only</option>
+              </select>
+            </div>
+
+            {/* Interactive Tables Grid */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+              gap: '0.75rem',
+              padding: '0.25rem 2px',
+            }}>
+              {diningTables
+                .filter((t) => floorPlanFilter === 'All' || t.section === floorPlanFilter)
+                .filter((t) => floorPlanStatusFilter === 'ALL' || t.status === floorPlanStatusFilter)
+                .map((tbl) => {
+                  const isCurrent = tbl.tableNumber === tableNumber && tbl.section === tableSection;
+                  const isOccupied = tbl.status === 'OCCUPIED';
+                  const isReserved = tbl.status === 'RESERVED';
+                  const isBilled = tbl.status === 'BILLED';
+
+                  let statusColor = '#16A34A';
+                  let statusBg = 'rgba(34, 197, 94, 0.1)';
+                  if (isOccupied) {
+                    statusColor = '#DC2626';
+                    statusBg = 'rgba(239, 68, 68, 0.1)';
+                  } else if (isReserved) {
+                    statusColor = '#2563EB';
+                    statusBg = 'rgba(59, 130, 246, 0.1)';
+                  } else if (isBilled) {
+                    statusColor = '#9333EA';
+                    statusBg = 'rgba(168, 85, 247, 0.1)';
+                  }
+
+                  return (
+                    <div
+                      key={tbl.id}
+                      onClick={() => handleSelectTable(tbl)}
+                      style={{
+                        padding: '0.85rem',
+                        borderRadius: '0.85rem',
+                        backgroundColor: theme.bgCard,
+                        border: isCurrent
+                          ? `2px solid ${theme.activeBg}`
+                          : `1px solid ${theme.border}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '0.65rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isCurrent ? '0 0 0 3px rgba(0, 125, 204, 0.15)' : 'none',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: 900, color: theme.textPrimary, letterSpacing: '-0.02em' }}>
+                            {tbl.tableNumber}
+                          </div>
+                          <div style={{ fontSize: '11px', color: theme.textSecondary, marginTop: '1px' }}>
+                            {tbl.section}
+                          </div>
+                        </div>
+
+                        <span style={{
+                          fontSize: '9.5px',
+                          fontWeight: 800,
+                          padding: '2px 6px',
+                          borderRadius: '999px',
+                          backgroundColor: statusBg,
+                          color: statusColor,
+                          border: `1px solid ${statusColor}33`,
+                        }}>
+                          ● {tbl.status || 'VACANT'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: theme.textSecondary }}>
+                        <span>🪑 {tbl.capacity || 4} Seats</span>
+                        {isCurrent ? (
+                          <span style={{ fontWeight: 800, color: theme.activeBg }}>Active</span>
+                        ) : tbl.activeOrderId ? (
+                          <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{tbl.activeOrderId}</span>
+                        ) : (
+                          <span style={{ color: '#16A34A', fontWeight: 700 }}>Select →</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '0.75rem',
+              borderTop: `1px solid ${theme.border}`,
+            }}>
+              <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
+                Currently Selected: <strong style={{ color: theme.textPrimary }}>{tableSection} • {tableNumber}</strong> ({currentTableObj.capacity || 4} Seats)
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowFloorPlanModal(false)}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: '0.55rem',
+                  backgroundColor: '#000000',
+                  color: '#FFFFFF',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Confirm Table
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KITCHEN ORDER TICKET (KOT) PREVIEW & DISPATCH MODAL */}
+      {showKotModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 110,
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '380px',
+            backgroundColor: '#FFFFFF',
+            color: '#18181B',
+            borderRadius: '1rem',
+            padding: '1.5rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.85rem',
+            fontFamily: 'monospace',
+          }}>
+            {/* Ticket Header */}
+            <div style={{ textAlign: 'center', borderBottom: '1px dashed #A1A1AA', paddingBottom: '0.75rem' }}>
+              <div style={{ fontSize: '15px', fontWeight: 900, letterSpacing: '0.05em' }}>
+                KITCHEN ORDER TICKET
+              </div>
+              <div style={{ fontSize: '11px', color: '#71717A', marginTop: '2px' }}>
+                {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+
+            {/* Table & Server Info */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.3rem',
+              fontSize: '12px',
+              borderBottom: '1px dashed #A1A1AA',
+              paddingBottom: '0.65rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 800 }}>Table: {tableSection} - {tableNumber}</span>
+                <span style={{ fontWeight: 800 }}>Covers: {guestCount}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#52525B', fontSize: '11px' }}>
+                <span>KOT #{100 + kotGeneratedCount + 1}</span>
+                <span>Server: {currentCashierName}</span>
+              </div>
+              <div style={{ color: '#52525B', fontSize: '11px' }}>
+                Order #{orderNumber}
+                {customerName && ` • Cust: ${customerName}`}
+              </div>
+            </div>
+
+            {/* Items List */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.55rem',
+              maxHeight: '260px',
+              overflowY: 'auto',
+              padding: '0.25rem 0',
+            }}>
+              {cart.map((item, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '13px' }}>
+                  <div style={{ flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
+                    <span style={{ fontWeight: 800 }}>{item.quantity}x</span>{' '}
+                    <span>{item.product.name}</span>
+                    {item.itemNote && (
+                      <div style={{ fontSize: '10.5px', color: '#DC2626', fontWeight: 700, marginTop: '1px' }}>
+                        ** {item.itemNote}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontWeight: 700, color: '#52525B' }}>
+                    {item.product.variant || ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              borderTop: '1px dashed #A1A1AA',
+              paddingTop: '0.75rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.45rem',
+              fontFamily: 'sans-serif',
+            }}>
+              <button
+                type="button"
+                onClick={handlePrintConfirmKot}
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  borderRadius: '0.65rem',
+                  backgroundColor: '#000000',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                <PrintRoundedIcon sx={{ fontSize: 17 }} />
+                <span>Print & Dispatch to Kitchen</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowKotModal(false)}
+                style={{
+                  width: '100%',
+                  height: '34px',
+                  borderRadius: '0.55rem',
+                  backgroundColor: '#F4F4F5',
+                  color: '#52525B',
+                  border: 'none',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRANSFER TABLE MODAL */}
+      {showTransferTableModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 110,
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '460px',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            padding: '1.5rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <PersonAddAltRoundedIcon sx={{ fontSize: 22, color: theme.posBtnBg }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
-                  Quick Add Customer
+                <SwapHorizRoundedIcon sx={{ fontSize: 22, color: theme.activeBg }} />
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0 }}>
+                  Transfer Table Order
                 </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTransferTableModal(false)}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
+              >
+                <CloseRoundedIcon sx={{ fontSize: 20 }} />
+              </button>
+            </div>
+
+            <div style={{
+              padding: '0.75rem',
+              borderRadius: '0.65rem',
+              backgroundColor: theme.sidebarIsDark ? '#1C1D21' : '#F1F5F9',
+              fontSize: '12px',
+              color: theme.textSecondary,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span>Current Table:</span>
+              <strong style={{ color: theme.textPrimary, fontSize: '13px' }}>{tableSection} • {tableNumber}</strong>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
+                Select Available Vacant Table:
+              </label>
+              <div style={{
+                maxHeight: '220px',
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '0.5rem',
+              }}>
+                {diningTables
+                  .filter((t) => t.status === 'VACANT' && !(t.tableNumber === tableNumber && t.section === tableSection))
+                  .map((vacantTbl) => (
+                    <button
+                      key={vacantTbl.id}
+                      type="button"
+                      onClick={() => handleTransferTable(vacantTbl)}
+                      style={{
+                        padding: '0.65rem',
+                        borderRadius: '0.65rem',
+                        border: `1px solid ${theme.border}`,
+                        backgroundColor: theme.bgCard,
+                        color: theme.textPrimary,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontFamily: 'inherit',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span style={{ fontSize: '13px', fontWeight: 800 }}>{vacantTbl.tableNumber}</span>
+                      <span style={{ fontSize: '10.5px', color: theme.textSecondary }}>{vacantTbl.section} • {vacantTbl.capacity || 4} seats</span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTransferTableModal(false)}
+              style={{
+                height: '38px',
+                borderRadius: '0.65rem',
+                border: `1px solid ${theme.border}`,
+                backgroundColor: theme.bgCardSubtle,
+                color: theme.textPrimary,
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MANDATORY CUSTOMER MODAL (NEW REGISTRATION + SELECT EXISTING) */}
+      {showAddCustomerModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.65)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 110,
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '460px',
+            backgroundColor: theme.popoverBg,
+            border: `1px solid ${theme.border}`,
+            borderRadius: '1.25rem',
+            padding: '1.5rem',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <PersonAddAltRoundedIcon sx={{ fontSize: 22, color: theme.activeBg }} />
+                <div>
+                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: theme.textPrimary, margin: 0, letterSpacing: '-0.02em' }}>
+                    Customer Details (Mandatory)
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '11.5px', color: theme.textSecondary }}>
+                    A verified customer is required to consider and checkout this sale.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
@@ -3907,17 +5442,73 @@ export default function PosMainScreen() {
                   setShowAddCustomerModal(false);
                   setAddCustomerError(null);
                 }}
-                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: theme.textSecondary, cursor: 'pointer', padding: '4px' }}
               >
                 <CloseRoundedIcon sx={{ fontSize: 20 }} />
               </button>
             </div>
 
+            {/* Tab Switcher: New Customer vs Select Existing */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '3px',
+              padding: '3px',
+              borderRadius: '0.65rem',
+              backgroundColor: theme.sidebarIsDark ? '#1C1D21' : '#F1F5F9',
+              border: `1px solid ${theme.border}`,
+            }}>
+              <button
+                type="button"
+                onClick={() => setCustomerModalTab('new')}
+                style={{
+                  padding: '0.42rem 0.5rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  backgroundColor: customerModalTab === 'new'
+                    ? (theme.sidebarIsDark ? '#2E2F38' : '#FFFFFF')
+                    : 'transparent',
+                  color: customerModalTab === 'new'
+                    ? (theme.sidebarIsDark ? '#FFFFFF' : '#000000')
+                    : theme.textSecondary,
+                  fontSize: '12px',
+                  fontWeight: customerModalTab === 'new' ? 800 : 600,
+                  cursor: 'pointer',
+                  boxShadow: customerModalTab === 'new' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  fontFamily: 'inherit',
+                }}
+              >
+                + New Customer
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCustomerModalTab('existing')}
+                style={{
+                  padding: '0.42rem 0.5rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  backgroundColor: customerModalTab === 'existing'
+                    ? (theme.sidebarIsDark ? '#2E2F38' : '#FFFFFF')
+                    : 'transparent',
+                  color: customerModalTab === 'existing'
+                    ? (theme.sidebarIsDark ? '#FFFFFF' : '#000000')
+                    : theme.textSecondary,
+                  fontSize: '12px',
+                  fontWeight: customerModalTab === 'existing' ? 800 : 600,
+                  cursor: 'pointer',
+                  boxShadow: customerModalTab === 'existing' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Select Existing
+              </button>
+            </div>
+
             {addCustomerError && (
               <div style={{
-                marginBottom: '1rem',
-                padding: '0.75rem 1rem',
-                borderRadius: '0.75rem',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '0.65rem',
                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.25)',
                 color: '#EF4444',
@@ -3928,146 +5519,274 @@ export default function PosMainScreen() {
               </div>
             )}
 
-            <form onSubmit={handleCreateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  minLength={2}
-                  value={newCustomerName}
-                  onChange={(e) => setNewCustomerName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+            {customerModalTab === 'new' ? (
+              /* TAB 1: QUICK NEW CUSTOMER REGISTRATION FORM */
+              <form onSubmit={handleCreateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '5px' }}>
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    minLength={2}
+                    value={newCustomerName}
+                    onChange={(e) => setNewCustomerName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    style={{
+                      width: '100%',
+                      height: '40px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.6rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={newCustomerPhone}
-                  onChange={(e) => setNewCustomerPhone(e.target.value)}
-                  placeholder="e.g. 9876543210"
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '5px' }}>
+                    Phone Number * (10 Digits)
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={newCustomerPhone}
+                    onChange={(e) => setNewCustomerPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    style={{
+                      width: '100%',
+                      height: '40px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.6rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
-                  Email Address (Optional)
-                </label>
-                <input
-                  type="email"
-                  value={newCustomerEmail}
-                  onChange={(e) => setNewCustomerEmail(e.target.value)}
-                  placeholder="rahul@example.com"
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '5px' }}>
+                    Email Address (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    value={newCustomerEmail}
+                    onChange={(e) => setNewCustomerEmail(e.target.value)}
+                    placeholder="rahul@example.com"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.6rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: theme.textSecondary, marginBottom: '6px' }}>
-                  Delivery / Billing Address (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={newCustomerAddress}
-                  onChange={(e) => setNewCustomerAddress(e.target.value)}
-                  placeholder="Flat 402, Sunshine Apts"
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    padding: '0 0.85rem',
-                    borderRadius: '0.65rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: theme.textSecondary, marginBottom: '5px' }}>
+                    Address / Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newCustomerAddress}
+                    onChange={(e) => setNewCustomerAddress(e.target.value)}
+                    placeholder="e.g. Block A, Apartment 302"
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 0.85rem',
+                      borderRadius: '0.6rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="submit"
-                  disabled={isCreatingCustomer}
-                  style={{
-                    flex: 1,
-                    height: '42px',
-                    borderRadius: '0.75rem',
-                    backgroundColor: theme.posBtnBg,
-                    color: theme.posBtnText,
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    border: 'none',
-                    cursor: isCreatingCustomer ? 'not-allowed' : 'pointer',
-                    opacity: isCreatingCustomer ? 0.7 : 1,
-                  }}
-                >
-                  {isCreatingCustomer ? 'Registering...' : 'Register Customer'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddCustomerModal(false)}
-                  style={{
-                    padding: '0 1rem',
-                    height: '42px',
-                    borderRadius: '0.75rem',
-                    border: `1px solid ${theme.border}`,
-                    backgroundColor: theme.bgCardSubtle,
-                    color: theme.textPrimary,
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
+                <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.4rem' }}>
+                  <button
+                    type="submit"
+                    disabled={isCreatingCustomer}
+                    style={{
+                      flex: 1,
+                      height: '42px',
+                      borderRadius: '0.65rem',
+                      backgroundColor: '#000000',
+                      color: '#FFFFFF',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: isCreatingCustomer ? 'not-allowed' : 'pointer',
+                      opacity: isCreatingCustomer ? 0.7 : 1,
+                      fontFamily: 'inherit',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {isCreatingCustomer ? 'Registering...' : 'Register & Assign to Sale'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCustomerModal(false)}
+                    style={{
+                      padding: '0 1rem',
+                      height: '42px',
+                      borderRadius: '0.65rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* TAB 2: SELECT FROM EXISTING CUSTOMERS */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ position: 'relative' }}>
+                  <SearchRoundedIcon sx={{
+                    position: 'absolute',
+                    left: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 18,
+                    color: theme.textSecondary,
+                  }} />
+                  <input
+                    type="text"
+                    placeholder="Search customer by name, phone..."
+                    value={customerSearchInModal}
+                    onChange={(e) => setCustomerSearchInModal(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '38px',
+                      padding: '0 10px 0 34px',
+                      borderRadius: '0.55rem',
+                      border: `1px solid ${theme.border}`,
+                      backgroundColor: theme.bgCardSubtle,
+                      color: theme.textPrimary,
+                      fontSize: '12.5px',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div style={{
+                  maxHeight: '280px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem',
+                }}>
+                  {effectiveCustomers
+                    .filter((c) => {
+                      const q = customerSearchInModal.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        c.name.toLowerCase().includes(q) ||
+                        c.phone.toLowerCase().includes(q) ||
+                        (c.email && c.email.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((c) => (
+                      <div
+                        key={c.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.65rem 0.75rem',
+                          borderRadius: '0.65rem',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: theme.bgCard,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '50%',
+                            backgroundColor: theme.sidebarIsDark ? '#27272A' : '#EFF6FF',
+                            color: theme.activeBg,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            flexShrink: 0,
+                          }}>
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: theme.textPrimary, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {c.name}
+                            </div>
+                            <div style={{ fontSize: '11px', color: theme.textSecondary }}>
+                              {c.phone} {c.loyaltyPoints > 0 ? `• ★ ${c.loyaltyPoints} Pts` : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomerName(c.name);
+                            setCustomerPhone(c.phone);
+                            setSelectedCustomerId(c.id);
+                            setCustomerLoyaltyPoints(c.loyaltyPoints || 0);
+                            setShowAddCustomerModal(false);
+                            setAddCustomerError(null);
+                          }}
+                          style={{
+                            padding: '0.35rem 0.65rem',
+                            backgroundColor: theme.activeBg,
+                            color: theme.activeText,
+                            border: 'none',
+                            borderRadius: '0.45rem',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            fontFamily: 'inherit',
+                          }}
+                        >
+                          Select
+                        </button>
+                      </div>
+                    ))}
+                </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
@@ -4422,7 +6141,7 @@ export default function PosMainScreen() {
                 }}>
                   <div style={{ fontSize: '12px', color: theme.textSecondary }}>
                     <span>₹{itemFormPrice} × {itemFormQuantity}</span>
-                    {disc > 0 && <span style={{ color: '#22C55E' }}> - ₹{disc} discount</span>}
+                    {disc > 0 && <span style={{ color: '#DC2626', fontWeight: 600 }}> - ₹{disc} discount</span>}
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 800, color: theme.textPrimary }}>
                     ₹{net}

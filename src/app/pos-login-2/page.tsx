@@ -284,6 +284,8 @@ export default function PosLoginScreen2() {
         justifyContent: 'flex-end',
         alignItems: 'center',
         flexShrink: 0,
+        width: '100%',
+        boxSizing: 'border-box',
       }}>
         <Link
           href="#help"
@@ -301,6 +303,7 @@ export default function PosLoginScreen2() {
             textDecoration: 'none',
             letterSpacing: '-0.01em',
             transition: 'opacity 0.15s',
+            marginLeft: 'auto',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.7'; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
